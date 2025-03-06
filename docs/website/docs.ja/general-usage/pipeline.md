@@ -4,16 +4,14 @@ description: Explanation of what a dlt pipeline is
 keywords: [pipeline, source, full refresh, dev mode]
 ---
 
-# Pipeline
+# パイプライン
 
-A [pipeline](glossary.md#pipeline) is a connection that moves data from your Python code to a
-[destination](glossary.md#destination). The pipeline accepts `dlt` [sources](source.md) or
-[resources](resource.md), as well as generators, async generators, lists, and any iterables.
-Once the pipeline runs, all resources are evaluated and the data is loaded at the destination.
+[パイプライン](glossary.md#pipeline)は、Python コードから[宛先](glossary.md#destination)にデータを移動する接続です。パイプラインは、`dlt` [ソース](source.md)または[リソース](resource.md)のほか、ジェネレーター、非同期ジェネレーター、リスト、および任意の反復可能オブジェクトを受け入れます。
+パイプラインが実行されると、すべてのリソースが評価され、データが宛先に読み込まれます。
 
-Example:
+例:
 
-This pipeline will load a list of objects into a DuckDB table named "three":
+このパイプラインは、オブジェクトのリストを「 three 」という名前の DuckDB テーブルにロードします:
 
 ```py
 import dlt
@@ -25,35 +23,26 @@ info = pipeline.run([{'id':1}, {'id':2}, {'id':3}], table_name="three")
 print(info)
 ```
 
-You instantiate a pipeline by calling the `dlt.pipeline` function with the following arguments:
+パイプラインをインスタンス化するには、次の引数で`dlt.pipeline`関数を呼び出します:
 
-- `pipeline_name`: a name of the pipeline that will be used to identify it in trace and monitoring
-  events and to restore its state and data schemas on subsequent runs. If not provided, `dlt` will
-  create a pipeline name from the file name of the currently executing Python module.
-- `destination`: a name of the [destination](../dlt-ecosystem/destinations) to which dlt
-  will load the data. It may also be provided to the `run` method of the `pipeline`.
-- `dataset_name`: a name of the dataset to which the data will be loaded. A dataset is a logical
-  group of tables, i.e., `schema` in relational databases or a folder grouping many files. It may also be
-  provided later to the `run` or `load` methods of the pipeline. If not provided, then
-  it defaults to the `{pipeline_name}_dataset` on destinations that require datasets (most of the warehouses).
-  It will stay empty on destinations that do not separate tables into datasets (or database schemas) ie.
-  on vector databases or Clikchouse.
+- `pipeline_name`: トレースおよび監視イベントでパイプラインを識別し、後続の実行時に状態とデータ スキーマを復元するために使用されるパイプラインの名前。指定されていない場合、`dlt` は現在実行中の Python モジュールのファイル名からパイプライン名を作成します。
+- `destination`: dlt がデータをロードする [destination](../dlt-ecosystem/destinations) の名前。`pipeline` の `run` メソッドに指定することもできます。
+- `dataset_name`: データがロードされるデータセットの名前。データセットはテーブルの論理グループ、つまりリレーショナルデータベースの `schema` または多くのファイルをグループ化したフォルダーです。また、後でパイプラインの `run` または `load` メソッドに指定することもできます。指定しない場合は、データセットを必要とする宛先 (ほとんどのウェアハウス) ではデフォルトで `{pipeline_name}_dataset` になります。
+テーブルをデータセット(またはデータベーススキーマ)に分割しない宛先(ベクターデータベースまたは Clickhouse) では空のままになります。
 
-To load the data, you call the `run` method and pass your data in the `data` argument.
+データをロードするには、`run` メソッドを呼び出し、`data` 引数にデータを渡します。
 
-Arguments:
+引数:
 
-- `data` (the first argument) may be a dlt source, resource, generator function, or any Iterator or
-  Iterable (i.e., a list or the result of the `map` function).
-- `write_disposition` controls how to write data to a table. Defaults to "append".
-  - `append` will always add new data at the end of the table.
-  - `replace` will replace existing data with new data.
-  - `skip` will prevent data from loading.
-  - `merge` will deduplicate and merge data based on `primary_key` and `merge_key` hints.
-- `table_name`: specified in cases when the table name cannot be inferred, i.e., from the resources or name
-  of the generator function.
+- `data` (最初の引数) は、dlt ソース、リソース、ジェネレーター関数、または任意の Iterator または Iterable (つまり、リストまたは `map` 関数の結果) になります。
+- `write_disposition` は、テーブルにデータを書き込む方法を制御します。デフォルトは「append」です。
+  - `append` は常にテーブルの末尾に新しいデータを追加します。
+  - `replace` は既存のデータを新しいデータに置き換えます。
+  - `skip` はデータの読み込みを防止します。
+  - `merge` は、`primary_key` と `merge_key` のヒントに基づいてデータの重複を排除し、マージします。
+- `table_name` は、テーブル名を推測できない場合、つまりリソー​​スやジェネレータ関数の名前から推測できない場合に指定します。
 
-Example: This pipeline will load the data the generator `generate_rows(10)` produces:
+例: このパイプラインは、ジェネレーター「generate_rows(10)」が生成したデータをロードします:
 
 ```py
 import dlt
@@ -69,28 +58,21 @@ info = pipeline.run(generate_rows(10))
 print(info)
 ```
 
-## Pipeline working directory
+## パイプライン作業ディレクトリ
 
-Each pipeline that you create with `dlt` stores extracted files, load packages, inferred schemas,
-execution traces, and the [pipeline state](state.md) in a folder in the local filesystem. The default
-location for such folders is in the user's home directory: `~/.dlt/pipelines/<pipeline_name>`.
+`dlt` で作成した各パイプラインは、抽出されたファイル、ロード パッケージ、推論されたスキーマ、実行トレース、[パイプラインの状態](state.md) をローカル ファイル システムのフォルダーに保存します。このようなフォルダーのデフォルトの場所は、ユーザーのホーム ディレクトリ内です: `~/.dlt/pipelines/<pipeline_name>`。
 
-You can inspect stored artifacts using the command
-[dlt pipeline info](../reference/command-line-interface.md#dlt-pipeline) and
-[programmatically](../walkthroughs/run-a-pipeline.md#4-inspect-a-load-process).
+保存された成果物は、コマンド[dlt pipeline info](../reference/command-line-interface.md#dlt-pipeline)使用したり、[プログラム的に](../walkthroughs/run-a-pipeline.md#4-inspect-a-load-process)検査できます。
 
-> 💡 A pipeline with a given name looks for its working directory in the location above - so if you have two
-> pipeline scripts that create a pipeline with the same name, they will see the same working folder
-> and share all the possible state. You may override the default location using the `pipelines_dir`
-> argument when creating the pipeline.
+> 💡 指定された名前のパイプラインは、上記の場所で作業ディレクトリを検索します。そのため、同じ名前のパイプラインを作成する 2 つのパイプライン スクリプトがある場合、それらは同じ作業フォルダーを参照し、すべての可能な状態を共有します。パイプラインを作成するときに、`pipelines_dir` 引数を使用してデフォルトの場所を上書きできます。
 
-> 💡 You can attach a `Pipeline` instance to an existing working folder, without creating a new
-> pipeline with `dlt.attach`.
+> 💡 `dlt.attach` を使用して新しいパイプラインを作成せずに、既存の作業フォルダーに `Pipeline` インスタンスをアタッチできます。
 
-### Separate working environments with `pipelines_dir`
+### `pipelines_dir` で作業環境を分離する
 
-You can run several pipelines with the same name but with different configurations, for example, to target development, staging, or production environments.
-Set the `pipelines_dir` argument to store all the working folders in a specific place. For example:
+たとえば、開発環境、ステージング環境、または本番環境をターゲットにするために、同じ名前で異なる構成の複数のパイプラインを実行できます。
+すべての作業フォルダを特定の場所に保存するには、`pipelines_dir`引数を設定します。例えば:
+
 ```py
 import dlt
 from dlt.common.pipeline import get_dlt_pipelines_dir
@@ -98,36 +80,32 @@ from dlt.common.pipeline import get_dlt_pipelines_dir
 dev_pipelines_dir = os.path.join(get_dlt_pipelines_dir(), "dev")
 pipeline = dlt.pipeline(destination="duckdb", dataset_name="sequence", pipelines_dir=dev_pipelines_dir)
 ```
-This code stores the pipeline working folder in `~/.dlt/pipelines/dev/<pipeline_name>`. Note that you need to pass this `~/.dlt/pipelines/dev/`
-into all CLI commands to get info/trace for that pipeline.
 
-## Do experiments with dev mode
+このコードは、パイプラインの作業フォルダーを `~/.dlt/pipelines/dev/<pipeline_name>` に保存します。パイプラインの情報/トレースを取得するには、この `~/.dlt/pipelines/dev/` をすべての CLI コマンドに渡す必要があることに注意してください。
 
-If you [create a new pipeline script](../walkthroughs/create-a-pipeline.md), you will be
-experimenting a lot. If you want each time the pipeline resets its state and loads data to a
-new dataset, set the `dev_mode` argument of the `dlt.pipeline` method to True. Each time the
-pipeline is created, `dlt` adds a datetime-based suffix to the dataset name.
+## 開発モードで実験する
 
-## Refresh pipeline data and state
+[新しいパイプライン スクリプトを作成](../walkthroughs/create-a-pipeline.md)すると、さまざまな実験を行うことになります。パイプラインが毎回状態をリセットして新しいデータセットにデータをロードするようにしたい場合は、`dlt.pipeline` メソッドの `dev_mode` 引数を True に設定します。パイプラインが作成されるたびに、`dlt` はデータセット名に日時ベースのサフィックスを追加します。
 
-You can reset parts or all of your sources by using the `refresh` argument to `dlt.pipeline` or the pipeline's `run` or `extract` method.
-That means when you run the pipeline, the sources/resources being processed will have their state reset and their tables either dropped or truncated,
-depending on which refresh mode is used.
+## パイプラインデータと状態を更新する
 
-The `refresh` option works with all relational or SQL destinations and cloud storages and files (`filesystem`). It does not work with vector databases (we are working on that) and
-with custom destinations.
+`dlt.pipeline` の `refresh` 引数、またはパイプラインの `run` または `extract` メソッドを使用して、ソースの一部またはすべてをリセットできます。
+つまり、パイプラインを実行すると、処理中のソース/リソースの状態がリセットされ、使用されている更新モードに応じて、テーブルが削除または切り捨てられます。
 
-The `refresh` argument should have one of the following string values to decide the refresh mode:
+`refresh` オプションは、すべてのリレーショナルまたは SQL の宛先、クラウド ストレージ、およびファイル (`filesystem`) で機能します。ベクターデータベース (現在対応中) およびカスタムの宛先では機能しません。
 
-### Drop tables and pipeline state for a source with `drop_sources`
-All sources being processed in `pipeline.run` or `pipeline.extract` are refreshed.
-That means all tables listed in their schemas are dropped and the state belonging to those sources and all their resources is completely wiped.
-The tables are deleted both from the pipeline's schema and from the destination database.
+`refresh`引数には、リフレッシュモードを決定するために、次の文字列値のいずれかを指定する必要があります:
 
-If you only have one source or run with all your sources together, then this is practically like running the pipeline again for the first time.
+### `drop_sources` を使用してソースのテーブルとパイプライン状態を削除します
+
+`pipeline.run` または `pipeline.extract` で処理されているすべてのソースが更新されます。
+つまり、スキーマにリストされているすべてのテーブルが削除され、それらのソースに属する状態とすべてのリソースが完全に消去されます。
+テーブルは、パイプラインのスキーマと宛先データベースの両方から削除されます。
+
+ソースが 1 つしかない場合、またはすべてのソースを一緒に実行する場合、これは実質的にパイプラインを初めて再度実行するのと同じです。
 
 :::caution
-This erases schema history for the selected sources and only the latest version is stored.
+これにより、選択したソースのスキーマ履歴が消去され、最新バージョンのみが保存されます。
 :::
 
 ```py
@@ -136,27 +114,27 @@ import dlt
 pipeline = dlt.pipeline("airtable_demo", destination="duckdb")
 pipeline.run(airtable_emojis(), refresh="drop_sources")
 ```
-In the example above, we instruct `dlt` to wipe the pipeline state belonging to the `airtable_emojis` source and drop all the database tables in `duckdb` to
-which data was loaded. The `airtable_emojis` source had two resources named "📆 Schedule" and "💰 Budget" loading to tables "_schedule" and "_budget". Here's
-what `dlt` does step by step:
-1. Collects a list of tables to drop by looking for all the tables in the schema that are created in the destination.
-2. Removes existing pipeline state associated with the `airtable_emojis` source.
-3. Resets the schema associated with the `airtable_emojis` source.
-4. Executes `extract` and `normalize` steps. These will create fresh pipeline state and a schema.
-5. Before it executes the `load` step, the collected tables are dropped from staging and regular dataset.
-6. Schema `airtable_emojis` (associated with the source) is removed from the `_dlt_version` table.
-7. Executes the `load` step as usual so tables are re-created and fresh schema and pipeline state are stored.
 
-### Selectively drop tables and resource state with `drop_resources`
+上記の例では、`dlt` に `airtable_emojis` ソースに属するパイプライン状態を消去し、データがロードされた `duckdb` 内のすべてのデータベース テーブルを削除するように指示しています。`airtable_emojis` ソースには、テーブル "_schedule" と "_budget" にロードされる "📆 Schedule" と "💰 Budget" という 2 つのリソースがありました。`dlt` が実行する処理をステップごとに説明します:
 
-Limits the refresh to the resources being processed in `pipeline.run` or `pipeline.extract` (e.g., by using `source.with_resources(...)`).
-Tables belonging to those resources are dropped, and their resource state is wiped (that includes incremental state).
-The tables are deleted both from the pipeline's schema and from the destination database.
+1. 宛先に作成されたスキーマ内のすべてのテーブルを検索して、削除するテーブルのリストを収集します。
+2. `airtable_emojis` ソースに関連付けられている既存のパイプラインの状態を削除します。
+3. `airtable_emojis` ソースに関連付けられたスキーマをリセットします。
+4. `extract` および `normalize` ステップを実行します。これにより、新しいパイプライン状態とスキーマが作成されます。
+5. `load` ステップを実行する前に、収集されたテーブルはステージング データセットと通常のデータセットから削除されます。
+6. スキーマ `airtable_emojis` (ソースに関連付けられている) は `_dlt_version` テーブルから削除されます。
+7. 通常どおり `load` ステップを実行し、テーブルが再作成され、新しいスキーマとパイプラインの状態が保存されます。
 
-Source level state keys are not deleted in this mode (i.e., `dlt.state()[<'my_key>'] = '<my_value>'`)
+### `drop_resources` を使用してテーブルとリソースの状態を選択的に削除する
+
+`pipeline.run` または `pipeline.extract` で処理されているリソースに更新を制限します (例: `source.with_resources(...)` を使用)。
+これらのリソースに属するテーブルは削除され、リソースの状態 (増分状態を含む) が消去されます。
+テーブルは、パイプラインのスキーマと宛先データベースの両方から削除されます。
+
+このモードではソース レベルの状態キーは削除されません (つまり、`dlt.state()[<'my_key>'] = '<my_value>'`)
 
 :::caution
-This erases schema history for all affected sources, and only the latest schema version is stored.
+これにより、影響を受けるすべてのソースのスキーマ履歴が消去され、最新のスキーマ バージョンのみが保存されます。
 :::
 
 ```py
@@ -165,41 +143,36 @@ import dlt
 pipeline = dlt.pipeline("airtable_demo", destination="duckdb")
 pipeline.run(airtable_emojis().with_resources("📆 Schedule"), refresh="drop_resources")
 ```
-Above, we request that the state associated with the "📆 Schedule" resource is reset, and the table generated by it ("_schedule") is dropped. Other resources,
-tables, and state are not affected. Please check `drop_sources` for a step-by-step description of what `dlt` does internally.
 
-### Selectively truncate tables and reset resource state with `drop_data`
+上記では、「📆 Schedule」リソースに関連付けられた状態をリセットし、それによって生成されたテーブル (「_schedule」) を削除するように要求しています。他のリソース、テーブル、状態は影響を受けません。`dlt` が内部で何を行うかについての詳細な説明については、`drop_sources` を確認してください。
 
-Same as `drop_resources`, but instead of dropping tables from the schema, only the data is deleted from them (i.e., by `TRUNCATE <table_name>` in SQL destinations). Resource state for selected resources is also wiped. In the case of [incremental resources](incremental-loading.md#incremental-loading-with-a-cursor-field), this will
-reset the cursor state and fully reload the data from the `initial_value`.
+### `drop_data` を使用してテーブルを選択的に切り捨て、リソースの状態をリセットする
 
-The schema remains unmodified in this case.
+`drop_resources` と同じですが、スキーマからテーブルを削除する代わりに、テーブルからデータのみが削除されます (つまり、SQL 宛先では `TRUNCATE <table_name>` によって)。選択したリソースのリソース状態も消去されます。[インクリメンタルリソース](incremental-loading.md#incremental-loading-with-a-cursor-field) の場合、これによりカーソル状態がリセットされ、`initial_value` からデータが完全に再ロードされます。
+
+この場合、スキーマは変更されません。
+
 ```py
 import dlt
 
 pipeline = dlt.pipeline("airtable_demo", destination="duckdb")
 pipeline.run(airtable_emojis().with_resources("📆 Schedule"), refresh="drop_data")
 ```
-Above, the incremental state of the "📆 Schedule" is reset before the `extract` step so data is fully reacquired. Just before the `load` step starts,
-the "_schedule" is truncated, and new (full) table data will be inserted/copied.
 
-## Display the loading progress
+上記では、`extract` ステップの前に "📆 Schedule" の増分状態がリセットされ、データが完全に再取得されます。`load` ステップが開始する直前に、"_schedule" が切り捨てられ、新しい (完全な) テーブル データが挿入/コピーされます。
 
-You can add a progress monitor to the pipeline. Typically, its role is to visually assure the user that
-the pipeline run is progressing. dlt supports 4 progress monitors out of the box:
+## ローディングの進行状況を表示する
 
-- [enlighten](https://github.com/Rockhopper-Technologies/enlighten) - a status bar with progress
-  bars that also allows for logging.
-- [tqdm](https://github.com/tqdm/tqdm) - the most popular Python progress bar lib, proven to work in
-  Notebooks.
-- [alive_progress](https://github.com/rsalmei/alive-progress) - with the most fancy animations.
-- **log** - dumps the progress information to log, console, or text stream. **the most useful on
-  production** optionally adds memory and CPU usage stats.
+パイプラインに進行状況モニターを追加できます。通常、その役割は、パイプラインの実行が進行中であることをユーザーに視覚的に確認することです。dltは、すぐに使用できる4つの進行状況モニターをサポートしています:
 
-> 💡 You must install the required progress bar library yourself.
+- [enlighten](https://github.com/Rockhopper-Technologies/enlighten) - ログ記録も可能な進行状況バー付きのステータスバー。
+- [tqdm](https://github.com/tqdm/tqdm) - 最も人気のある Python のプログレスバーライブラリ。ノートブックで動作することが確認されています。
+- [alive_progress](https://github.com/rsalmei/alive-progress) - 最も派手なアニメーション付き。
+- **log** - 進行状況情報をログ、コンソール、またはテキストストリームにダンプします。**本番環境では最も便利な**オプションでメモリと CPU 使用率の統計を追加します。
 
-You pass the progress monitor in the `progress` argument of the pipeline. You can use a name from the
-list above as in the following example:
+> 💡 必要なプログレス バー ライブラリを自分でインストールする必要があります。
+
+パイプラインの`progress`引数に進捗モニターを渡します。次の例のように、上記のリストから名前を使用できます:
 
 ```py
 # create a pipeline loading chess data that dumps
@@ -212,7 +185,7 @@ pipeline = dlt.pipeline(
 )
 ```
 
-You can fully configure the progress monitor. See two examples below:
+進捗モニターを完全に構成できます。以下の2つの例を参照してください:
 
 ```py
 from airflow.operators.python import get_current_context  # noqa
@@ -237,6 +210,4 @@ pipeline = dlt.pipeline(
 )
 ```
 
-Note that the value of the `progress` argument is
-[configurable](../walkthroughs/run-a-pipeline.md#2-see-the-progress-during-loading).
-
+`progress` 引数の値は [構成可能](../walkthroughs/run-a-pipeline.md#2-see-the-progress-during-loading) であることに注意してください。

@@ -4,45 +4,45 @@ description: How to extract data from a REST API using dlt's REST API source
 keywords: [tutorial, api, github, duckdb, rest api, source, pagination, authentication]
 ---
 
-This tutorial demonstrates how to extract data from a REST API using dlt's REST API source and load it into a destination. You will learn how to build a data pipeline that loads data from the [Pokemon](https://pokeapi.co/) and the [GitHub API](https://docs.github.com/en/) into a local DuckDB database.
+このチュートリアルでは、dlt の REST API ソースを使用して REST API からデータを抽出し、それを宛先にロードする方法を説明します。[Pokemon](https://pokeapi.co/) と [GitHub API](https://docs.github.com/en/) からローカルの DuckDB データベースにデータをロードするデータ パイプラインの構築方法を学習します。
 
-Extracting data from an API is straightforward with dlt: provide the base URL, define the resources you want to fetch, and dlt will handle the pagination, authentication, and data loading.
+dlt を使用すると、API からデータを抽出するのは簡単です。ベース URL を指定し、取得するリソースを定義すると、dlt がページ区切り、認証、およびデータの読み込みを処理します。
 
-## What you will learn
+## 学ぶ内容
 
-- How to set up a REST API source
-- Configuration basics for API endpoints
-- Configuring the destination database
-- Relationships between different resources
-- How to append, replace, and merge data in the destination
-- Loading data incrementally by fetching only new or updated data
+- REST APIソースの設定方法
+- APIエンドポイント設定の基本
+- 宛先のデータベースの構成
+- 異なるリソース間の関係
+- 宛先でデータを追加、置換、結合する方法
+- 新しいデータまたは更新されたデータのみを取得してデータをインクリメンタルにロードする
 
-## Prerequisites
+## 前提条件
 
-- Python 3.9 or higher installed
-- Virtual environment set up
+- Python 3.9 以上がインストールされている
+- 仮想環境がセットアップされている
 
-## Installing dlt
+## dlt のインストール
 
-Before we start, make sure you have a Python virtual environment set up. Follow the instructions in the [installation guide](../reference/installation) to create a new virtual environment and install dlt.
+始める前に、Python 仮想環境が設定されていることを確認してください。[インストールガイド](../reference/installation)の指示に従って、新しい仮想環境を作成し、dlt をインストールします。
 
-Verify that dlt is installed by running the following command in your terminal:
+ターミナルで次のコマンドを実行して、dltがインストールされていることを確認します:
 
 ```sh
 dlt --version
 ```
 
-If you see the version number (such as "dlt 0.5.3"), you're ready to proceed.
+バージョン番号 (「dlt 0.5.3」など) が表示されたら、続行する準備は完了です。
 
-## Setting up a new project
+## 新しいプロジェクトの設定
 
-Initialize a new dlt project with a REST API source and DuckDB destination:
+REST API ソースと 宛先の DuckDB を指定して新しい dlt プロジェクトを初期化します:
 
 ```sh
 dlt init rest_api duckdb
 ```
 
-`dlt init` creates multiple files and a directory for your project. Let's take a look at the project structure:
+`dlt init` はプロジェクト用の複数のファイルとディレクトリを作成します。プロジェクト構造を見てみましょう:
 
 ```sh
 rest_api_pipeline.py
@@ -52,31 +52,31 @@ requirements.txt
     secrets.toml
 ```
 
-Here's what each file and directory contains:
+各ファイルとディレクトリの内容は次のとおりです:
 
-- `rest_api_pipeline.py`: This is the main script where you'll define your data pipeline. It contains two basic pipeline examples for Pokemon and GitHub APIs. You can modify or rename this file as needed.
-- `requirements.txt`: This file lists all the Python dependencies required for your project.
-- `.dlt/`: This directory contains the [configuration files](../general-usage/credentials/) for your project:
-    - `secrets.toml`: This file stores your API keys, tokens, and other sensitive information.
-    - `config.toml`: This file contains the configuration settings for your dlt project.
+- `rest_api_pipeline.py`: これは、データ パイプラインを定義するメイン スクリプトです。Pokemon と GitHub API の 2 つの基本的なパイプライン例が含まれています。必要に応じて、このファイルを変更したり、名前を変更したりできます。
+- `requirements.txt`: このファイルには、プロジェクトに必要なすべての Python 依存関係がリストされます。
+- `.dlt/`: このディレクトリには、プロジェクトの [構成ファイル](../general-usage/credentials/) が含まれています:
+    - `secrets.toml`: このファイルには、API キー、トークン、その他の機密情報が保存されます。
+    - `config.toml`: このファイルには、dlt プロジェクトの構成設定が含まれています。
 
-## Installing dependencies
+## 依存関係のインストール
 
-Before we proceed, let's install the required dependencies for this tutorial. Run the following command to install the dependencies listed in the `requirements.txt` file:
+先に進む前に、このチュートリアルに必要な依存関係をインストールしましょう。次のコマンドを実行して、`requirements.txt`ファイルにリストされている依存関係をインストールします:
 
 ```sh
 pip install -r requirements.txt
 ```
 
-## Running the pipeline
+## パイプラインの実行
 
-Let's verify that the pipeline is working as expected. Run the following command to execute the pipeline:
+パイプラインが期待通りに動作していることを確認しましょう。次のコマンドを実行してパイプラインを実行します:
 
 ```sh
 python rest_api_pipeline.py
 ```
 
-You should see the output of the pipeline execution in the terminal. The output will also display the location of the DuckDB database file where the data is stored:
+ターミナルにパイプライン実行の出力が表示されます。出力には、データが保存されている DuckDB データベースファイルの場所も表示されます:
 
 ```sh
 Pipeline rest_api_pokemon load step completed in 1.08 seconds
@@ -85,28 +85,28 @@ The duckdb destination used duckdb:////home/user-name/quick_start/rest_api_pokem
 Load package 1692364844.9254808 is LOADED and contains no failed jobs
 ```
 
-## Exploring the data
+## データの調査
 
-Now that the pipeline has run successfully, let's explore the data loaded into DuckDB. dlt comes with a built-in browser application that allows you to interact with the data. To enable it, run the following command:
+パイプラインが正常に実行されたので、DuckDB にロードされたデータを調べてみましょう。dlt には、データを操作できる組み込みのブラウザアプリケーションが付属しています。これを有効にするには、次のコマンドを実行します:
 
 ```sh
 pip install streamlit
 ```
 
-Next, run the following command to start the data browser:
+次に、以下のコマンドを実行してデータブラウザを起動します:
 
 ```sh
 dlt pipeline rest_api_pokemon show
 ```
 
-The command opens a new browser window with the data browser application. `rest_api_pokemon` is the name of the pipeline defined in the `rest_api_pipeline.py` file.
-You can explore the loaded data, run queries, and see some pipeline execution details:
+このコマンドは、データブラウザアプリケーションを含む新しいブラウザを開きます。`rest_api_pokemon` は、`rest_api_pipeline.py` ファイルで定義されているパイプラインの名前です。
+読み込まれたデータを調べたり、クエリを実行したり、パイプライン実行の詳細を確認したりできます:
 
 ![Explore rest_api data in Streamlit App](https://dlt-static.s3.eu-central-1.amazonaws.com/images/docs-rest-api-tutorial-streamlit-screenshot.png)
 
-## Configuring the REST API source
+## REST API ソースの構成
 
-Now that your environment and the project are set up, let's take a closer look at the configuration of the REST API source. Open the `rest_api_pipeline.py` file in your code editor and locate the following code snippet:
+REST API ソースの構成環境とプロジェクトがセットアップされたので、REST API ソースの構成を詳しく見てみましょう。エディタで`rest_api_pipeline.py`ファイルを開き、次のコードスニペットを見つけます:
 
 ```py
 import dlt
@@ -145,14 +145,14 @@ def load_pokemon() -> None:
     print(load_info)
 ```
 
-Here's what's happening in the code:
+コード内で何が起こっているか見てみましょう:
 
-1. With `dlt.pipeline()`, we define a new pipeline named `rest_api_pokemon` with DuckDB as the destination and `rest_api_data` as the dataset name.
-2. The `rest_api_source()` function creates a new REST API source object.
-3. We pass this source object to the `pipeline.run()` method to start the pipeline execution. Inside the `run()` method, dlt will fetch data from the API and load it into the DuckDB database.
-4. The `print(load_info)` outputs the pipeline execution details to the console.
+1. `dlt.pipeline()` 関数で、DuckDB を宛先とし、`rest_api_data` をデータセット名として、`rest_api_pokemon` という名前の新しいパイプラインを定義します。
+2. `rest_api_source()` 関数は、新しい REST API ソース オブジェクトを作成します。
+3. このソース オブジェクトを `pipeline.run()` メソッドに渡して、パイプラインの実行を開始します。`run()` メソッド内で、dlt は API からデータを取得し、それを DuckDB データベースにロードします。
+4. `print(load_info)` はパイプライン実行の詳細をコンソールに出力します。
 
-Let's break down the configuration of the REST API source. It consists of three main parts: `client`, `resource_defaults`, and `resources`.
+REST API ソースの構成を詳しく見てみましょう。これは、`client`、`resource_defaults`、`resources` の 3 つの主要部分で構成されています。
 
 ```py
 config: RESTAPIConfig = {
@@ -168,27 +168,27 @@ config: RESTAPIConfig = {
 }
 ```
 
-- The `client` configuration is used to connect to the web server and authenticate if necessary. For our simple example, we only need to specify the `base_url` of the API: `https://pokeapi.co/api/v2/`.
-- The `resource_defaults` configuration allows you to set default parameters for all resources. Normally, you would set common parameters here, such as pagination limits. In our Pokemon API example, we set the `limit` parameter to 1000 for all resources to retrieve more data in a single request and reduce the number of HTTP API calls.
-- The `resources` list contains the names of the resources you want to load from the API. REST API will use some conventions to determine the endpoint URL based on the resource name. For example, the resource name `pokemon` will be translated to the endpoint URL `https://pokeapi.co/api/v2/pokemon`.
+- `client` 構成は、Web サーバーに接続し、必要に応じて認証するために使用されます。この簡単な例では、API の `base_url`: `https://pokeapi.co/api/v2/` のみを指定する必要があります。
+- `resource_defaults` 構成では、すべてのリソースのデフォルト パラメータを設定できます。通常、ここではページ区切りの制限などの共通パラメータを設定します。Pokemon API の例では、すべてのリソースの `limit` パラメータを 1000 に設定して、1 回のリクエストでより多くのデータを取得し、HTTP API 呼び出しの数を減らしています。
+- `resources` リストには、API からロードするリソースの名前が含まれています。REST API は、いくつかの規則を使用して、リソース名に基づいてエンドポイント URL を決定します。たとえば、リソース名 `pokemon` は、エンドポイント URL `https://pokeapi.co/api/v2/pokemon` に変換されます。
 
 :::note
-### Pagination
-You may have noticed that we didn't specify any pagination configuration in the `rest_api_source()` function. That's because for REST APIs that follow best practices, dlt can automatically detect and handle pagination. Read more about [configuring pagination](../dlt-ecosystem/verified-sources/rest_api/basic#pagination) in the REST API source documentation.
+### ページネーション
+`rest_api_source()` 関数でページネーション設定を指定していないことにお気づきかもしれません。これは、ベスト プラクティスに従う REST API の場合、dlt がページネーションを自動的に検出して処理できるためです。[ページネーションの設定](../dlt-ecosystem/verified-sources/rest_api/basic#pagination)の詳細については、REST API ソース ドキュメントを参照してください。
 :::
 
-## Appending, replacing, and merging loaded data
+## 読み込まれたデータの追加、置換、およびマージ
 
-Try running the pipeline again with `python rest_api_pipeline.py`. You will notice that all the tables have duplicated data. This happens because, by default, dlt appends the data to the destination table. In dlt, you can control how the data is loaded into the destination table by setting the `write_disposition` parameter in the resource configuration. The possible values are:
-- `append`: Appends the data to the destination table. This is the default.
-- `replace`: Replaces the data in the destination table with the new data.
-- `merge`: Merges the new data with the existing data in the destination table based on the primary key.
+`python rest_api_pipeline.py` でパイプラインを再度実行してみてください。すべてのテーブルに重複したデータがあることに気づくでしょう。これは、dlt がデフォルトでデータを宛先テーブルに追加するために発生します。dlt では、リソース構成で `write_disposition` パラメータを設定することで、宛先テーブルにデータをロードする方法を制御できます。可能な値は次のとおりです。:
+- `append`: データを宛先テーブルに追加します。これがデフォルトです。
+- `replace`: 宛先テーブル内のデータを新しいデータに置き換えます。
+- `merge`: 主キーに基づいて、新しいデータを宛先テーブル内の既存のデータとマージします。
 
-### Replacing the data
+### データの置換
 
-In our case, we don't want to append the data every time we run the pipeline. Let's start with the simpler `replace` write disposition.
+今回の場合、パイプラインを実行するたびにデータを追加することは望ましくありません。まずは、よりシンプルな `replace` 書き込み処理から始めましょう。
 
-To change the write disposition to `replace`, update the `resource_defaults` configuration in the `rest_api_pipeline.py` file:
+書き込み処理を `replace` に変更するには、`rest_api_pipeline.py` ファイルの `resource_defaults` 構成を更新します:
 
 ```py
 ...
@@ -215,13 +215,13 @@ pokemon_source = rest_api_source(
 ...
 ```
 
-Run the pipeline again with `python rest_api_pipeline.py`. This time, the data will be replaced in the destination table instead of being appended.
+`python rest_api_pipeline.py` を使用してパイプラインを再度実行します。今回は、宛先テーブルでデータが追加されるのではなく、置き換えられます。
 
-### Merging the data
+### データのマージ
 
-When you want to update the existing data as new data is loaded, you can use the `merge` write disposition. This requires specifying a primary key for the resource. The primary key is used to match the new data with the existing data in the destination table.
+新しいデータがロードされるときに既存のデータを更新したい場合は、`merge` 書き込み処理を使用できます。これには、リソースの主キーを指定する必要があります。主キーは、新しいデータを宛先テーブル内の既存のデータと一致させるために使用されます。
 
-Let's update our example to use the `merge` write disposition. We need to specify the primary key for the `pokemon` resource and set the write disposition to `merge`:
+`merge` 書き込み処理を使用するように例を更新してみましょう。`pokemon` リソースの主キーを指定し、書き込み処理を `merge` に設定する必要があります:
 
 ```py
 ...
@@ -257,13 +257,13 @@ pokemon_source = rest_api_source(
 )
 ```
 
-Run the pipeline with `python rest_api_pipeline.py`, the data for the `pokemon` resource will be merged with the existing data in the destination table based on the `name` field.
+`python rest_api_pipeline.py` を使用してパイプラインを実行すると、`p​​okemon` リソースのデータが、`name` フィールドに基づいて宛先テーブル内の既存のデータとマージされます。
 
-## Loading data incrementally
+## データのインクリメンタルなロード
 
-When working with some APIs, you may need to load data incrementally to avoid fetching the entire dataset every time and to reduce the load time. APIs that support incremental loading usually provide a way to fetch only new or changed data (most often by using a timestamp field like `updated_at`, `created_at`, or incremental IDs).
+一部の API を使用する場合、毎回データセット全体を取得することを回避し、読み込み時間を短縮するために、データを段階的に読み込む必要がある場合があります。 増分読み込みをサポートする API は通常、新しいデータまたは変更されたデータのみを取得する方法を提供します (ほとんどの場合、`updated_at`、`created_at` などのタイムスタンプ フィールド、または増分 ID を使用します)。
 
-To illustrate incremental loading, let's consider the GitHub API. In the `rest_api_pipeline.py` file, you can find an example of how to load data from the GitHub API incrementally. Let's take a look at the configuration:
+増分読み込みを説明するために、GitHub APIを考えてみましょう。`rest_api_pipeline.py`ファイルには、GitHub APIからデータを増分的に読み込む方法の例があります。設定を見てみましょう:
 
 ```py
 import dlt
@@ -312,18 +312,18 @@ load_info = pipeline.run(github_source)
 print(load_info)
 ```
 
-In this configuration, the `since` parameter is defined as a special incremental parameter. The `cursor_path` field specifies the JSON path to the field that will be used to fetch the updated data, and we use the `initial_value` for the initial value for the incremental parameter. This value will be used in the first request to fetch the data.
+この構成では、`since` パラメータは特別な増分パラメータとして定義されています。`cursor_path` フィールドは、更新されたデータを取得するために使用されるフィールドへの JSON パスを指定し、増分パラメータの初期値として `initial_value` を使用します。この値は、データを取得する最初のリクエストで使用されます。
 
-When the pipeline runs, dlt will automatically update the `since` parameter with the latest value from the response data. This way, you can fetch only the new or updated data from the API.
+パイプラインが実行されると、dlt は応答データの最新の値で `since` パラメータを自動的に更新します。これにより、API から新しいデータまたは更新されたデータのみを取得できます。
 
-Read more about [incremental loading](../dlt-ecosystem/verified-sources/rest_api/basic#incremental-loading) in the REST API source documentation.
+REST API ソースドキュメントの [インクリメンタルローディング](../dlt-ecosystem/verified-sources/rest_api/basic#incremental-loading) で詳細をご確認ください。
 
-## What's next?
+## 次は？
 
-Congratulations on completing the tutorial! You've learned how to set up a REST API source in dlt and run a data pipeline to load the data into DuckDB.
+チュートリアルの完了おめでとうございます。dlt で REST API ソースを設定し、データ パイプラインを実行してデータを DuckDB にロードする方法を学びました。
 
-Interested in learning more about dlt? Here are some suggestions:
+dlt についてもっと知りたいですか？いくつか提案があります:
 
-- Learn more about the REST API source configuration in the [REST API source documentation](../dlt-ecosystem/verified-sources/rest_api/)
-- Learn how to [create a custom source](./load-data-from-an-api.md) in the advanced tutorial.
+- REST API ソース構成の詳細については、[REST API ソースドキュメント](../dlt-ecosystem/verified-sources/rest_api/) を参照してください。
+- 上級チュートリアルで[カスタムソースを作成する](./load-data-from-an-api.md)方法を学習します。
 

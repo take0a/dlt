@@ -4,37 +4,37 @@ description: Build a data pipeline with dlt
 keywords: [getting started, quick start, basic examples]
 ---
 
-This tutorial introduces you to foundational dlt concepts, demonstrating how to build a custom data pipeline that loads data from pure Python data structures to DuckDB. It starts with a simple example and progresses to more advanced topics and usage scenarios.
+このチュートリアルでは、基本的な DLT の概念を紹介し、純粋な Python データ構造から DuckDB にデータをロードするカスタム データ パイプラインの構築方法を示します。簡単な例から始まり、より高度なトピックと使用シナリオに進みます。
 
-## What you will learn
+## 学ぶ内容
 
-- Loading data from a list of Python dictionaries into DuckDB.
-- Low-level API usage with a built-in HTTP client.
-- Understand and manage data loading behaviors.
-- Incrementally load new data and deduplicate existing data.
-- Dynamic resource creation and reducing code redundancy.
-- Group resources into sources.
-- Securely handle secrets.
-- Make reusable data sources.
+- Python 辞書のリストから DuckDB にデータをロードします。
+- 組み込みの HTTP クライアントを使用した低レベル API の使用。
+- データをロードする動作を理解し、管理します。
+- 新しいデータをインクリメンタルにロードし、既存のデータとの重複を排除します。
+- 動的なリソースの作成とコードの冗長性の削減。
+- リソースをソースにグループ化します。
+- 秘密を安全に扱います。
+- 再利用可能なデータ ソースを作成します。
 
-## Prerequisites
+## 前提条件
 
-- Python 3.9 or higher installed
-- Virtual environment set up
+- Python 3.9 以上がインストールされている
+- 仮想環境のセットアップ
 
-## Installing dlt
+## dlt のインストール
 
-Before we start, make sure you have a Python virtual environment set up. Follow the instructions in the [installation guide](../reference/installation) to create a new virtual environment and install dlt.
+始める前に、Python 仮想環境が設定されていることを確認してください。[インストール ガイド](../reference/installation)の指示に従って、新しい仮想環境を作成し、dlt をインストールしてください。
 
-Verify that dlt is installed by running the following command in your terminal:
+ターミナルで次のコマンドを実行して、dltがインストールされていることを確認します:
 
 ```sh
 dlt --version
 ```
 
-## Quick start
+## クイックスタート
 
-For starters, let's load a list of Python dictionaries into DuckDB and inspect the created dataset. Here is the code:
+まず、Python 辞書のリストを DuckDB にロードし、作成されたデータセットを調べてみましょう。コードは次のとおりです:
 
 ```py
 import dlt
@@ -49,19 +49,19 @@ load_info = pipeline.run(data, table_name="users")
 print(load_info)
 ```
 
-When you look at the code above, you can see that we:
-1. Import the `dlt` library.
-2. Define our data to load.
-3. Create a pipeline that loads data into DuckDB. Here we also specify the `pipeline_name` and `dataset_name`. We'll use both in a moment.
-4. Run the pipeline.
+上記のコードを見ると:
+1. `dlt` ライブラリをインポートします。
+2. ロードするデータを定義します。
+3. DuckDB にデータをロードするパイプラインを作成します。ここでは、`pipeline_name` と `dataset_name` も指定します。どちらもすぐに使用します。
+4. パイプラインを実行します。
 
-Save this Python script with the name `quick_start_pipeline.py` and run the following command:
+この Python スクリプトを `quick_start_pipeline.py` という名前で保存し、次のコマンドを実行します:
 
 ```sh
 python quick_start_pipeline.py
 ```
 
-The output should look like:
+出力は次のようになります:
 
 ```sh
 Pipeline quick_start completed in 0.59 seconds
@@ -70,11 +70,11 @@ The duckdb destination used duckdb:////home/user-name/quick_start/quick_start.du
 Load package 1692364844.460054 is LOADED and contains no failed jobs
 ```
 
-`dlt` just created a database schema called **mydata** (the `dataset_name`) with a table **users** in it.
+`dlt` は、**users** テーブルを含む **mydata** (`dataset_name`) というデータベース スキーマを作成しました。
 
-### Explore data in Python
+### Pythonでデータを探索する
 
-You can use dlt [datasets](../general-usage/dataset-access/dataset) to easily query the data in pure Python.
+dlt の [datasets](../general-usage/dataset-access/dataset) を使用すると、純粋な Python でデータを簡単にクエリできます。
 
 ```py
 # get the dataset
@@ -90,69 +90,69 @@ print(table.df())
 print(table.limit(10).arrow())
 ```
 
-### Explore data in Streamlit
+### Streamlitでデータを探索する
 
-To allow a sneak peek and basic discovery, you can take advantage of [built-in integration with Streamlit](../reference/command-line-interface#show-tables-and-data-in-the-destination):
+こっそり覗いて基本的な情報を得るには、[Streamlit の組み込み統合](../reference/command-line-interface#show-tables-and-data-in-the-destination) を利用できます。:
 
 ```sh
 dlt pipeline quick_start show
 ```
 
-**quick_start** is the name of the pipeline from the script above. If you do not have Streamlit installed yet, do:
+**quick_start** は上記のスクリプトのパイプラインの名前です。Streamlit をまだインストールしていない場合は:
 
 ```sh
 pip install streamlit
 ```
 
-Now you should see the **users** table:
+**users** テーブルが表示されるはずです:
 
 ![Streamlit Explore data](/img/streamlit-new.png)
 Streamlit Explore data. Schema and data for a test pipeline “quick_start”.
 
 :::tip
-`dlt` works in Jupyter Notebook and Google Colab! See our [Quickstart Colab Demo.](https://colab.research.google.com/drive/1NfSB1DpwbbHX9_t5vlalBTf13utwpMGx?usp=sharing)
+`dlt` は Jupyter Notebook と Google Colab で動作します。[クイックスタート Colab デモ](https://colab.research.google.com/drive/1NfSB1DpwbbHX9_t5vlalBTf13utwpMGx?usp=sharing) をご覧ください。
 
-Looking for the source code of all the snippets? You can find and run them [from this repository](https://github.com/dlt-hub/dlt/blob/devel/docs/website/docs/getting-started-snippets.py).
+すべてのスニペットのソース コードをお探しですか? [このリポジトリ](https://github.com/dlt-hub/dlt/blob/devel/docs/website/docs/getting-started-snippets.py)から見つけて実行できます。
 :::
 
-Now that you have a basic understanding of how to get started with dlt, you might be eager to dive deeper. For that, we need to switch to a more advanced data source - the GitHub API. We will load issues from our [dlt-hub/dlt](https://github.com/dlt-hub/dlt) repository.
+dlt の基本的な使い方を理解したので、さらに詳しく知りたいと思うかもしれません。そのためには、より高度なデータ ソースである GitHub API に切り替える必要があります。[dlt-hub/dlt](https://github.com/dlt-hub/dlt) リポジトリから問題を読み込みます。
 
 :::note
-This tutorial uses the GitHub REST API for demonstration purposes only. If you need to read data from a REST API, consider using dlt's REST API source. Check out the [REST API source tutorial](./rest-api) for a quick start or the [REST API source reference](../dlt-ecosystem/verified-sources/rest_api) for more details.
+このチュートリアルでは、デモンストレーション目的でのみ GitHub REST API を使用します。REST API からデータを読み取る必要がある場合は、dlt の REST API ソースの使用を検討してください。クイック スタートについては [REST API ソース チュートリアル](./rest-api) を、詳細については [REST API ソース リファレンス](../dlt-ecosystem/verified-sources/rest_api) を参照してください。
 :::
 
-## Create a pipeline
+## パイプラインを作成する
 
-First, we need to create a [pipeline](../general-usage/pipeline). Pipelines are the main building blocks of `dlt` and are used to load data from sources to destinations. Open your favorite text editor and create a file called `github_issues.py`. Add the following code to it:
+まず、[パイプライン](../general-usage/pipeline)を作成する必要があります。パイプラインは`dlt`の主要な構成要素であり、ソースから宛先にデータをロードするために使用されます。お気に入りのテキストエディタを開いて、`github_issues.py`というファイルを作成します。次のコードを追加します。:
 
 <!--@@@DLT_SNIPPET basic_api-->
 
 
-Here's what the code above does:
-1. It makes a request to the GitHub API endpoint and checks if the response is successful.
-2. Then, it creates a dlt pipeline with the name `github_issues` and specifies that the data should be loaded to the `duckdb` destination and the `github_data` dataset. Nothing gets loaded yet.
-3. Finally, it runs the pipeline with the data from the API response (`response.json()`) and specifies that the data should be loaded to the `issues` table. The `run` method returns a `LoadInfo` object that contains information about the loaded data.
+上記のコードが行うことは次のとおりです:
+1. GitHub API エンドポイントにリクエストを送信し、応答が成功したかどうかを確認します。
+2. 次に、`github_issues` という名前の dlt パイプラインを作成し、データを `duckdb` の宛先と `github_data` データセットにロードするように指定します。まだ何もロードされていません。
+3. 最後に、API レスポンス (`response.json()`) のデータを使用してパイプラインを実行し、データを `issues` テーブルにロードするように指定します。`run` メソッドは、ロードされたデータに関する情報を含む `LoadInfo` オブジェクトを返します。
 
-## Run the pipeline
+## パイプラインを実行する
 
-Save `github_issues.py` and run the following command:
+`github_issues.py`を保存し、次のコマンドを実行します:
 
 ```sh
 python github_issues.py
 ```
 
-Once the data has been loaded, you can inspect the created dataset using the Streamlit app:
+データが読み込まれたら、Streamlitアプリを使用して作成されたデータセットを検査できます:
 
 ```sh
 dlt pipeline github_issues show
 ```
 
-## Append or replace your data
+## データを追加または置換する
 
-Try running the pipeline again with `python github_issues.py`. You will notice that the **issues** table contains two copies of the same data. This happens because the default load mode is `append`. It is very useful, for example, when you have daily data updates and you want to ingest them.
+`python github_issues.py` を使用してパイプラインを再度実行してみてください。**issues** テーブルに同じデータのコピーが 2 つ含まれていることがわかります。これは、デフォルトのロード モードが `append` であるために発生します。これは、たとえば、毎日データが更新され、それを取り込みたい場合などに非常に便利です。
 
-To get the latest data, we'd need to run the script again. But how to do that without duplicating the data?
-One option is to tell `dlt` to replace the data in existing tables in the destination by using the `replace` write disposition. Change the `github_issues.py` script to the following:
+最新のデータを取得するには、スクリプトを再度実行する必要があります。しかし、データを重複させずにそれを実行するにはどうすればよいでしょうか?
+1 つの選択肢は、`dlt` に `replace` 書き込み処理を使用して、宛先の既存のテーブルのデータを置き換えるように指示することです。`github_issues.py` スクリプトを次のように変更します。:
 
 ```py
 import dlt
@@ -179,85 +179,83 @@ load_info = pipeline.run(
 print(load_info)
 ```
 
-Run this script twice to see that the **issues** table still contains only one copy of the data.
+このスクリプトを 2 回実行すると、**issues** テーブルにはまだデータのコピーが 1 つだけ含まれていることがわかります。
 
 :::tip
-What if the API has changed and new fields get added to the response?
-`dlt` will migrate your tables!
-See the `replace` mode and table schema migration in action in our [Schema evolution colab demo](https://colab.research.google.com/drive/1H6HKFi-U1V4p0afVucw_Jzv1oiFbH2bu#scrollTo=e4y4sQ78P_OM).
+API が変更され、レスポンスに新しいフィールドが追加された場合はどうなるでしょうか?
+`dlt` がテーブルを移行します!
+[スキーマ進化 colab デモ](https://colab.research.google.com/drive/1H6HKFi-U1V4p0afVucw_Jzv1oiFbH2bu#scrollTo=e4y4sQ78P_OM) で、`replace` モードとテーブル スキーマ移行の実際の様子をご覧ください。
 :::
 
-Learn more:
+もっと詳しく知る:
 
-- [Full load - how to replace your data](../general-usage/full-loading).
-- [Append, replace, and merge your tables](../general-usage/incremental-loading).
+- [フルロード - データの置き換え方法](../general-usage/full-loading).
+- [テーブルの追加、置換、結合](../general-usage/incremental-loading).
 
-## Declare loading behavior
+## ローディングの振る舞いを宣言する
 
-So far, we have been passing the data to the `run` method directly. This is a quick way to get started. However, frequently, you receive data in chunks, and you want to load it as it arrives. For example, you might want to load data from an API endpoint with pagination or a large file that does not fit in memory. In such cases, you can use Python generators as a data source.
+これまでは、データを直接 `run` メソッドに渡してきました。これは、すぐに開始できる方法です。ただし、多くの場合、データをチャンクで受信し、到着時にロードする必要があります。たとえば、ページ区切りのある API エンドポイントからデータをロードしたり、メモリに収まらない大きなファイルをロードしたりする場合があります。このような場合は、Python ジェネレーターをデータ ソースとして使用できます。
 
-You can pass a generator to the `run` method directly or use the `@dlt.resource` decorator to turn the generator into a [dlt resource](../general-usage/resource). The decorator allows you to specify the loading behavior and relevant resource parameters.
+ジェネレーターを `run` メソッドに直接渡すか、`@dlt.resource` デコレータを使用してジェネレーターを [dlt リソース](../general-usage/resource) に変換することができます。デコレータを使用すると、読み込み動作と関連するリソース パラメータを指定できます。
 
-### Load only new data (incremental loading)
+### 新しいデータのみをロードする（インクリメンタルロード）
 
-Let's improve our GitHub API example and get only issues that were created since the last load.
-Instead of using the `replace` write disposition and downloading all issues each time the pipeline is run, we do the following:
+GitHub API の例を改良して、最後のロード以降に作成された問題のみを取得してみましょう。
+`replace` 書き込み処理を使用してパイプラインが実行されるたびにすべての問題をダウンロードする代わりに、次の操作を行います:
 
 <!--@@@DLT_SNIPPET incremental-->
 
 
-Let's take a closer look at the code above.
+上記のコードを詳しく見てみましょう。
 
-We use the `@dlt.resource` decorator to declare the table name into which data will be loaded and specify the `append` write disposition.
+`@dlt.resource` デコレータを使用して、データがロードされるテーブル名を宣言し、`append` 書き込み処理を指定しています。
 
-We request issues for the dlt-hub/dlt repository ordered by the **created_at** field (descending) and yield them page by page in the `get_issues` generator function.
+**created_at** フィールド (降順) で順序付けられた dlt-hub/dlt リポジトリの問題を要求し、`get_issues` ジェネレーター関数でページごとに生成します。
 
-We also use `dlt.sources.incremental` to track the `created_at` field present in each issue to filter in the newly created ones.
+また、`dlt.sources.incremental` を使用して、各 issue に存在する `created_at` フィールドを追跡し、新しく作成されたものをフィルタリングします。
 
-Now run the script. It loads all the issues from our repo to `duckdb`. Run it again, and you can see that no issues got added (if no issues were created in the meantime).
+次にスクリプトを実行します。リポジトリからすべての問題が `duckdb` にロードされます。もう一度実行すると、問題が追加されていないことがわかります (その間に問題が作成されなかった場合)。
 
-Now you can run this script on a daily schedule, and each day you’ll load only issues created after the time of the previous pipeline run.
+これで、このスクリプトを毎日のスケジュールで実行できるようになり、各日には前回のパイプラインの実行後に作成された問題のみが読み込まれます。
 
 :::tip
-Between pipeline runs, `dlt` keeps the state in the same database it loaded data into.
-Peek into that state, the tables loaded, and get other information with:
+パイプラインの実行中、`dlt` はデータをロードした同じデータベースに状態を保持します。
+その状態、ロードされたテーブル、その他の情報を確認するには、:
 
 ```sh
 dlt pipeline -v github_issues_incremental info
 ```
 :::
 
-Learn more:
+もっと詳しく知る:
 
-- Declare your [resources](../general-usage/resource) and group them in [sources](../general-usage/source) using Python decorators.
-- [Set up "last value" incremental loading.](../general-usage/incremental-loading#incremental_loading-with-last-value)
-- [Inspect pipeline after loading.](../walkthroughs/run-a-pipeline#4-inspect-a-load-process)
-- [`dlt` command line interface.](../reference/command-line-interface)
+- [リソース](../general-usage/resource)を宣言し、Pythonデコレータを使用して[ソース](../general-usage/source)にグループ化します。
+- [インクリメンタルローディングの「最後の値」を設定します。](../general-usage/incremental-loading#incremental_loading-with-last-value)
+- [ロード後にパイプラインを検査します。](../walkthroughs/run-a-pipeline#4-inspect-a-load-process)
+- [`dlt` コマンドラインインターフェース。](../reference/command-line-interface)
 
-### Update and deduplicate your data
+### データを更新して重複を排除する
 
-The script above finds **new** issues and adds them to the database.
-It will ignore any updates to **existing** issue text, emoji reactions, etc.
-To always get fresh content of all the issues, combine incremental load with the `merge` write disposition,
-like in the script below.
+上記のスクリプトは、**新しい** issue を見つけてデータベースに追加します。
+**既存の** issue のテキスト、絵文字での反応などの更新は無視されます。
+すべての issue の最新のコンテンツを常に取得するには、以下のスクリプトのように、インクリメンタルなロードと `merge` 書き込み処理を組み合わせます。
 
 <!--@@@DLT_SNIPPET incremental_merge-->
 
 
-Above, we add the `primary_key` argument to the `dlt.resource()` that tells `dlt` how to identify the issues in the database to find duplicates whose content it will merge.
+上記では、`dlt.resource()` に `primary_key` 引数を追加し、データベース内の問題を識別して、コンテンツをマージする重複を見つける方法を `dlt` に指示しています。
 
-Note that we now track the `updated_at` field — so we filter in all issues **updated** since the last pipeline run (which also includes those newly created).
+ここで、`updated_at` フィールドを追跡することに注意してください。これにより、前回のパイプライン実行以降に**更新**されたすべての問題 (新しく作成された問題も含まれます) がフィルター処理されます。
 
-Pay attention to how we use the **since** parameter from the [GitHub API](https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28#list-repository-issues)
-and `updated_at.last_value` to tell GitHub to return issues updated only **after** the date we pass. `updated_at.last_value` holds the last `updated_at` value from the previous run.
+[GitHub API](https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28#list-repository-issues) の **since** パラメータと `updated_at.last_value` を使用して、渡した日付より**後**に更新された問題のみを返すように GitHub に指示する方法に注意してください。`updated_at.last_value` は、前回の実行からの最後の `updated_at` 値を保持します。
 
-[Learn more about merge write disposition](../general-usage/incremental-loading#merge-incremental_loading).
+[マージ書き込み処理の詳細](../general-usage/incremental-loading#merge-incremental_loading)を参照してください。
 
-## Using pagination helper
+## ページネーションヘルパーの使用
 
-In the previous examples, we used the `requests` library to make HTTP requests to the GitHub API and handled pagination manually. `dlt` has a built-in [REST client](../general-usage/http/rest-client.md) that simplifies API requests. We'll use the `paginate()` helper from it for the next example. The `paginate` function takes a URL and optional parameters (quite similar to `requests`) and returns a generator that yields pages of data.
+前の例では、`requests` ライブラリを使用して GitHub API への HTTP リクエストを作成し、ページネーションを手動で処理しました。`dlt` には、API リクエストを簡素化する組み込みの [REST クライアント](../general-usage/http/rest-client.md)があります。次の例では、その `paginate()` ヘルパーを使用します。`paginate` 関数は、URL とオプションのパラメーター (`requests` と非常に似ています) を受け取り、データページを生成するジェネレーターを返します。
 
-Here's how the updated script looks:
+更新されたスクリプトは次のようになります:
 
 ```py
 import dlt
@@ -296,18 +294,18 @@ print("------")
 print(load_info)
 ```
 
-Let's zoom in on the changes:
+変化に注目してみましょう:
 
-1. The `while` loop that handled pagination is replaced with reading pages from the `paginate()` generator.
-2. `paginate()` takes the URL of the API endpoint and optional parameters. In this case, we pass the `since` parameter to get only issues updated after the last pipeline run.
-3. We're not explicitly setting up pagination; `paginate()` handles it for us. Magic! Under the hood, `paginate()` analyzes the response and detects the pagination method used by the API. Read more about pagination in the [REST client documentation](../general-usage/http/rest-client.md#paginating-api-responses).
+1. ページネーションを処理する `while` ループは、 `paginate()` ジェネレータからページを読み取ることに置き換えられます。
+2. `paginate()` は、API エンドポイントの URL とオプションのパラメータを受け取ります。この場合、最後のパイプライン実行後に更新された問題のみを取得するために `since` パラメータを渡します。
+3. ページネーションを明示的に設定しているわけではありません。`paginate()` がそれを処理します。魔法のようです! 内部的には、`paginate()` がレスポンスを分析し、API が使用するページネーション メソッドを検出します。ページネーションの詳細については、[REST クライアント ドキュメント](../general-usage/http/rest-client.md#paginating-api-responses) を参照してください。
 
-If you want to take full advantage of the `dlt` library, then we strongly suggest that you build your sources out of existing building blocks:
-To make the most of `dlt`, consider the following:
+`dlt` ライブラリを最大限に活用したい場合は、既存のビルディング ブロックからソースを構築することを強くお勧めします。
+`dlt` を最大限に活用するには、次の点を考慮してください。
 
-## Use source decorator
+## ソースデコレータを使用する
 
-In the previous step, we loaded issues from the GitHub API. Now we'll load comments from the API as well. Here's a sample [dlt resource](../general-usage/resource) that does that:
+前のステップでは、GitHub APIから issue を読み込みました。今度は、APIからコメントも読み込みます。これを実行するサンプルの[dltリソース](../general-usage/resource)を以下に示します:
 
 ```py
 import dlt
@@ -328,7 +326,7 @@ def get_comments(
         yield page
 ```
 
-We can load this resource separately from the issues resource; however, loading both issues and comments in one go is more efficient. To do that, we'll use the `@dlt.source` decorator on a function that returns a list of resources:
+このリソースは、issuesリソースとは別に読み込むことができますが、issuesとcommentsの両方を一度に読み込む方が効率的です。そのためには、リソースのリストを返す関数で`@dlt.source`デコレータを使用します:
 
 ```py
 @dlt.source
@@ -336,7 +334,7 @@ def github_source():
     return [get_issues, get_comments]
 ```
 
-`github_source()` groups resources into a [source](../general-usage/source). A dlt source is a logical grouping of resources. You use it to group resources that belong together, for example, to load data from the same API. Loading data from a source can be run in a single pipeline. Here's what our updated script looks like:
+`github_source()` はリソースを [source](../general-usage/source) にグループ化します。dlt ソースはリソースの論理的なグループです。同じ API からデータをロードするなど、同じグループに属するリソースをグループ化するために使用します。ソースからのデータのロードは、単一のパイプラインで実行できます。更新されたスクリプトは次のようになります:
 
 ```py
 import dlt
@@ -396,9 +394,9 @@ load_info = pipeline.run(github_source())
 print(load_info)
 ```
 
-### Dynamic resources
+### 動的リソース
 
-You've noticed that there's a lot of code duplication in the `get_issues` and `get_comments` functions. We can reduce that by extracting the common fetching code into a separate function and using it in both resources. Even better, we can use `dlt.resource` as a function and pass it the `fetch_github_data()` generator function directly. Here's the refactored code:
+`get_issues` 関数と `get_comments` 関数には多くのコード重複があることに気付いたでしょう。共通のフェッチコードを別の関数に抽出し、両方のリソースで使用することで、重複を減らすことができます。さらに良い方法は、`dlt.resource` を関数として使用し、それを `fetch_github_data()` ジェネレーター関数に直接渡すことです。リファクタリングしたコードは次のとおりです:
 
 ```py
 import dlt
@@ -430,11 +428,11 @@ load_info = pipeline.run(github_source())
 row_counts = pipeline.last_trace.last_normalize_info
 ```
 
-## Handle secrets
+## 秘密を扱う
 
-For the next step, we'd want to get the [number of repository clones](https://docs.github.com/en/rest/metrics/traffic?apiVersion=2022-11-28#get-repository-clones) for our dlt repo from the GitHub API. However, the `traffic/clones` endpoint that returns the data requires [authentication](https://docs.github.com/en/rest/overview/authenticating-to-the-rest-api?apiVersion=2022-11-28).
+次のステップでは、GitHub API から dlt リポジトリの [リポジトリ クローンの数](https://docs.github.com/en/rest/metrics/traffic?apiVersion=2022-11-28#get-repository-clones) を取得する必要があります。ただし、データを返す `traffic/clones` エンドポイントでは [認証](https://docs.github.com/en/rest/overview/authenticating-to-the-rest-api?apiVersion=2022-11-28) が必要です。
 
-Let's handle this by changing our `fetch_github_data()` function first:
+まず`fetch_github_data()`関数を変更してこれを処理しましょう:
 
 ```py
 from dlt.sources.helpers.rest_client.auth import BearerTokenAuth
@@ -462,15 +460,15 @@ def github_source_with_token(access_token: str):
 ...
 ```
 
-Here, we added an `access_token` parameter and now we can use it to pass the access token to the request:
+ここで、`access_token`パラメータを追加し、これを使用してアクセストークンをリクエストに渡すことができます:
 
 ```py
 load_info = pipeline.run(github_source_with_token(access_token="ghp_XXXXX"))
 ```
 
-It's a good start. But we'd want to follow the best practices and not hardcode the token in the script. One option is to set the token as an environment variable, load it with `os.getenv()`, and pass it around as a parameter. dlt offers a more convenient way to handle secrets and credentials: it lets you inject the arguments using a special `dlt.secrets.value` argument value.
+これは良いスタートです。しかし、ベスト プラクティスに従い、スクリプトにトークンをハードコードしないようにします。1 つのオプションは、トークンを環境変数として設定し、`os.getenv()` で読み込み、パラメーターとして渡すことです。dlt は、シークレットと認証情報を処理するより便利な方法を提供します。特別な `dlt.secrets.value` 引数値を使用して引数を挿入できます。
 
-To use it, change the `github_source()` function to:
+これを使用するには、`github_source()`関数を次のように変更します:
 
 ```py
 @dlt.source
@@ -480,21 +478,21 @@ def github_source_with_token(
     ...
 ```
 
-When you add `dlt.secrets.value` as a default value for an argument, `dlt` will try to load and inject this value from different configuration sources in the following order:
+`dlt.secrets.value` を引数のデフォルト値として追加すると、`dlt` は次の順序でさまざまな設定ソースからこの値をロードして挿入しようとします。:
 
-1. Special environment variables.
-2. `secrets.toml` file.
+1. 特別な環境変数。
+2. `secrets.toml` ファイル.
 
-The `secrets.toml` file is located in the `~/.dlt` folder (for global configuration) or in the `.dlt` folder in the project folder (for project-specific configuration).
+`secrets.toml` ファイルは、`~/.dlt` フォルダ (グローバル構成の場合) またはプロジェクト フォルダ内の `.dlt` フォルダ (プロジェクト固有の構成の場合) にあります。
 
-Let's add the token to the `~/.dlt/secrets.toml` file:
+トークンを`~/.dlt/secrets.toml`ファイルに追加しましょう:
 
 ```toml
 [github_with_source_secrets]
 access_token = "ghp_A...3aRY"
 ```
 
-Now we can run the script and it will load the data from the `traffic/clones` endpoint:
+これでスクリプトを実行すると、`traffic/clones`エンドポイントからデータがロードされます:
 
 ```py
 ...
@@ -521,9 +519,9 @@ pipeline = dlt.pipeline(
 load_info = pipeline.run(github_source())
 ```
 
-## Configurable sources
+## 設定可能なソース
 
-The next step is to make our dlt GitHub source reusable so it can load data from any GitHub repo. We'll do that by changing both the `github_source()` and `fetch_github_data()` functions to accept the repo name as a parameter:
+次のステップは、dlt GitHubソースを再利用可能にして、任意のGitHubリポジトリからデータをロードできるようにすることです。そのためには、`github_source()`と`fetch_github_data()`関数の両方を変更して、リポジトリ名をパラメータとして受け入れるようにします:
 
 ```py
 import dlt
@@ -565,33 +563,33 @@ pipeline = dlt.pipeline(
 load_info = pipeline.run(github_source())
 ```
 
-Next, create a `.dlt/config.toml` file in the project folder and add the `repo_name` parameter to it:
+次に、プロジェクトフォルダに`.dlt/config.toml`ファイルを作成し、それに`repo_name`パラメータを追加します。:
 
 ```toml
 [github_with_source_secrets]
 repo_name = "dlt-hub/dlt"
 ```
 
-That's it! Now you have a reusable source that can load data from any GitHub repo.
+これで完了です。これで、任意の GitHub リポジトリからデータを読み込むことができる再利用可能なソースができました。
 
-## What’s next
+## 次は
 
-Congratulations on completing the tutorial! You've come a long way since the [getting started](../intro) guide. By now, you've mastered loading data from various GitHub API endpoints, organizing resources into sources, managing secrets securely, and creating reusable sources. You can use these skills to build your own pipelines and load data from any source.
+チュートリアルを完了しました。おめでとうございます。[入門](../intro) ガイド以来、長い道のりを歩んできました。これまでに、さまざまな GitHub API エンドポイントからデータをロードし、リソースをソースに整理し、シークレットを安全に管理し、再利用可能なソースを作成する方法を習得しました。これらのスキルを使用して、独自のパイプラインを構築し、任意のソースからデータをロードできます。
 
-Interested in learning more? Here are some suggestions:
-1. You've been running your pipelines locally. Learn how to [deploy and run them in the cloud](../walkthroughs/deploy-a-pipeline/).
-2. Dive deeper into how dlt works by reading the [Using dlt](../general-usage) section. Some highlights:
-    - [Set up "last value" incremental loading](../general-usage/incremental-loading#incremental_loading-with-last-value).
-    - Learn about data loading strategies: [append, replace, and merge](../general-usage/incremental-loading).
-    - [Connect the transformers to the resources](../general-usage/resource#feeding-data-from-one-resource-into-another) to load additional data or enrich it.
-    - [Customize your data schema—set primary and merge keys, define column nullability, and specify data types](../general-usage/resource#define-schema).
-    - [Create your resources dynamically from data](../general-usage/source#create-resources-dynamically).
-    - [Transform your data before loading](../general-usage/resource#customize-resources) and see some [examples of customizations like column renames and anonymization](../general-usage/customising-pipelines/renaming_columns).
-    - Employ data transformations using [SQL](../dlt-ecosystem/transformations/sql) or [Pandas](../dlt-ecosystem/transformations/sql).
-    - [Pass config and credentials into your sources and resources](../general-usage/credentials).
-    - [Run in production: inspecting, tracing, retry policies, and cleaning up](../running-in-production/running).
-    - [Run resources in parallel, optimize buffers, and local storage](../reference/performance.md)
-    - [Use REST API client helpers](../general-usage/http/rest-client.md) to simplify working with REST APIs.
-3. Explore [destinations](../dlt-ecosystem/destinations/) and [sources](../dlt-ecosystem/verified-sources/) provided by us and the community.
-4. Explore the [Examples](../examples) section to see how dlt can be used in real-world scenarios.
+もっと詳しく知りたいですか？いくつか提案があります:
 
+1. これまではパイプラインをローカルで実行していました。[パイプラインをクラウドにデプロイして実行する](../walkthroughs/deploy-a-pipeline/)方法を学習します。
+2. [dltの使用](../general-usage)セクションを読んで、dltの仕組みについてさらに詳しく学びましょう:
+    - [インクリメンタルローディングで「最後の値」を設定する](../general-usage/incremental-loading#incremental_loading-with-last-value).
+    - データ読み込み戦略について学習します: [追加、置換、およびマージ](../general-usage/incremental-loading)。
+    - [トランスフォーマーをリソースに接続](../general-usage/resource#feeding-data-from-one-resource-into-another)して、追加のデータを読み込んだり、データを拡充したりします。
+    - [データ スキーマをカスタマイズします。主キーとマージ キーを設定し、列の NULL 値許容性を定義し、データ型を指定します](../general-usage/resource#define-schema)。
+    - [データからリソースを動的に作成します](../general-usage/source#create-resources-dynamically)。
+    - [読み込む前にデータを変換](../general-usage/resource#customize-resources)し、[列名の変更や匿名化などのカスタマイズの例](../general-usage/customising-pipelines/renaming_columns)を確認してください。
+    - [SQL](../dlt-ecosystem/transformations/sql) または [Pandas](../dlt-ecosystem/transformations/sql) を使用してデータ変換を実行します。
+    - [ソースとリソースに設定と資格情報を渡します](../general-usage/credentials)。
+    - [本番環境で実行: 検査、トレース、再試行ポリシー、クリーンアップ](../running-in-production/running)。
+    - [リソースを並列実行し、バッファとローカルストレージを最適化する](../reference/performance.md)
+    - [REST API クライアント ヘルパーを使用](../general-usage/http/rest-client.md)すると、REST API の操作が簡単になります。
+3. 私たちとコミュニティが提供する[宛先](../dlt-ecosystem/destinations/)と[ソース](../dlt-ecosystem/verified-sources/)を探索してください。
+4. [例](../examples)セクションを参照して、実際のシナリオで dlt がどのように使用されるかを確認してください。

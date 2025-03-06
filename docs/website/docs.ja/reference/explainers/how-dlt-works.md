@@ -4,15 +4,15 @@ description: How data load tool (dlt) works
 keywords: [architecture, extract, normalize, load]
 ---
 
-# How `dlt` works
+# `dlt` の仕組み
 
-In a nutshell, `dlt` automatically turns data from a number of available [sources](../../dlt-ecosystem/verified-sources) (e.g., an API, a PostgreSQL database, or Python data structures) into a live dataset stored in a [destination](../../dlt-ecosystem/destinations) of your choice (e.g., Google BigQuery, a Deltalake on Azure, or by pushing the data back via reverse ETL). You can easily implement your own sources, as long as you yield data in a way that is compatible with `dlt`, such as JSON objects, Python lists and dictionaries, pandas dataframes, and arrow tables. `dlt` will be able to automatically compute the schema and move the data to your destination.
+簡単に言うと、`dlt` は、利用可能なさまざまな[ソース](../../dlt-ecosystem/verified-sources)(API、PostgreSQL データベース、Python データ構造など)からのデータを自動的に、選択した[宛先](../../dlt-ecosystem/destinations)(Google BigQuery、Azure の Deltalake、またはリバース ETL でのデータのプッシュバックなど)に保存されるライブデータセットに変換します。JSON オブジェクト、Python リストと辞書、pandas データフレーム、アローテーブルなど、`dlt` と互換性のある方法でデータを生成する限り、独自のソースを簡単に実装できます。`dlt` は、スキーマを自動的に計算し、データを宛先に移動できます。
 
 ![architecture-diagram](/img/dlt-onepager.png)
 
-## A concrete example
+## 具体的な例
 
-The main building block of `dlt` is the [pipeline](../../general-usage/glossary.md#pipeline), which orchestrates the loading of data from your source into your destination in three discrete steps when you call its `run` method. Consider this intentionally short example:
+`dlt` の主な構成要素は [パイプライン](../../general-usage/glossary.md#pipeline) であり、`run` メソッドを呼び出すと、ソースから宛先へのデータのロードを 3 つの個別のステップで調整します。意図的に短くした次の例を考えてみましょう:
 
 ```py
 import dlt
@@ -28,49 +28,48 @@ pipeline.run(
 )
 ```
 
-This is what happens when the `run` method is executed:
+これは`run`メソッドが実行されたときに起こることです:
 
-1. [Extract](how-dlt-works.md#extract) - Fully extracts the data from your source to your hard drive. In the example above, an implicit source with one resource with 3 items is created and extracted.
-2. [Normalize](how-dlt-works.md#normalize) - Inspects and normalizes your data and computes a schema compatible with your destination. For the example above, the normalizer will detect one column `id` of type `int` in one table named `items`, it will furthermore detect a nested list in table items and unnest it into a child table named `items__nested`.
-3. [Load](how-dlt-works#load) - Runs schema migrations if necessary on your destination and loads your data into the destination. For the example above, a new dataset on a local duckdb database is created that contains the two tables discovered in the previous steps.
+1. [Extract](how-dlt-works.md#extract) - ソースからハード ドライブにデータを完全に抽出します。上記の例では、3 つの項目を持つ 1 つのリソースを持つ暗黙的なソースが作成され、抽出されます。
+2. [Normalize](how-dlt-works.md#normalize) - データを検査して正規化し、宛先と互換性のあるスキーマを計算します。上記の例では、正規化機能は `items` という名前の 1 つのテーブルで `int` 型の `id` 列を 1 つ検出し、さらにテーブル items 内のネストされたリストを検出して、それを `items__nested` という名前の子テーブルにしてネストを解除します。
+3. [Load](how-dlt-works#load) - 必要に応じて宛先でスキーマ移行を実行し、データを宛先にロードします。上記の例では、前の手順で検出された 2 つのテーブルを含む新しいデータセットがローカル duckdb データベースに作成されます。
 
-## The three phases
+## ３つのフェーズ
 
-### Extract
+### 抽出
 
-Extract can be run individually with the `extract` command on the pipeline: 
+抽出はパイプラインの`extract`コマンドで個別に実行できます。: 
 
 ```py
 pipeline.extract(data)
 ```
 
-During the extract phase, `dlt` fully extracts the data from your [sources](../../dlt-ecosystem/verified-sources) to your hard drive into a new [load package](../../general-usage/destination-tables#load-packages-and-load-ids), which will be assigned a unique ID and will contain your raw data as received from your sources. Additionally, you can [supply schema hints](../../general-usage/resource#define-schema) to define the data types of some of the columns or add a primary key and unique indexes. You can also control this phase by [limiting](../../general-usage/resource#sample-from-large-data) the number of items extracted in one run, using [incremental cursor fields](../../general-usage/incremental-loading#incremental-loading-with-a-cursor-field), and by tuning the performance with [parallelization](../../reference/performance#extract). You can also apply filters and maps to [obfuscate](../../general-usage/customising-pipelines/pseudonymizing_columns) or [remove](../../general-usage/customising-pipelines/removing_columns) personal data, and you can use [transformers](../../examples/transformers) to create derivative data.
+抽出フェーズでは、`dlt` は[ソース](../../dlt-ecosystem/verified-sources)からハードドライブの新しい [ロードパッケージ](../../general-usage/destination-tables#load-packages-and-load-ids)にデータを完全に抽出します。このパッケージには一意の ID が割り当てられ、ソースから受信した生データが含まれます。さらに、[スキーマヒントを提供](../../general-usage/resource#define-schema)して、一部の列のデータ型を定義したり、主キーや一意のインデックスを追加したりすることもできます。このフェーズは、[インクリメンタルカーソルフィールド](../../general-usage/resource#sample-from-large-data)を使用して 1 回の実行で抽出される項目の数を[制限](../../general-usage/resource#sample-from-large-data)して、[並列化](../../reference/performance#extract)でパフォーマンスを調整することでも制御できます。また、フィルターとマップを適用して個人データを[難読化](../../general-usage/customising-pipelines/pseudonymizing_columns)または[削除](../../general-usage/customising-pipelines/removing_columns)したり、[トランスフォーマー](../../examples/transformers)を使用して派生データを作成したりすることもできます。
 
-### Normalize
+### 正規化
 
-Normalize can be run individually with the `normalize` command on the pipeline. Normalize is dependent on having a completed extract phase and will not do anything if there is no extracted data.
+正規化は、パイプラインの `normalize` コマンドを使用して個別に実行できます。正規化は抽出フェーズが完了していることに依存しており、抽出されたデータがない場合には何も実行されません。
 
 ```py
 pipeline.normalize()
 ```
 
-During the normalization phase, `dlt` inspects and normalizes your data and computes a [schema](../../general-usage/schema) corresponding to the input data. The schema will automatically evolve to accommodate any future source data changes like new columns or tables. `dlt` will also unnest nested data structures into child tables and create variant columns if detected values do not match a schema computed during a previous run. The result of the normalization phase is an updated load package that holds your normalized data in a format your destination understands and a full schema which can be used to migrate your data to your destination. You can control the normalization phase, for example, by [defining the allowed nesting level](../../general-usage/source#reduce-the-nesting-level-of-generated-tables) of input data, by [applying schema contracts](../../general-usage/schema-contracts) that govern how the schema might evolve, and how rows that do not fit are treated. Performance settings are [also available](../../reference/performance#normalize).
+正規化フェーズでは、`dlt` はデータを検査して正規化し、入力データに対応する[スキーマ](../../general-usage/schema)を計算します。スキーマは、新しい列やテーブルなどの将来のソースデータの変更に対応するために自動的に進化します。また、`dlt` は、検出された値が前回の実行中に計算されたスキーマと一致しない場合は、ネストされたデータ構造を子テーブルにネスト解除し、バリアント列を作成します。正規化フェーズの結果は、宛先が理解できる形式で正規化されたデータを保持する更新されたロードパッケージと、データを宛先に移行するために使用できる完全なスキーマです。正規化フェーズは、たとえば、入力データの [許可されるネストレベルを定義](../../general-usage/source#reduce-the-nesting-level-of-generated-tables) したり、スキーマがどのように進化するか、および適合しない行がどのように処理されるかを制御する [スキーマコントラクトを適用](../../general-usage/schema-contracts)したりすることで制御できます。パフォーマンス設定も [使用可能](../../reference/performance#normalize)です。
 
-### Load
+### ロード
 
-Load can be run individually with the `load` command on the pipeline. Load is dependent on having a completed normalize phase and will not do anything if there is no normalized data.
+ロードは、パイプラインの `load` コマンドを使用して個別に実行できます。ロードは、正規化フェーズが完了していることに依存しており、正規化されたデータがない場合には何も実行されません。
 
 ```py
 pipeline.load()
 ```
+ロードフェーズでは、`dlt` は最初に必要に応じて宛先でスキーマ移行を実行し、次にデータを宛先に読み込みます。`dlt` は、大規模な読み込みを並列化できるように、ロードジョブと呼ばれる小さなチャンクでデータを読み込みます。宛先への接続が失敗した場合は、パイプラインを再実行しても安全であり、`dlt` は現在の読み込みパッケージからすべてのロードジョブの読み込みを続行します。`dlt` は、内部 dlt スキーマ、すべてのロードパッケージに関する情報、およびインクリメンタルに使用されるいくつかの状態情報などを格納する特別なテーブルも作成します。これらの情報は、インクリメンタルに前回の実行から別のマシンへの増分状態を復元できるようにします。ロードフェーズを制御する方法には、異なる [`write_dispositions`](../../general-usage/incremental-loading#choosing-a-write-disposition) を使用して宛先のデータを置き換えたり、単に追加したり、テーブルごとに構成できる特定のマージキーでマージしたりする方法があります。一部の宛先では、バケットプロバイダー上のリモートステージングデータセットを使用できます。また、`dlt` は [deltables や iceberg](../../dlt-ecosystem/destinations/delta-iceberg) などの最新のオープンテーブル形式もサポートしており、[リバース ETL](../../dlt-ecosystem/destinations/destination) も可能です。
 
-During the loading phase, `dlt` first runs schema migrations as needed on your destination and then loads your data into the destination. `dlt` will load your data in smaller chunks called load jobs to be able to parallelize large loads. If the connection to the destination fails, it is safe to rerun the pipeline, and `dlt` will continue to load all load jobs from the current load package. `dlt` will also create special tables that store the internal dlt schema, information about all load packages, and some state information which, among other things, are used by the incrementals to be able to restore the incremental state from a previous run to another machine. Some ways to control the loading phase are by using different [`write_dispositions`](../../general-usage/incremental-loading#choosing-a-write-disposition) to replace the data in the destination, simply append to it, or merge on certain merge keys that you can configure per table. For some destinations, you can use a remote staging dataset on a bucket provider, and `dlt` even supports modern open table formats like [deltables and iceberg](../../dlt-ecosystem/destinations/delta-iceberg), and [reverse ETL](../../dlt-ecosystem/destinations/destination) is also possible.
+## その他の注目すべき `dlt` の機能
 
-## Other notable `dlt` features
-
-* `dlt` is simply a Python package, so it will run [everywhere that Python runs](../../walkthroughs/deploy-a-pipeline) — locally, in notebooks, on orchestrators — you name it.  
-* `dlt` allows you to build and test your data pipelines locally with `duckdb` and then switch out the destination for deployment.  
-* `dlt` provides a user-friendly interface for [accessing your data in Python](../../general-usage/dataset-access/dataset), using [a Streamlit app](../../general-usage/dataset-access/streamlit), and leveraging [integrations](../../general-usage/dataset-access/ibis-backend) with the fabulous Ibis library. All of this even works on data lakes provided by bucket storage providers.  
-* `dlt` fully manages schema migrations on your destinations. You don’t even need to know how to use SQL to update your schema. It also supports [schema contracts](../../general-usage/schema-contracts) to govern how the schema might evolve.  
-* `dlt` offers numerous options for [monitoring and tracing](../../running-in-production/monitoring) what is happening during your loads.  
-* `dlt` supports you when you need to [transform your data](../../dlt-ecosystem/transformations) after the load, whether with dbt or in Python using Arrow tables and pandas DataFrames.  
+* `dlt` は単なる Python パッケージなので、[Python が実行されるあらゆる場所](../../walkthroughs/deploy-a-pipeline) (ローカル、ノートブック、オーケストレーターなど) で実行されます。 
+* `dlt` を使用すると、`duckdb` を使用してデータ パイプラインをローカルで構築およびテストし、デプロイメントの宛先を切り替えることができます。 
+* `dlt` は、[Python でデータにアクセス](../../general-usage/dataset-access/dataset)するためのユーザーフレンドリーなインターフェースを提供します。[Streamlit アプリ](../../general-usage/dataset-access/streamlit)を使用し、優れた Ibis ライブラリとの [統合](../../general-usage/dataset-access/ibis-backend) を活用します。これらはすべて、バケット ストレージ プロバイダーが提供するデータ レイクでも機能します。
+* `dlt` は、移行先でのスキーマ移行を完全に管理します。スキーマを更新するために SQL を使用する方法を知る必要さえありません。また、スキーマがどのように進化するかを制御する [スキーマ コントラクト](../../general-usage/schema-contracts) もサポートしています。 
+* `dlt` は、ロード中に何が起こっているかを [監視およびトレース](../../running-in-production/monitoring) するためのさまざまなオプションを提供します。
+* `dlt` は、dbt を使用する場合でも、Arrow テーブルと pandas DataFrames を使用して Python を使用する場合でも、ロード後に [データを変換](../../dlt-ecosystem/transformations)する必要がある場合にサポートします。

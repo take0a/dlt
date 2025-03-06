@@ -4,33 +4,28 @@ description: Build a data pipeline with dlt from scratch
 keywords: [getting started, quick start, basics]
 ---
 
-# Building data pipelines with `dlt`, from basic to advanced
+# `dlt` によるデータパイプラインの構築。基礎から応用まで
 
-This in-depth overview will take you through the main areas of pipelining with `dlt`. If you are looking for the [quickstart](./intro.md), go to the related pages.
+この詳細部の概要では、`dlt` によるパイプラインの主要な領域について説明します。[クイックスタート](./intro.md)をお探しの場合は、リンク先のページにアクセスしてください。
 
-## Why build pipelines with `dlt`?
+## なぜ `dlt` でパイプラインを構築するのでしょう？
 
-`dlt` offers functionality to support the entire extract and load process. Let's look at the high-level diagram:
+`dlt` は、抽出とロードのプロセス全体をサポートする機能を提供します。ハイレベルの図を見てみましょう:
 
 ![dlt source resource pipe diagram](/img/dlt-high-level.png)
 
-First, we have a `pipeline` function that can infer a schema from data and load the data to the destination.
-We can use this pipeline with JSON data, dataframes, or other iterable objects such as generator functions.
+まず、データからスキーマを推測し、データを宛先にロードできる `pipeline` 関数があります。
+このパイプラインは、JSON データ、データフレーム、ジェネレーター関数のような反復可能なオブジェクトにも使用することができます。
 
-This pipeline provides effortless loading via a schema discovery, versioning, and evolution
-engine that ensures you can "just load" any data with row and column-level lineage.
+このパイプラインは、スキーマの検出、バージョン管理、進化エンジンを通して、手間のかからないローディングを提供し、行と列のレベルの系統で "そのままロード" できるようにします。
 
-By utilizing a `dlt pipeline`, we can easily adapt and structure data as it evolves, reducing the time spent on
-maintenance and development.
+`dlt パイプライン`を利用することで、データの進化に合わせて簡単に適応でき、構造化もできるので、メンテナンスと開発にかかる時間が削減できます。
 
-This allows our data team to focus on leveraging the data and driving value, while ensuring
-effective governance through timely notifications of any changes.
+これによって、データチームは、変更へのタイムリーな通知による効果的なガバナンスを確保しつつ、データの活用と価値の向上に注力できるのです。
 
-For extraction, `dlt` also provides `source` and `resource` decorators that enable defining
-how extracted data should be loaded, while supporting graceful,
-scalable extraction via micro-batching and parallelism.
+抽出では、`dlt` は、`source` と `resource` のデコレーターを提供するので、マイクロバッチと並列処理による適切でスケーラブルな抽出をサポートしつつ、抽出されたデータがロードされるべき定義が可能となります。
 
-## The simplest pipeline: 1 liner to load data with schema evolution
+## 最もシンプルなパイプライン：スキーマの進化を伴うデータをロードするワンライナー
 
 ```py
 import dlt
@@ -38,12 +33,12 @@ import dlt
 dlt.pipeline(destination='duckdb', dataset_name='mydata').run([{'id': 1, 'name': 'John'}], table_name="users")
 ```
 
-A pipeline in the `dlt` library is a powerful tool that allows you to move data from your Python code to a destination with a single function call. By defining a pipeline, you can easily load, normalize, and evolve your data schemas, enabling seamless data integration and analysis.
+`dlt` ライブラリの pipeline は、１回の関数呼び出しで、Python コードから宛先にデータ移動できる強力なツールです。パイプラインを定義することで、データ スキーマを簡単に読み込み、正規化、進化させることができ、シームレスなデータ統合と分析が可能になります。
 
-For example, let's consider a scenario where you want to load a list of objects into a DuckDB table named "three". With `dlt`, you can create a pipeline and run it with just a few lines of code:
+例えば、オブジェクトのリストを「three」という名前の DuckDB テーブルにロードするシナリオを考えてみましょう。`dlt` なら、ほんの数行のコードで、パイプラインを作成して、実行できます:
 
-1. [Create a pipeline](./walkthroughs/create-a-pipeline.md) to the [destination](dlt-ecosystem/destinations).
-1. Give this pipeline data and [run it](./walkthroughs/run-a-pipeline.md).
+1. [宛先](dlt-ecosystem/destinations)への [pipeline を作る](./walkthroughs/create-a-pipeline.md)
+1. このパイプラインにデータを与えて、[実行する](./walkthroughs/run-a-pipeline.md)
 
 ```py
 import dlt
@@ -61,16 +56,16 @@ info = pipeline.run(data, table_name="countries")
 print(info)
 ```
 
-In this example, the `pipeline` function is used to create a pipeline with the specified destination (DuckDB) and dataset name ("country_data"). The `run` method is then called to load the data from a list of objects into the table named "countries". The `info` variable stores information about the loaded data, such as package IDs and job metadata.
+この例では、`pipeline` 関数を使用して、指定された宛先 (DuckDB) とデータセット名 (「country_data」) を持つパイプラインを作成します。次に、`run` メソッドが呼び出され、オブジェクトのリストから「countries」という名前のテーブルにデータがロードされます。`info` 変数には、パッケージ ID やジョブ メタデータなど、ロードされたデータに関する情報が格納されます。
 
-The data you can pass to it should be iterable: lists of rows, generators, or `dlt` sources will do just fine.
+渡すことができるデータは反復可能である必要があります。行のリスト、ジェネレーター、または `dlt` ソースであれば問題ありません。
 
-If you want to configure how the data is loaded, you can choose between `write_disposition`s such as `replace`, `append`, and `merge` in the pipeline function.
+データのロード方法を構成する場合は、pipeline 関数で `replace`、`append`、`merge` などの `write_disposition` を選択できます。
 
-Here is an example where we load some data to duckdb by `upserting` or `merging` on the id column found in the data.
-In this example, we also run a dbt package and then load the outcomes of the load jobs into their respective tables.
-This will enable us to log when schema changes occurred and match them to the loaded data for lineage, granting us both column and row-level lineage.
-We also alert the schema change to a Slack channel where hopefully the producer and consumer are subscribed.
+これは、データ内の id 列を　`upserting` または `merging` して、duckdb にデータをロードする例です。
+この例では、dbt パッケージも実行し、ロードジョブの結果をそれぞれのテーブルにロードします。
+これにより、スキーマの変更が発生したときにログに記録し、ロードされたデータと照合して系統化できるため、列と行レベルの両方の系統化が可能になります。
+また、プロデューサーとコンシューマーがサブスクライブしている Slack チャネルにスキーマの変更を通知します。
 
 ```py
 import dlt
@@ -92,7 +87,7 @@ load_info = pipeline.run(
     table_name="users"
 )
 ```
-Add dbt runner, optionally with venv:
+dbt ランナーを追加します。オプションで venv も:
 ```py
 venv = dlt.dbt.get_venv(pipeline)
 dbt = dlt.dbt.package(
@@ -109,7 +104,7 @@ pipeline.run([load_info], table_name="loading_status", write_disposition='append
 pipeline.run([models_info], table_name="transform_status", write_disposition='append')
 ```
 
-Let's alert any schema changes:
+スキーマの変更を通知しましょう:
 ```py
 from dlt.common.runtime.slack import send_slack_message
 
@@ -124,59 +119,49 @@ for package in load_info.load_packages:
             )
 ```
 
-## Extracting data with `dlt`
+## `dlt` によるデータ抽出
 
-Extracting data with `dlt` is simple - you simply decorate your data-producing functions with loading or incremental extraction metadata, which enables `dlt` to extract and load by your custom logic.
+`dlt` を使用したデータの抽出は簡単です。データ生成関数をロードまたは増分抽出メタデータで装飾するだけで、`dlt` はカスタム ロジックによって抽出およびロードできるようになります。
 
-Technically, two key aspects contribute to `dlt`'s effectiveness:
+技術的には、2つの重要な側面が `dlt` の有効性に貢献しています:
 
-- Scalability through iterators, chunking, and parallelization.
-- The utilization of implicit extraction DAGs that allow efficient API calls for data enrichments or transformations.
+- イテレータ、チャンク化、並列化によるスケーラビリティ。
+- データの拡充や変換のための効率的な API 呼び出しを可能にする暗黙的な抽出 DAG の利用。
 
-### Scalability via iterators, chunking, and parallelization
+### イテレータ、チャンク化、並列化によるスケーラビリティ
 
-`dlt` offers scalable data extraction by leveraging iterators, chunking, and parallelization techniques. This approach allows for efficient processing of large datasets by breaking them down into manageable chunks.
+`dlt` は、イテレータ、チャンク化、並列化技術を活用してスケーラブルなデータ抽出を提供します。このアプローチにより、大規模なデータセットを管理しやすいチャンクに分割して効率的に処理できます。
 
-For example, consider a scenario where you need to extract data from a massive database with millions of records. Instead of loading the entire dataset at once, `dlt` allows you to use iterators to fetch data in smaller, more manageable portions. This technique enables incremental processing and loading, which is particularly useful when dealing with limited memory resources.
+たとえば、数百万件のレコードを含む大規模なデータベースからデータを抽出する必要があるシナリオを考えてみましょう。データセット全体を一度に読み込む代わりに、`dlt` を使用すると、反復子を使用して、より小さく管理しやすい部分でデータを取得できます。この手法により、増分処理と読み込みが可能になり、メモリ リソースが限られている場合に特に役立ちます。
 
-Furthermore, `dlt` facilitates parallelization during the extraction process. By processing multiple data chunks simultaneously, `dlt` takes advantage of parallel processing capabilities, resulting in significantly reduced extraction times. This parallelization enhances performance, especially when dealing with high-volume data sources.
+さらに、`dlt` は抽出プロセス中の並列化を容易にします。`dlt` は複数のデータ チャンクを同時に処理することで並列処理機能を活用し、抽出時間を大幅に短縮します。この並列化により、特に大量のデータ ソースを処理する場合にパフォーマンスが向上します。
 
-### Implicit extraction DAGs
+### 暗黙的な抽出 DAG
 
-`dlt` incorporates the concept of implicit extraction DAGs to handle the dependencies between data sources and their transformations automatically. A DAG represents a directed graph without cycles, where each node represents a data source or transformation step.
+`dlt` には、データ ソースとその変換間の依存関係を自動的に処理するための暗黙的な抽出 DAG の概念が組み込まれています。DAG はサイクルのない有向グラフを表し、各ノードはデータ ソースまたは変換ステップを表します。
 
-When using `dlt`, the tool automatically generates an extraction DAG based on the dependencies identified between the data sources and their transformations. This extraction DAG determines the optimal order for extracting the resources to ensure data consistency and integrity.
+`dlt` を使用すると、ツールはデータ ソースとその変換の間で識別された依存関係に基づいて、抽出 DAG を自動的に生成します。この抽出 DAG は、データの一貫性と整合性を確保するために、リソースを抽出する最適な順序を決定します。
 
-For instance, imagine a pipeline where data needs to be extracted from multiple API endpoints and undergo certain transformations or enrichments via additional calls before loading it into a database. `dlt` analyzes the dependencies between the API endpoints and transformations and generates an extraction DAG accordingly. The extraction DAG ensures that the data is extracted in the correct order, accounting for any dependencies and transformations.
+たとえば、複数の API エンドポイントからデータを抽出し、追加の呼び出しによって特定の変換またはエンリッチメントを行ってからデータベースにロードする必要があるパイプラインを想像してください。`dlt` は、API エンドポイントと変換間の依存関係を分析し、それに応じて抽出 DAG を生成します。抽出 DAG は、依存関係と変換を考慮して、データが正しい順序で抽出されることを保証します。
 
-When deploying to Airflow, the internal DAG is unpacked into Airflow tasks in such a way to ensure consistency and allow granular loading.
+Airflow にデプロイすると、一貫性を確保し、きめ細かい読み込みを可能にするために、内部 DAG が Airflow タスクに展開されます。
 
-## Defining incremental loading
+## 増分ロードの定義
 
-[Incremental loading](general-usage/incremental-loading.md) is a crucial concept in data pipelines that involves loading only new or changed data instead of reloading the entire dataset. This approach provides several benefits, including low-latency data transfer and cost savings.
+[増分ロード](general-usage/incremental-loading.md)は、データ パイプラインの重要な概念であり、データセット全体を再読み込みするのではなく、新しいデータまたは変更されたデータのみを読み込みます。このアプローチには、低レイテンシのデータ転送やコスト削減など、いくつかの利点があります。
 
-### Declarative loading
+### 宣言的ローディング
 
-Declarative loading allows you to specify the desired state of the data in the target destination,
-enabling efficient incremental updates. With `dlt`, you can define the incremental loading
-behavior using the `write_disposition` parameter. There are three options available:
+宣言的ロードでは、ターゲットの宛先にあるデータの望ましい状態を指定できるため、効率的な増分更新が可能になります。`dlt` では、`write_disposition` パラメータを使用して増分ロードの動作を定義できます。3 つのオプションがあります。
 
-1. Full load: This option replaces the entire destination dataset with the data produced by the
-   source on the current run. You can achieve this by setting `write_disposition='replace'` in
-   your resources. It is suitable for stateless data that doesn't change, such as recorded events
-   like page views.
-2. Append: The append option adds new data to the existing destination dataset. By using
-   `write_disposition='append'`, you can ensure that only new records are loaded. This is
-   suitable for stateless data that can be easily appended without any conflicts.
-3. Merge: The merge option is used when you want to merge new data with the existing destination
-   dataset while also handling deduplication or upserts. It requires the use of `merge_key`
-   and/or `primary_key` to identify and update specific records. By setting
-   `write_disposition='merge'`, you can perform merge-based incremental loading.
+1. Full load: このオプションは、宛先データセット全体を、現在の実行でソースによって生成されたデータに置き換えます。これを実現するには、リソースで `write_disposition='replace'` を設定します。これは、ページ ビューなどの記録されたイベントなど、変更されないステートレス データに適しています。
+2. Append: 追記 オプションは、既存の宛先データセットに新しいデータを追加します。
+`write_disposition='append'` を使用すると、新しいレコードのみがロードされることを保証できます。これは、競合なしで簡単に追加できるステートレス データに適しています。
+3. Merge: マージ オプションは、重複排除やアップサートを処理しながら、新しいデータを既存の宛先データセットとマージする場合に使用します。特定のレコードを識別して更新するには、`merge_key` や `primary_key` を使用する必要があります。`write_disposition='merge'` を設定すると、マージベースの増分読み込みを実行できます。
 
-For example, let's say you want to load GitHub events and update them in the destination, ensuring
-that only one instance of each event is present.
+たとえば、GitHub イベントをロードして宛先で更新し、各イベントのインスタンスが 1 つだけ存在するようにするとします。
 
-You can use the merge write disposition as follows:
+マージ書き込み処理は次のように使用できます:
 
 ```py
 @dlt.resource(primary_key="id", write_disposition="merge")
@@ -184,45 +169,30 @@ def github_repo_events():
     yield from _get_event_pages()
 ```
 
-In this example, the `github_repo_events` resource uses the merge write disposition with
-`primary_key="id"`. This ensures that only one copy of each event, identified by its unique ID,
-is present in the `github_repo_events` table. `dlt` takes care of loading the data
-incrementally, deduplicating it, and performing the necessary merge operations.
+この例では、`github_repo_events` リソースは、`primary_key="id"` を使用したマージ書き込み処理を使用します。これにより、一意の ID で識別される各イベントのコピーが 1 つだけ `github_repo_events` テーブルに存在することが保証されます。`dlt` は、データを段階的に読み込み、重複を排除し、必要なマージ操作を実行します。
 
-### Advanced state management
+### 高度な状態管理
 
-Advanced state management in `dlt` allows you to store and retrieve values across pipeline runs
-by persisting them at the destination but accessing them in a dictionary in code. This enables you
-to track and manage incremental loading effectively. By leveraging the pipeline state, you can
-preserve information, such as last values, checkpoints, or column renames, and utilize them later in
-the pipeline.
+`dlt` の高度な状態管理により、パイプラインの実行中に値を保存および取得できます。保存先で値を永続化しながら、コード内の辞書で値にアクセスします。これにより、増分読み込みを効果的に追跡および管理できます。パイプラインの状態を活用することで、最後の値、チェックポイント、列名の変更などの情報を保持し、パイプラインで後で利用できます。
 
-## Transforming the data
+## データ変換
 
-Data transformation plays a crucial role in the data loading process. You can perform
-transformations both before and after loading the data. Here's how you can achieve it:
+データ変換は、データ読み込みプロセスにおいて重要な役割を果たします。データの読み込み前と読み込み後に変換を実行できます。その方法は次のとおりです。:
 
-### Before loading
+### ロード前
 
-Before loading the data, you have the flexibility to perform transformations using Python. You can
-leverage Python's extensive libraries and functions to manipulate and preprocess the data as needed.
-Here's an example of
-[pseudonymizing columns](general-usage/customising-pipelines/pseudonymizing_columns.md) before
-loading the data.
+データをロードする前に、Python を使用して柔軟に変換を実行できます。Python の広範なライブラリと関数を活用して、必要に応じてデータを操作および前処理できます。
+データをロードする前に[カラムを仮名化する](general-usage/customising-pipelines/pseudonymizing_columns.md)例です。
 
-In the above example, the `pseudonymize_name` function pseudonymizes the `name` column by
-generating a deterministic hash using SHA256. It adds a salt to the column value to ensure
-consistent mapping. The `dummy_source` generates dummy data with an `id` and `name`
-column, and the `add_map` function applies the `pseudonymize_name` transformation to each
-record.
+上記の例では、`pseudonymize_name` 関数は、SHA256 を使用して決定論的ハッシュを生成することで、`name` 列を仮名化します。一貫したマッピングを確保するために、列の値にソルトを追加します。`dummy_source` は、`id` 列と `name` 列を持つダミー データを生成し、`add_map` 関数は各レコードに `pseudonymize_name` 変換を適用します。
 
-### After loading
+### ロード後
 
-For transformations after loading the data, you have several options available:
+データをロードした後の変換には、いくつかのオプションがあります:
 
-#### [Using dbt](dlt-ecosystem/transformations/dbt/dbt.md)
+#### [dbt の使用](dlt-ecosystem/transformations/dbt/dbt.md)
 
-dbt is a powerful framework for transforming data. It enables you to structure your transformations into DAGs, providing cross-database compatibility and various features such as templating, backfills, testing, and troubleshooting. You can use the dbt runner in `dlt` to seamlessly integrate dbt into your pipeline. Here's an example of running a dbt package after loading the data:
+dbt は、データを変換するための強力なフレームワークです。変換を DAG に構造化して、データベース間の互換性と、テンプレート、バックフィル、テスト、トラブルシューティングなどのさまざまな機能を提供します。`dlt` の dbt ランナーを使用して、dbt をパイプラインにシームレスに統合できます。以下は、データを読み込んだ後に dbt パッケージを実行する例です。
 
 ```py
 import dlt
@@ -238,7 +208,7 @@ pipeline = dlt.pipeline(
 load_info = pipeline.run(pipedrive_source())
 print(load_info)
 ```
-Now transform from loaded data to dbt dataset:
+ロードしたデータをdbtデータセットに変換します:
 ```py
 pipeline = dlt.pipeline(
     pipeline_name='pipedrive',
@@ -258,11 +228,11 @@ for m in models:
     print(f"Model {m.model_name} materialized in {m.time} with status {m.status} and message {m.message}")
 ```
 
-In this example, the first pipeline loads the data using `pipedrive_source()`. The second pipeline performs transformations using a dbt package called `pipedrive` after loading the data. The `dbt.package` function sets up the dbt runner, and `dbt.run_all()` executes the dbt models defined in the package.
+この例では、最初のパイプラインは `pipedrive_source()` を使用してデータをロードします。2 番目のパイプラインは、データを読み込んだ後、`pipedrive` という dbt パッケージを使用して変換を実行します。`dbt.package` 関数は dbt ランナーを設定し、`dbt.run_all()` はパッケージで定義された dbt モデルを実行します。
 
-#### [Using the `dlt` SQL client](dlt-ecosystem/transformations/sql.md)
+#### [`dlt` の SQL クライアントの使用](dlt-ecosystem/transformations/sql.md)
 
-Another option is to leverage the `dlt` SQL client to query the loaded data and perform transformations using SQL statements. You can execute SQL statements that change the database schema or manipulate data within tables. Here's an example of creating a new table with aggregated sales data in duckdb:
+もう 1 つのオプションは、`dlt` SQL クライアントを利用して、ロードされたデータをクエリし、SQL ステートメントを使用して変換を実行することです。データベース スキーマを変更したり、テーブル内のデータを操作したりする SQL ステートメントを実行できます。以下は、duckdb で集計された売上データを含む新しいテーブルを作成する例です:
 
 ```py
 pipeline = dlt.pipeline(destination="duckdb", dataset_name="crm")
@@ -283,11 +253,11 @@ with pipeline.sql_client() as client:
     """)
 ```
 
-In this example, the `execute_sql` method of the SQL client allows you to execute SQL statements. The statement inserts a row with values into the `customers` table.
+この例では、SQL クライアントの `execute_sql` メソッドを使用して SQL ステートメントを実行できます。このステートメントは、値を含む行を `customers` テーブルに挿入します。
 
-#### [Using Pandas](dlt-ecosystem/transformations/python.md)
+#### [Pandas の使用](dlt-ecosystem/transformations/python.md)
 
-You can fetch query results as Pandas data frames and perform transformations using Pandas functionalities. Here's an example of reading data from the `issues` table in DuckDB and counting reaction types using Pandas:
+クエリ結果をPandasデータフレームとして取得し、Pandasの機能を使用して変換を実行できます。以下は、DuckDBの「issues」テーブルからデータを読み取り、Pandaを使用して反応タイプをカウントする例です:
 
 ```py
 pipeline = dlt.pipeline(
@@ -303,88 +273,63 @@ reactions = pipeline.dataset().issues.select("reactions__+1", "reactions__-1", "
 counts = reactions.sum(0).sort_values(0, ascending=False)
 ```
 
-By leveraging these transformation options, you can shape and manipulate the data before or after loading it, allowing you to meet specific requirements and ensure data quality and consistency.
+これらの変換オプションを活用することで、データをロードする前またはロードした後にデータを整形および操作できるため、特定の要件を満たし、データの品質と一貫性を確保できます。
 
-## Adjusting the automated normalization
+## 自動正規化の調整
 
-To streamline the process, `dlt` recommends attaching schemas to sources implicitly instead of
-creating them explicitly. You can provide a few global schema settings and let the table and column
-schemas be generated from the resource hints and the data itself. The `dlt.source` decorator accepts a
-schema instance that you can create and modify within the source function. Additionally, you can
-store schema files with the source Python module and have them automatically loaded and used as the
-schema for the source.
+プロセスを効率化するために、`dlt` では、スキーマを明示的に作成するのではなく、暗黙的にソースにアタッチすることを推奨しています。いくつかのグローバル スキーマ設定を提供して、テーブルと列のスキーマをリソース ヒントとデータ自体から生成することができます。`dlt.source` デコレータは、ソース関数内で作成および変更できるスキーマ インスタンスを受け入れます。さらに、スキーマ ファイルをソース Python モジュールに保存し、自動的にロードしてソースのスキーマとして使用することもできます。
 
-By adjusting the automated normalization process in `dlt`, you can ensure that the generated database
-schema meets your specific requirements and aligns with your preferred naming conventions, data
-types, and other customization needs.
+`dlt` の自動正規化プロセスを調整することで、生成されたデータベース スキーマが特定の要件を満たし、優先する命名規則、データ型、その他のカスタマイズ ニーズに一致することを確認できます。
 
-### Customizing the normalization process
+### 正規化プロセスのカスタマイズ
 
-Customizing the normalization process in `dlt` allows you to adapt it to your specific requirements.
+`dlt` の正規化プロセスをカスタマイズすることで、特定の要件に合わせて調整することができます。
 
-You can adjust table and column names, configure column properties, define data type autodetectors,
-apply performance hints, specify preferred data types, or change how IDs are propagated in the
-unpacking process.
+テーブル名と列名を調整したり、列のプロパティを構成したり、データ型の自動検出器を定義したり、パフォーマンス ヒントを適用したり、優先データ型を指定したり、解凍プロセスで ID が伝播される方法を変更したりできます。
 
-These customization options enable you to create a schema that aligns with your desired naming
-conventions, data types, and overall data structure. With `dlt`, you have the flexibility to tailor
-the normalization process to meet your unique needs and achieve optimal results.
+これらのカスタマイズ オプションを使用すると、希望する命名規則、データ型、および全体的なデータ構造に合わせたスキーマを作成できます。`dlt` を使用すると、独自のニーズに合わせて正規化プロセスを柔軟にカスタマイズし、最適な結果を得ることができます。
 
-Read more about how to configure [schema generation.](general-usage/schema.md)
+[スキーマ生成](general-usage/schema.md)を構成する方法の詳細については、リンク先を御覧ください。
 
-### Exporting and importing schema files
+### スキーマファイルのエクスポートとインポート
 
-`dlt` allows you to export and import schema files, which contain the structure and instructions for
-processing and loading the data. Exporting schema files enables you to modify them directly, making
-adjustments to the schema as needed. You can then import the modified schema files back into `dlt` to
-use them in your pipeline.
+`dlt` を使用すると、データの処理と読み込みの構造と指示を含むスキーマ ファイルをエクスポートおよびインポートできます。スキーマ ファイルをエクスポートすると、それらを直接変更して、必要に応じてスキーマを調整できます。その後、変更したスキーマ ファイルを `dlt` にインポートして、パイプラインで使用できます。
 
-Read more: [Adjust a schema docs.](./walkthroughs/adjust-a-schema.md)
+詳細は: [スキーマの調整](./walkthroughs/adjust-a-schema.md)
 
-## Governance support in `dlt` pipelines
+## `dlt` パイプラインにおけるガバナンスのサポート
 
-`dlt` pipelines offer robust governance support through three key mechanisms: pipeline metadata
-utilization, schema enforcement and curation, and schema change alerts.
+`dlt` パイプラインは、パイプラインメタデータの利用、スキーマの適用とキュレーション、スキーマ変更アラートという 3 つの主要なメカニズムを通じて、強力なガバナンス サポートを提供します。
 
-### Pipeline metadata
+### パイプラインメタデータ
 
-`dlt` pipelines leverage metadata to provide governance capabilities. This metadata includes load IDs,
-which consist of a timestamp and pipeline name. Load IDs enable incremental transformations and data
-vaulting by tracking data loads and facilitating data lineage and traceability.
+`dlt` パイプラインはメタデータを活用してガバナンス機能を提供します。このメタデータには、タイムスタンプとパイプライン名で構成されるロード ID が含まれます。ロード ID は、データのロードを追跡し、データのリネージとトレーサビリティを容易にすることで、増分変換とデータ保管を可能にします。
 
-Read more about [lineage](general-usage/destination-tables.md#data-lineage).
+[リネージ](general-usage/destination-tables.md#data-lineage)についてもっと読む
 
-### Schema enforcement and curation
+### スキーマの強制とキュレーション
 
-`dlt` empowers users to enforce and curate schemas, ensuring data consistency and quality. Schemas
-define the structure of normalized data and guide the processing and loading of data. By adhering to
-predefined schemas, pipelines maintain data integrity and facilitate standardized data handling
-practices.
+`dlt` を使用すると、ユーザーはスキーマを強制および管理して、データの一貫性と品質を確保できます。スキーマは正規化されたデータの構造を定義し、データの処理と読み込みをガイドします。パイプラインは、定義済みのスキーマに準拠することで、データの整合性を維持し、標準化されたデータ処理方法を促進します。
 
-Read more: [Adjust a schema docs.](./walkthroughs/adjust-a-schema.md)
+詳細: [スキーマの調整](./walkthroughs/adjust-a-schema.md)
 
-### Schema evolution
+### スキーマの進化
 
-`dlt` enables proactive governance by alerting users to schema changes. When modifications occur in
-the source data’s schema, such as table or column alterations, `dlt` notifies stakeholders, allowing
-them to take necessary actions, such as reviewing and validating the changes, updating downstream
-processes, or performing impact analysis.
+`dlt` は、スキーマの変更をユーザーに警告することで、積極的なガバナンスを可能にします。テーブルや列の変更など、ソース データのスキーマに変更が発生すると、`dlt` は関係者に通知し、変更の確認と検証、下流プロセスの更新、影響分析の実行など、必要なアクションを実行できるようにします。
 
-These governance features in `dlt` pipelines contribute to better data management practices,
-compliance adherence, and overall data governance, promoting data consistency, traceability, and
-control throughout the data processing lifecycle.
+`dlt` パイプラインのこれらのガバナンス機能は、データ管理プラクティス、コンプライアンス遵守、および全体的なデータ ガバナンスの向上に貢献し、データ処理ライフサイクル全体にわたってデータの一貫性、追跡可能性、および制御を促進します。
 
-### Scaling and finetuning
+### スケーリングと微調整
 
-`dlt` offers several mechanisms and configuration options to scale up and finetune pipelines:
+`dlt`はパイプラインをスケールアップし微調整するためのいくつかのメカニズムと構成オプションを提供します:
 
-- Running extraction, normalization, and load in parallel.
-- Writing sources and resources that are run in parallel via thread pools and async execution.
-- Finetuning the memory buffers, intermediary file sizes, and compression options.
+- 抽出、正規化、ロードを並行して実行します。
+- スレッド プールと非同期実行を介して並列実行されるソースとリソースを書き込みます。
+- メモリバッファー、中間ファイルのサイズ、および圧縮オプションを微調整します。
 
-Read more about [performance.](reference/performance.md)
+[パフォーマンス](reference/performance.md)の詳細を御覧ください。
 
-### Other advanced topics
+### その他の高度なトピック
 
-`dlt` is a constantly growing library that supports many features and use cases needed by the community. [Join our Slack](https://dlthub.com/community) to find recent releases or discuss what you can build with `dlt`.
+`dlt` は、コミュニティが必要とする多くの機能とユースケースをサポートする、継続的に成長しているライブラリです。[Slack](https://dlthub.com/community) に参加して、最新のリリースを見つけたり、`dlt` を使用して構築できるものについて話し合ったりしてください。
 

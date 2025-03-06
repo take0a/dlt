@@ -10,27 +10,27 @@ import snippets from '!!raw-loader!./intro-snippets.py';
 
 ![dlt pacman](/img/dlt-pacman.gif)
 
-## What is dlt?
+## dlt とは?
 
-dlt is an open-source Python library that loads data from various, often messy data sources into well-structured, live datasets. It offers a lightweight interface for extracting data from [REST APIs](./tutorial/rest-api), [SQL databases](./tutorial/sql-database), [cloud storage](./tutorial/filesystem), [Python data structures](./tutorial/load-data-from-an-api), and [many more](./dlt-ecosystem/verified-sources).
+dlt は、オープンソースの Python ライブラリで、いろいろな、時には整っていないデータソースから、構造化された本番のデータセットにデータをロードします。[REST APIs](./tutorial/rest-api)、[SQL databases](./tutorial/sql-database)、[cloud storage](./tutorial/filesystem)、[Python data structures](./tutorial/load-data-from-an-api) 、[その他のデータソース](./dlt-ecosystem/verified-sources)からデータを抽出するための軽量なインターフェースです。
 
-dlt is designed to be easy to use, flexible, and scalable:
+dlt は使いやすく、柔軟性と拡張性があるように設計されています:
 
-- dlt infers [schemas](./general-usage/schema) and [data types](./general-usage/schema/#data-types), [normalizes the data](./general-usage/schema/#data-normalizer), and handles nested data structures.
-- dlt supports a variety of [popular destinations](./dlt-ecosystem/destinations/) and has an interface to add [custom destinations](./dlt-ecosystem/destinations/destination) to create reverse ETL pipelines.
-- dlt can be deployed anywhere Python runs, be it on [Airflow](./walkthroughs/deploy-a-pipeline/deploy-with-airflow-composer), [serverless functions](./walkthroughs/deploy-a-pipeline/deploy-with-google-cloud-functions), or any other cloud deployment of your choice.
-- dlt automates pipeline maintenance with [schema evolution](./general-usage/schema-evolution) and [schema and data contracts](./general-usage/schema-contracts).
+- dlt は、[スキーマ](./general-usage/schema) と[データ型](./general-usage/schema/#data-types)を推論し、[データを正規化して](./general-usage/schema/#data-normalizer), ネストしたデータ構造を扱います。
+- dlt は、様々な[人気のある宛先](./dlt-ecosystem/destinations/)をサポートします。また、リバースETLパイプラインを作るための[カスタマイズした宛先](./dlt-ecosystem/destinations/destination)を追加するインターフェースがあります。
+- dlt は、Python が実行される、どんな場所にもデプロイできますから、[Airflow](./walkthroughs/deploy-a-pipeline/deploy-with-airflow-composer) 上にも、[serverless functions](./walkthroughs/deploy-a-pipeline/deploy-with-google-cloud-functions) にも、その他の任意のクラウド上にもデプロイできます。
+- dlt は、[スキーマの進化](./general-usage/schema-evolution)と[スキーマとデータの制約](./general-usage/schema-contracts)によって、パイプラインのメンテナンスを自動化します。
 
-To get started with dlt, install the library using pip:
+dlt を使い始めるには、pip を使ってライブラリをインストールします:
 
 ```sh
 pip install dlt
 ```
 :::tip
-We recommend using a clean virtual environment for your experiments! Read the [detailed instructions](./reference/installation) on how to set up one.
+実験にはクリーンな仮想環境を使用することをお勧めします！設定方法については、[詳細な手順](./reference/installation)をお読みください。
 :::
 
-## Load data with dlt from …
+## dlt でデータをロードします
 
 <Tabs
   groupId="source-type"
@@ -43,7 +43,7 @@ We recommend using a clean virtual environment for your experiments! Read the [d
 ]}>
   <TabItem value="rest-api">
 
-Use dlt's [REST API source](./tutorial/rest-api) to extract data from any REST API. Define the API endpoints you’d like to fetch data from, the pagination method, and authentication, and dlt will handle the rest:
+dlt の [REST API ソース](./tutorial/rest-api) を使用して、任意の REST API からデータを抽出します。データの取得元となる API エンドポイント、ページネーション方法、認証を定義すると、dlt が残りの処理を行います:
 
 ```py
 import dlt
@@ -76,11 +76,11 @@ print(load_info)
 print(pipeline.dataset().posts.df())
 ```
 
-Follow the [REST API source tutorial](./tutorial/rest-api) to learn more about the source configuration and pagination methods.
+ソースの構成とページネーションの方法の詳細については、[REST API ソースのチュートリアル](./tutorial/rest-api)に従ってください。 
   </TabItem>
   <TabItem value="sql-database">
 
-Use the [SQL source](./tutorial/sql-database) to extract data from databases like PostgreSQL, MySQL, SQLite, Oracle, and more.
+[SQL ソース](./tutorial/sql-database)を使用して、PostgreSQL、MySQL、SQLite、Oracle などのデータベースからデータを抽出します。
 
 ```py
 from dlt.sources.sql_database import sql_database
@@ -102,12 +102,12 @@ print(load_info)
 print(pipeline.dataset().family.df())
 ```
 
-Follow the [SQL source tutorial](./tutorial/sql-database) to learn more about the source configuration and supported databases.
+ソースの構成とサポート対象のデータベースの詳細については、[SQL ソースのチュートリアル](./tutorial/sql-database)に従ってください。
 
   </TabItem>
   <TabItem value="filesystem">
 
-The [Filesystem](./tutorial/filesystem) source extracts data from AWS S3, Google Cloud Storage, Google Drive, Azure, or a local file system.
+[ファイルシステム](./tutorial/filesystem)ソースは、 AWS S3、Google Cloud Storage、Google Drive、Azure またはローカルのファイルシステムからデータを抽出します。
 
 ```py
 from dlt.sources.filesystem import filesystem
@@ -130,12 +130,12 @@ print(load_info)
 print(pipeline.dataset().example.df())
 ```
 
-Follow the [filesystem source tutorial](./tutorial/filesystem) to learn more about the source configuration and supported storage services.
+ソースの構成とサポート対象のストレージサービスの詳細については、[ファイルシステムソースのチュートリアル](./tutorial/filesystem)に従ってください。
 
   </TabItem>
   <TabItem value="python-data">
 
-dlt is able to load data from Python generators or directly from Python data structures:
+dlt は Python のジェネレータや Python のデータ構造から直接データをロードできます:
 
 ```py
 import dlt
@@ -157,19 +157,19 @@ print(load_info)
 print(pipeline.dataset().foo_data.df())
 ```
 
-Check out the [Python data structures tutorial](./tutorial/load-data-from-an-api) to learn about dlt fundamentals and advanced usage scenarios.
+dlt の基礎、高度な利用のシナリオについて学ぶには、[Python データ構造のチュートリアル](./tutorial/load-data-from-an-api)を御覧ください。 
 
   </TabItem>
 
 </Tabs>
 
 :::tip
-If you'd like to try out dlt without installing it on your machine, check out the [Google Colab demo](https://colab.research.google.com/drive/1NfSB1DpwbbHX9_t5vlalBTf13utwpMGx?usp=sharing).
+dlt をマシンにインストールすることなく、試してみない場合は、[Google Colab のデモ](https://colab.research.google.com/drive/1NfSB1DpwbbHX9_t5vlalBTf13utwpMGx?usp=sharing)を御覧ください。
 :::
 
-## Join the dlt community
+## dlt コミュニティに参加する
 
-1. Give the library a ⭐ and check out the code on [GitHub](https://github.com/dlt-hub/dlt).
-1. Ask questions and share how you use the library on [Slack](https://dlthub.com/community).
-1. Report problems and make feature requests [here](https://github.com/dlt-hub/dlt/issues/new/choose).
+1. ライブラリに⭐をつけて、[GitHub](https://github.com/dlt-hub/dlt) でコードを確認しましょう。
+1. [Slack](https://dlthub.com/community) で質問したり、ライブラリの使用方法を共有しましょう。
+1. 問題の報告や機能のリクエストは、[ここ](https://github.com/dlt-hub/dlt/issues/new/choose)から。
 

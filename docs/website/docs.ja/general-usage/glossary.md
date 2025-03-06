@@ -6,59 +6,48 @@ keywords: [glossary, resource, source, pipeline]
 
 # Glossary
 
-## [Source](source)
+## [ソース](source)
 
-A location that holds data with a certain structure, organized into one or more resources.
+1 つ以上のリソースが編成された、特定の構造を持つデータを保持する場所。
 
-- If endpoints in an API are the resources, then the API is the source.
-- If tabs in a spreadsheet are the resources, then the spreadsheet is the source.
-- If tables in a database are the resources, then the database is the source.
+- API 内のエンドポイントがリソースである場合、API はソースです。
+- スプレッドシート内のタブがリソースである場合、スプレッドシートはソースです。
+- データベース内のテーブルがリソースである場合、データベースはソースです。
 
-Within this documentation, **source** also refers to the software component (i.e., a Python function)
-that **extracts** data from the source location using one or more resource components.
+このドキュメントでは、**ソース** は、1 つ以上のリソース コンポーネントを使用してソースの場所からデータを **抽出** するソフトウェア コンポーネント (つまり、Python 関数) も指します。
 
-## [Resource](resource)
+## [リソース](resource)
 
-A logical grouping of data within a data source, typically holding data of similar structure and
-origin.
+データソース内のデータを論理的にグループ化したもの。通常は、同様の構造と発生元のデータを持ちます。
 
-- If the source is an API, then a resource is an endpoint in that API.
-- If the source is a spreadsheet, then a resource is a tab in that spreadsheet.
-- If the source is a database, then a resource is a table in that database.
+- ソースが API の場合、リソースはその API 内のエンドポイントになります。
+- ソースがスプレッドシートの場合、リソースはそのスプレッドシート内のタブになります。
+- ソースがデータベースの場合、リソースはそのデータベース内のテーブルになります。
 
-Within this documentation, **resource** also refers to the software component (i.e., a Python function)
-that **extracts** the data from the source location.
+このドキュメントでは、**リソース** は、ソースの場所からデータを **抽出** するソフトウェア コンポーネント (つまり、Python 関数) も指します。
 
-## [Destination](../dlt-ecosystem/destinations)
+## [宛先](../dlt-ecosystem/destinations)
 
-The data store where data from the source is loaded (e.g., Google BigQuery).
+ソースからのデータがロードされるデータ ストア (例: Google BigQuery)。
 
-## [Pipeline](pipeline)
+## [パイプライン](pipeline)
 
-Moves the data from the source to the destination, according to instructions provided in the schema
-(i.e., extracting, normalizing, and loading the data).
+スキーマで指定された指示に従って、データをソースから宛先に移動します (データの抽出、正規化、ロードなど)。
 
-## [Verified source](../walkthroughs/add-a-verified-source)
+## [検証済みのソース](../walkthroughs/add-a-verified-source)
 
-A Python module distributed with `dlt init` that allows creating pipelines that extract data from a
-particular **Source**. Such a module is intended to be published in order for others to use it to
-build pipelines.
+`dlt init` とともに配布される Python モジュールで、特定の **ソース** からデータを抽出するパイプラインを作成できます。このようなモジュールは、他のユーザーがパイプラインを構築するために使用できるように公開されることを目的としています。
 
-A source must be published to become "verified," which means that it has tests, test data,
-demonstration scripts, documentation, and the dataset produced was reviewed by a data engineer.
+ソースが、「検証済み」になるためには公開されている必要があります。つまり、テスト、テスト データ、デモ スクリプト、ドキュメントが含まれ、生成されたデータセットがデータ エンジニアによってレビューされている必要があります。
 
-## [Schema](schema)
+## [スキーマ](schema)
 
-Describes the structure of normalized data (e.g., unpacked tables, column types, etc.) and provides
-instructions on how the data should be processed and loaded (i.e., it tells `dlt` about the content
-of the data and how to load it into the destination).
+正規化されたデータの構造 (展開されたテーブル、列の型など) を記述し、データの処理方法とロード方法に関する指示を提供します (つまり、データの内容とそれを宛先にロードする方法を `dlt` に伝えます)。
 
-## [Config](credentials/setup#secrets.toml-and-config.toml)
+## [設定](credentials/setup#secrets.toml-and-config.toml)
 
-A set of values that are passed to the pipeline at runtime (e.g., to change its behavior locally vs.
-in production).
+実行時にパイプラインに渡される値のセット (例: ローカルと本番環境での動作を変更するため)。
 
-## [Credentials](credentials/complex_types)
+## [資格情報](credentials/complex_types)
 
-A subset of configuration whose elements are kept secret and never shared in plain text.
-
+要素が秘密に保持され、プレーンテキストで共有されることのない構成のサブセット。

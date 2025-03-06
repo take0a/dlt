@@ -4,23 +4,23 @@ description: How to install dlt
 keywords: [installation, environment, pip install]
 ---
 
-# Installation
+# インストール
 
-## Setting up your environment
+## 環境の設定
 
-### 1. Make sure you are using **Python 3.9-3.13** and have `pip` installed
+### 1. **Python 3.9-3.13** を使用していること、`pip` がインストールされていることを確認する
 
 ```sh
 python --version
 pip --version
 ```
 
-If you have a different Python version installed or are missing pip, follow the instructions below to update your Python version and/or install `pip`.
+別のバージョンの Python がインストールされている場合、または pip がない場合は、以下の手順に従って Python バージョンを更新し、`pip` をインストールしてください。
 
 <Tabs values={[{"label": "Ubuntu", "value": "ubuntu"}, {"label": "macOS", "value": "macos"}, {"label": "Windows", "value": "windows"}]}  groupId="operating-systems" defaultValue="ubuntu">
   <TabItem value="ubuntu">
 
-You can install Python 3.10 with `apt`.
+`apt` を使用して Python 3.10 をインストールできます。
 
 ```sh
 sudo apt update
@@ -31,7 +31,7 @@ sudo apt install python3.10-venv
   </TabItem>
   <TabItem value="macos">
 
-On macOS, you can use [Homebrew](https://brew.sh) to install Python 3.10.
+macOS では、[Homebrew](https://brew.sh) を使用して Python 3.10 をインストールできます。
 
 ```sh
 brew update
@@ -41,7 +41,7 @@ brew install python@3.10
   </TabItem>
   <TabItem value="windows">
 
-After installing [Python 3.10 (64-bit version) for Windows](https://www.python.org/downloads/windows/), you can install `pip`.
+[Windows 用の Python 3.10 (64 ビット版)](https://www.python.org/downloads/windows/)をインストールしたら、`pip` をインストールできます。
 
 ```sh
 C:\> pip3 install -U pip
@@ -50,22 +50,21 @@ C:\> pip3 install -U pip
   </TabItem>
 </Tabs>
 
-### 2. Set up and activate a virtual environment for your Python project
+### 2. Pythonプロジェクト用の仮想環境をセットアップしてアクティブ化する
 
-We recommend working within a [virtual environment](https://docs.python.org/3/library/venv.html) when creating Python projects.
-This way, all the dependencies for your current project will be isolated from packages in other projects.
+Python プロジェクトを作成するときは、[仮想環境](https://docs.python.org/3/library/venv.html)内で作業することをお勧めします。これにより、現在のプロジェクトのすべての依存関係が他のプロジェクトのパッケージから分離されます。
 
 <Tabs values={[{"label": "Ubuntu", "value": "ubuntu"}, {"label": "macOS", "value": "macos"}, {"label": "Windows", "value": "windows"}]}  groupId="operating-systems" defaultValue="ubuntu">
 
   <TabItem value="ubuntu">
 
-Create a new virtual environment in your working folder. This will create an `./env` directory where your virtual environment will be stored:
+作業フォルダに新しい仮想環境を作成します。これにより、仮想環境が保存される `./env` ディレクトリが作成されます:
 
 ```sh
 python -m venv ./env
 ```
 
-Activate the virtual environment:
+仮想環境をアクティブ化します:
 
 ```sh
 source ./env/bin/activate
@@ -74,13 +73,13 @@ source ./env/bin/activate
   </TabItem>
   <TabItem value="macos">
 
-Create a new virtual environment in your working folder. This will create an `./env` directory where your virtual environment will be stored:
+作業フォルダに新しい仮想環境を作成します。これにより、仮想環境が保存される `./env` ディレクトリが作成されます:
 
 ```sh
 python -m venv ./env
 ```
 
-Activate the virtual environment:
+仮想環境をアクティブ化します:
 
 ```sh
 source ./env/bin/activate
@@ -89,13 +88,13 @@ source ./env/bin/activate
   </TabItem>
   <TabItem value="windows">
 
-Create a new virtual environment in your working folder. This will create an `./env` directory where your virtual environment will be stored:
+作業フォルダに新しい仮想環境を作成します。これにより、仮想環境が保存される `./env` ディレクトリが作成されます:
 
 ```bat
 C:\> python -m venv ./env
 ```
 
-Activate the virtual environment:
+仮想環境をアクティブ化します:
 
 ```bat
 C:\> .\env\Scripts\activate
@@ -104,47 +103,47 @@ C:\> .\env\Scripts\activate
   </TabItem>
 </Tabs>
 
-### 3. Install `dlt` library
+### 3. `dlt`ライブラリをインストールする
 
-To install or upgrade to the newest version of `dlt` in your virtual environment, run:
+仮想環境に `dlt` の最新バージョンをインストールまたはアップグレードするには、次のコマンドを実行します:
 
 ```sh
 pip install -U dlt
 ```
 
-Here are some additional installation examples:
+以下に、追加のインストール例をいくつか示します:
 
-To install dlt with DuckDB support:
+DuckDB サポート付きの dlt をインストールするには:
 ```sh
 pip install "dlt[duckdb]"
 ```
 
-To install a specific version of dlt (for example, versions before 0.5.0):
+特定のバージョンの dlt をインストールするには (たとえば、0.5.0 より前のバージョン):
 ```sh
 pip install "dlt<0.5.0"
 ```
 
-### 3.1. Install dlt via Pixi or Conda
+### 3.1. Pixi または Conda で dlt をインストールする
 
-To install dlt using `pixi`:
+`pixi` を使用して dlt をインストールするには:
 
 ```sh
 pixi add dlt
 ```
 
-To install dlt using `conda`:
+`conda` を使用して dlt をインストールするには:
 
 ```sh
 conda install -c conda-forge dlt
 ```
 
-### 4. Done!
+### 4. 完了！
 
-You are now ready to build your first pipeline with `dlt`. Check out these tutorials to get started:
+これで、`dlt` を使って最初のパイプラインを構築する準備が整いました。始めるには、これらのチュートリアルをご覧ください:
 
-- [Load data from a REST API](../tutorial/rest-api)
-- [Load data from a SQL database](../tutorial/sql-database)
-- [Load data from a cloud storage or a file system](../tutorial/filesystem)
+- [REST API からデータをロードする](../tutorial/rest-api)
+- [SQL データベースからデータをロードする](../tutorial/sql-database)
+- [クラウドストレージまたはファイルシステムからデータをロードする](../tutorial/filesystem)
 
-Or read a more detailed tutorial on how to build a [custom data pipeline with dlt](../tutorial/load-data-from-an-api.md).
+もしくは、[dlt を使用したカスタムデータパイプライン](../tutorial/load-data-from-an-api.md)を構築する方法に関する詳細なチュートリアルをお読みください。
 

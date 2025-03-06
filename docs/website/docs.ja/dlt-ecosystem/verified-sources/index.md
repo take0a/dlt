@@ -7,43 +7,39 @@ import Link from '../../_book-onboarding-call.md';
 import DocCardList from '@theme/DocCardList';
 import {useCurrentSidebarCategory} from '@docusaurus/theme-common';
 
-Planning to use `dlt` in production and need a source that isn't listed? We're happy to help you build it: <Link/>.
+`dlt` を本番環境で使用する予定で、リストに載っていないソースが必要ですか? 喜んで構築をお手伝いします: <Link/>.
 
-### Core sources
+### コアソース
 
 <DocCardList items={useCurrentSidebarCategory().items.filter(
 item => item.label === '30+ SQL Databases' || item.label === 'REST APIs' || item.label === 'Cloud storage and filesystem'
 )} />
 
-### Verified sources
+### 検証済みのソース
 
-Choose from our collection of verified sources, developed and maintained by the `dlt` team and community. Each source is rigorously tested against a real API and provided as Python code for easy customization.
+`dlt` チームとコミュニティによって開発および保守されている検証済みのソースのコレクションから選択してください。各ソースは実際の API に対して厳密にテストされており、簡単にカスタマイズできるように Python コードとして提供されています。
 
 :::tip
-If you couldn't find a source implementation, you can easily create your own. Check out the [resource page](../../general-usage/resource) to learn how!
+ソース実装が見つからない場合は、簡単に独自に作成できます。方法については、[リソース ページ](../../general-usage/resource) をご覧ください。
 :::
 
 <DocCardList items={useCurrentSidebarCategory().items.filter(
 item => item.label !== '30+ SQL Databases' && item.label !== 'REST APIs' && item.label !== 'Cloud storage and filesystem'
 )} />
 
-### What's the difference between core and verified sources?
+### コアソースと検証済みソースの違いは何ですか?
 
-The main difference between the [core sources](#core-sources) and [verified sources](#verified-sources) lies in their structure.
-Core sources are generic collections, meaning they can connect to a variety of systems. For example, the [SQL Database source](sql_database) can connect to any
-database that supports SQLAlchemy.
+[コアソース](#core-sources) と [検証済みソース](#verified-sources) の主な違いは、その構造にあります。
+コアソースは汎用コレクションであるため、さまざまなシステムに接続できます。たとえば、[SQL データベース ソース](sql_database) は、SQLAlchemy をサポートする任意のデータベースに接続できます。
 
-According to our telemetry, core sources are the most widely used among our users!
+テレメトリによると、コアソースはユーザーの間で最も広く使用されています。
 
-It's also important to note that core sources are integrated into the `dlt` core library,
-whereas verified sources are maintained in a separate [repository](https://github.com/dlt-hub/verified-sources).
-To use a verified source, you need to run the `dlt` init command, which will download the verified source code to
-your working directory.
+また、コア ソースは `dlt` コア ライブラリに統合されているのに対し、検証済みソースは別の [リポジトリ](https://github.com/dlt-hub/verified-sources) で管理されていることにも注意してください。
+検証済みソースを使用するには、`dlt` init コマンドを実行して、検証済みソース コードを作業ディレクトリにダウンロードする必要があります。
 
 
 ### Get help
 
-* Source missing? [Request a new verified source.](https://github.com/dlt-hub/verified-sources/issues/new?template=source-request.md)
-* Missing endpoint or a feature? [Request or contribute](https://github.com/dlt-hub/verified-sources/issues/new?template=extend-a-source.md)
-* [Join our Slack community](https://dlthub.com/community) and ask in the technical-help channel.
-
+* ソースが見つかりませんか? [新しい検証済みソースをリクエストしてください。](https://github.com/dlt-hub/verified-sources/issues/new?template=source-request.md)
+* エンドポイントまたは機能が不足していますか? [リクエストまたは貢献](https://github.com/dlt-hub/verified-sources/issues/new?template=extend-a-source.md)
+* [Slack コミュニティに参加](https://dlthub.com/community)して、技術ヘルプチャネルで質問してください。

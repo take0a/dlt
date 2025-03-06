@@ -4,32 +4,32 @@ description: Learn how to load data files like JSON, JSONL, CSV, and Parquet fro
 keywords: [dlt, tutorial, filesystem, cloud storage, file system, python, data pipeline, incremental loading, json, jsonl, csv, parquet, duckdb]
 ---
 
-This tutorial is for you if you need to load data files like JSONL, CSV, and Parquet from either Cloud Storage (e.g., AWS S3, Google Cloud Storage, Google Drive, Azure Blob Storage), a remote (SFTP), or a local file system.
+このチュートリアルは、JSONL、CSV、Parquet などのデータ ファイルを Cloud Storage (AWS S3、Google Cloud Storage、Google Drive、Azure Blob Storage など)、リモート (SFTP)、またはローカルファイルシステムからロードする必要がある場合に役立ちます。
 
-## What you will learn
+## 学ぶ内容
 
-- How to set up a file system or cloud storage as a data source
-- Configuration basics for file systems and cloud storage
-- Loading methods
-- Incremental loading of data from file systems or cloud storage
-- How to load data of any type
+- ファイルシステムまたはクラウドストレージをデータソースとして設定する方法
+- ファイルシステムとクラウドストレージの構成の基本
+- ロードの方法
+- ファイルシステムまたはクラウドストレージからのデータのインクリメンタルなロード
+- その他の種類のデータをロードする方法
 
-## 0. Prerequisites
+## 0. 前提条件
 
-- Python 3.9 or higher installed
-- Virtual environment set up
-- `dlt` installed. Follow the instructions in the [installation guide](../reference/installation) to create a new virtual environment and install dlt.
+- Python 3.9 以上がインストールされている
+- 仮想環境がセットアップされている
+- `dlt` がインストールされている。[インストールガイド](../reference/installation)の指示に従って、新しい仮想環境を作成し、dlt をインストールしてください。
 
-## 1. Setting up a new project
+## 1. 新しいプロジェクトの設定
 
-To help you get started quickly, dlt provides some handy CLI commands. One of these commands will help you set up a new dlt project:
+すぐに使い始めるために、dlt は便利な CLI コマンドをいくつか提供しています。これらのコマンドの 1 つは、新しい dlt プロジェクトを設定するのに役立ちます:
 
 ```sh
 dlt init filesystem duckdb
 ```
 
-This command creates a project that loads data from a file system into a DuckDB database. You can easily switch out duckdb for any other [supported destinations](../dlt-ecosystem/destinations).
-After running this command, your project will have the following structure:
+このコマンドは、ファイル システムから DuckDB データベースにデータをロードするプロジェクトを作成します。duckdb を他の [サポートされている宛先](../dlt-ecosystem/destinations) に簡単に切り替えることができます。
+このコマンドを実行すると、プロジェクトは次の構造になります:
 
 ```text
 filesystem_pipeline.py
@@ -39,31 +39,31 @@ requirements.txt
     secrets.toml
 ```
 
-Here’s what each file does:
+各ファイルの機能は次のとおりです:
 
-- `filesystem_pipeline.py`: This is the main script where you'll define your data pipeline. It contains several different examples of loading data from the filesystem source.
-- `requirements.txt`: This file lists all the Python dependencies required for your project.
-- `.dlt/`: This directory contains the [configuration files](../general-usage/credentials/) for your project:
-    - `secrets.toml`: This file stores your API keys, tokens, and other sensitive information.
-    - `config.toml`: This file contains the configuration settings for your dlt project.
+- `filesystem_pipeline.py`: これは、データパイプラインを定義するメインスクリプトです。ファイルシステムソースからデータをロードするさまざまな例が含まれています。
+- `requirements.txt`: このファイルには、プロジェクトに必要なすべての Python 依存関係がリストされています。
+- `.dlt/`: このディレクトリには、プロジェクトの[構成ファイル](../general-usage/credentials/)が含まれています:
+    - `secrets.toml`: このファイルには、API キー、トークン、その他の機密情報が保存されます。
+    - `config.toml`: このファイルには、dlt プロジェクトの構成設定が含まれています。
 
 :::note
-When deploying your pipeline in a production environment, managing all configurations with files might not be convenient. In this case, we recommend you use environment variables to store secrets and configs instead. Read more about [configuration providers](../general-usage/credentials/setup#available-config-providers) available in dlt.
+パイプラインを本番環境にデプロイする場合、すべての構成をファイルで管理するのは不便な場合があります。この場合、代わりに環境変数を使用してシークレットと構成を保存することをお勧めします。dlt で利用可能な [構成プロバイダー](../general-usage/credentials/setup#available-config-providers) の詳細をご覧ください。
 :::
 
-## 2. Creating the pipeline
+## 2. パイプラインの作成
 
-The filesystem source provides users with building blocks for loading data from any type of files. You can break down the data extraction into two steps:
+ファイルシステムソースは、あらゆるタイプのファイルからデータをロードするためのビルディングブロックをユーザーに提供します。データの抽出は2つのステップに分けることができます:
 
-1. Listing the files in the bucket/directory.
-2. Reading the files and yielding records.
+1. バケット/ディレクトリ内のファイルを一覧表示します。
+2. ファイルを読み取り、レコードを生成します。
 
-dlt's filesystem source includes several resources:
+dlt のファイルシステムソースにはいくつかのリソースが含まれています:
 
-- The `filesystem` resource lists files in the directory or bucket.
-- Several readers resources (`read_csv`, `read_parquet`, `read_jsonl`) read files and yield the records. These resources have a special type; they are called [transformers](../general-usage/resource#process-resources-with-dlttransformer). Transformers expect items from another resource. In this particular case, transformers expect a `FileItem` object and transform it into multiple records.
+- `filesystem` リソースは、ディレクトリまたはバケット内のファイルを一覧表示します。
+- いくつかのリーダーリソース (`read_csv`、`read_parquet`、`read_jsonl`) は、ファイルを読み取り、レコードを生成します。これらのリソースには特別なタイプがあり、[トランスフォーマー](../general-usage/resource#process-resources-with-dlttransformer) と呼ばれます。トランスフォーマーは、別のリソースからのアイテムを期待します。今回のケースでは、トランスフォーマーは `FileItem` オブジェクトを期待し、それを複数のレコードに変換します。
 
-Let's initialize a source and create a pipeline for loading CSV files from Google Cloud Storage to DuckDB. You can replace the code from `filesystem_pipeline.py` with the following:
+ソースを初期化し、Google Cloud Storage から DuckDB に CSV ファイルをロードするためのパイプラインを作成しましょう。`filesystem_pipeline.py` のコードを次のコードに置き換えることができます:
 
 ```py
 import dlt
@@ -77,36 +77,36 @@ info = pipeline.run(reader)
 print(info)
 ```
 
-What's happening in the snippet above?
+上記のスニペットでは何が起こっているのでしょうか？
 
-1. We import the `filesystem` resource and initialize it with a bucket URL (`gs://filesystem-tutorial`) and the `file_glob` parameter. dlt uses `file_glob` to filter file names in the bucket. `filesystem` returns a generator object.
-2. We pipe the file names yielded by the filesystem resource to the transformer resource `read_csv` to read each file and iterate over records from the file. We name this transformer resource `"encounters"` using the `with_name()` method. dlt will use the resource name `"encounters"` as a table name when loading the data.
+1. `filesystem` リソースをインポートし、バケット URL (`gs://filesystem-tutorial`) と `file_glob` パラメータで初期化します。dlt は `file_glob` を使用してバケット内のファイル名をフィルタリングします。`filesystem` はジェネレーター オブジェクトを返します。
+2. ファイルシステムリソースによって生成されたファイル名をトランスフォーマーリソース `read_csv` にパイプして、各ファイルを読み取り、ファイルのレコードを反復処理します。`with_name()` メソッドを使用して、このトランスフォーマー リソースに `"encounters"` という名前を付けます。dlt は、データをロードするときに、リソース名 `"encounters"` をテーブル名として使用します。
 
 :::note
-A [transformer](../general-usage/resource#process-resources-with-dlttransformer) in dlt is a special type of resource that processes each record from another resource. This lets you chain multiple resources together.
+dlt の [トランスフォーマー](../general-usage/resource#process-resources-with-dlttransformer) は、別のリソースからの各レコードを処理する特別なタイプのリソースです。これにより、複数のリソースを連結できます。
 :::
 
-3. We create the dlt pipeline, configuring it with the name `hospital_data_pipeline` and DuckDB as the destination.
-4. We call `pipeline.run()`. This is where the underlying generators are iterated:
- - dlt retrieves remote data,
- - normalizes data,
- - creates or updates the table in the destination,
- - loads the extracted data into the destination.
-5. `print(info)` outputs the pipeline running stats we get from `pipeline.run()`.
+3. dlt パイプラインを作成し、名前を `hospital_data_pipeline` に設定し、宛先として DuckDB を設定します。
+4. `pipeline.run()` を呼び出します。ここで基礎となるジェネレータが反復処理されます。:
+ - dlt はリモート データを取得し、
+ - データを正規化し、
+ - 宛先のテーブルを作成または更新し、
+ - 抽出されたデータを宛先にロードします。
+5. `print(info)` は、`pipeline.run()` から取得したパイプラインの実行統計を出力します。
 
-## 3. Configuring the filesystem source
+## 3. ファイルシステムソースの設定
 
 :::note
-In this tutorial, we will work with the publicly accessed dataset [Hospital Patient Records](https://mavenanalytics.io/data-playground?order=date_added%2Cdesc&search=Hospital%20Patient%20Records), which contains synthetic electronic health care records. You can use the exact credentials from this tutorial to load this dataset from GCP.
+このチュートリアルでは、合成電子カルテを含む、公開アクセス可能なデータセット [Hospital Patient Records](https://mavenanalytics.io/data-playground?order=date_added%2Cdesc&search=Hospital%20Patient%20Records) を操作します。このチュートリアルの正確な認証情報を使用して、GCP からこのデータセットを読み込むことができます。
 <details>
 <summary>Citation</summary>
 Jason Walonoski, Mark Kramer, Joseph Nichols, Andre Quina, Chris Moesel, Dylan Hall, Carlton Duffett, Kudakwashe Dube, Thomas Gallagher, Scott McLachlan, Synthea: An approach, method, and software mechanism for generating synthetic patients and the synthetic electronic health care record, Journal of the American Medical Informatics Association, Volume 25, Issue 3, March 2018, Pages 230–238, https://doi.org/10.1093/jamia/ocx079
 </details>
 :::
 
-Next, we need to configure the connection. Specifically, we’ll set the bucket URL and credentials. This example uses Google Cloud Storage. For other cloud storage services, see the [Filesystem configuration section](../dlt-ecosystem/verified-sources/filesystem/basic#configuration).
+次に、接続を構成する必要があります。具体的には、バケットの URL と認証情報を設定します。この例では、Google Cloud Storage を使用します。その他のクラウド ストレージ サービスについては、[ファイルシステム構成セクション](../dlt-ecosystem/verified-sources/filesystem/basic#configuration) を参照してください。
 
-Let's specify the bucket URL and credentials. We can do this using the following methods:
+バケットのURLと認証情報を指定しましょう。これは次の方法で行うことができます:
 
 <Tabs
   groupId="config-provider-type"
@@ -164,21 +164,21 @@ files = filesystem(
 </TabItem>
 </Tabs>
 
-As you can see, all parameters of `filesystem` can be specified directly in the code or taken from the configuration.
+ご覧のとおり、`filesystem` のすべてのパラメータはコード内で直接指定することも、構成から取得することもできます。
 
 :::tip
-dlt supports more ways of authorizing with cloud storages, including identity-based and default credentials. To learn more about adding credentials to your pipeline, please refer to the [Configuration and secrets section](../general-usage/credentials/complex_types#aws-credentials).
+dlt は、ID ベースやデフォルトの認証情報など、クラウド ストレージを使用した認証のさまざまな方法をサポートしています。パイプラインに認証情報を追加する方法の詳細については、[構成とシークレットのセクション](../general-usage/credentials/complex_types#aws-credentials) を参照してください。
 :::
 
-## 4. Running the pipeline
+## 4. パイプラインの実行
 
-Let's verify that the pipeline is working as expected. Run the following command to execute the pipeline:
+パイプラインが期待通りに動作していることを確認しましょう。次のコマンドを実行してパイプラインを実行します。:
 
 ```sh
 python filesystem_pipeline.py
 ```
 
-You should see the output of the pipeline execution in the terminal. The output will also display the location of the DuckDB database file where the data is stored:
+ターミナルにパイプライン実行の出力が表示されます。出力には、データが保存されているDuckDBデータベースファイルの場所も表示されます:
 
 ```sh
 Pipeline hospital_data_pipeline load step completed in 4.11 seconds
@@ -187,36 +187,36 @@ The duckdb destination used duckdb:////Users/vmishechk/PycharmProjects/dlt/hospi
 Load package 1726074108.8017762 is LOADED and contains no failed jobs
 ```
 
-## 5. Exploring the data
+## 5. データの調査
 
-Now that the pipeline has run successfully, let's explore the data loaded into DuckDB. dlt comes with a built-in browser application that allows you to interact with the data. To enable it, run the following command:
+データの探索パイプラインが正常に実行されたので、DuckDBにロードされたデータを探索してみましょう。dltには、データを操作できる組み込みのブラウザアプリケーションが付属しています。これを有効にするには、次のコマンドを実行します:
 
 ```sh
 pip install streamlit
 ```
 
-Next, run the following command to start the data browser:
+次に、以下のコマンドを実行してデータブラウザを起動します。:
 
 ```sh
 dlt pipeline hospital_data_pipeline show
 ```
 
-The command opens a new browser window with the data browser application. `hospital_data_pipeline` is the name of the pipeline defined in the `filesystem_pipeline.py` file.
+このコマンドは、データ ブラウザ アプリケーションを含む新しいブラウザ ウィンドウを開きます。`hospital_data_pipeline` は、`filesystem_pipeline.py` ファイルで定義されているパイプラインの名前です。
 
 ![Streamlit Explore data](/img/filesystem-tutorial/streamlit-data.png)
 
-You can explore the loaded data, run queries, and see some pipeline execution details.
+読み込まれたデータを調べたり、クエリを実行したり、パイプライン実行の詳細を確認したりできます。
 
-## 6. Appending, replacing, and merging loaded data
+## 6. ロードされたデータの追加、置換、およびマージ
 
-If you try running the pipeline again with `python filesystem_pipeline.py`, you will notice that all the tables have duplicated data. This happens because by default, dlt appends the data to the destination table. It is very useful, for example, when you have daily data updates and you want to ingest them. With dlt, you can control how the data is loaded into the destination table by setting the `write_disposition` parameter in the resource configuration. The possible values are:
-- `append`: Appends the data to the destination table. This is the default.
-- `replace`: Replaces the data in the destination table with the new data.
-- `merge`: Merges the new data with the existing data in the destination table based on the primary key.
+`python filesystem_pipeline.py` でパイプラインを再度実行してみると、すべてのテーブルに重複したデータがあることに気づくでしょう。これは、デフォルトでは dlt がデータを宛先テーブルに追加するために発生します。これは、たとえば、毎日データが更新され、それを取り込みたい場合に非常に便利です。dlt を使用すると、リソース構成で `write_disposition` パラメータを設定することで、データが宛先テーブルにロードされる方法を制御できます。可能な値は次のとおりです:
+- `append`: データを宛先テーブルに追加します。これがデフォルトです。
+- `replace`: 宛先テーブル内のデータを新しいデータに置き換えます。
+- `merge`: 主キーに基づいて、新しいデータを宛先テーブル内の既存のデータとマージします。
 
-To specify the `write_disposition`, you can set it in the `pipeline.run` command. Let's change the write disposition to `merge`. In this case, dlt will deduplicate the data before loading them into the destination.
+`write_disposition` を指定するには、`pipeline.run` コマンドで設定します。書き込み処理を `merge` に変更してみましょう。この場合、dlt はデータを宛先にロードする前に重複排除します。
 
-To enable data deduplication, we also should specify a `primary_key` or `merge_key`, which will be used by dlt to define if two records are different. Both keys could consist of several columns. dlt will try to use `merge_key` and fallback to `primary_key` if it's not specified. To specify any hints about the data, including column types, primary keys, you can use the [`apply_hints`](../general-usage/resource#set-table-name-and-adjust-schema) method.
+データの重複排除を有効にするには、dlt が 2 つのレコードが異なるかどうかを定義するために使用する `primary_key` または `merge_key` も指定する必要があります。両方のキーは複数の列で構成できます。dlt は `merge_key` の使用を試み、指定されていない場合は `primary_key` にフォールバックします。列タイプ、主キーなど、データに関するヒントを指定するには、[`apply_hints`](../general-usage/resource#set-table-name-and-adjust-schema) メソッドを使用できます。
 
 ```py
 import dlt
@@ -231,14 +231,14 @@ info = pipeline.run(reader, write_disposition="merge")
 print(info)
 ```
 :::tip
-You may need to drop the previously loaded data if you loaded data several times with `append` write disposition to make sure the primary key column has unique values.
+主キー列に一意の値があることを確認するために、`append` 書き込み処理を使用してデータを複数回ロードした場合は、以前にロードしたデータを削除する必要があるかもしれません。
 :::
 
-You can learn more about `write_disposition` in the [write dispositions section](../general-usage/incremental-loading#the-3-write-dispositions) of the incremental loading page.
+`write_disposition` の詳細については、増分読み込みページの [write dispositions セクション](../general-usage/incremental-loading#the-3-write-dispositions) を参照してください。
 
-## 7. Loading data incrementally
+## 7. データをインクリメンタルにロードする
 
-When loading data from files, you often only want to load files that have been modified. dlt makes this easy with [incremental loading](../general-usage/incremental-loading). To load only modified files, you can use the `apply_hint` method:
+ファイルからデータをロードする場合、変更されたファイルのみをロードしたいことがよくあります。dltは[増分ロード](../general-usage/incremental-loading)でこれを簡単にします。変更されたファイルのみをロードするには、`apply_hint`メソッドを使用します:
 
 ```py
 import dlt
@@ -254,9 +254,9 @@ info = pipeline.run(reader, write_disposition="merge")
 print(info)
 ```
 
-Notice that we used `apply_hints` on the `files` resource, not on `reader`. As mentioned before, the `filesystem` resource lists all files in the storage based on the `file_glob` parameter. So at this point, we can also specify additional conditions to filter out files. In this case, we only want to load files that have been modified since the last load. dlt will automatically keep the state of the incremental load and manage the correct filtering.
+`reader` ではなく `files` リソースで `apply_hints` を使用していることに注意してください。前述のように、`filesystem` リソースは `file_glob` パラメータに基づいてストレージ内のすべてのファイルをリストします。したがって、この時点で、ファイルをフィルター処理するための追加条件を指定することもできます。この場合、最後のロード以降に変更されたファイルのみをロードします。dlt は増分ロードの状態を自動的に保持し、適切なフィルター処理を管理します。
 
-But what if we not only want to process modified files but also want to load only new records? In the `encounters` table, we can see the column named `STOP` indicating the timestamp of the end of the encounter. Let's modify our code to load only those records whose `STOP` timestamp was updated since our last load.
+しかし、変更されたファイルを処理するだけでなく、新しいレコードだけをロードしたい場合はどうすればよいでしょうか。`encounters` テーブルには、エンカウンターの終了のタイムスタンプを示す `STOP` という列があります。コードを変更して、最後のロード以降に `STOP` タイムスタンプが更新されたレコードだけをロードするようにしてみましょう。
 
 ```py
 import dlt
@@ -272,19 +272,19 @@ info = pipeline.run(reader, write_disposition="merge")
 print(info)
 ```
 
-Notice that we applied incremental loading both for `files` and for `reader`. Therefore, dlt will first filter out only modified files and then filter out new records based on the `STOP` column.
+`files` と `reader` の両方に増分ロードを適用したことに注意してください。したがって、dlt は最初に変更されたファイルのみをフィルターし、次に `STOP` 列に基づいて新しいレコードをフィルターします。
 
-If you run `dlt pipeline hospital_data_pipeline show`, you can see the pipeline now has new information in the state about the incremental variable:
+`dlt pipeline hospital_data_pipeline show`を実行すると、パイプラインの状態に増分変数に関する新しい情報が含まれていることがわかります:
 
 ![Streamlit Explore data](/img/filesystem-tutorial/streamlit-incremental-state.png)
 
-To learn more about incremental loading, check out the [filesystem incremental loading section](../dlt-ecosystem/verified-sources/filesystem/basic#5-incremental-loading).
+インクリメンタルなロードの詳細については、[ファイルシステムのインクリメンタルロードのセクション](../dlt-ecosystem/verified-sources/filesystem/basic#5-incremental-loading)を参照してください。
 
-## 8. Enrich records with the files metadata
+## 8. ファイルのメタデータでレコードを充実させる
 
-Now let's add the file names to the actual records. This could be useful to connect the files' origins to the actual records.
+次に、実際のレコードにファイル名を追加してみましょう。これは、ファイルの起源を実際のレコードに結び付けるのに役立ちます。
 
-Since the `filesystem` source yields information about files, we can modify the transformer to add any available metadata. Let's create a custom transformer function. We can just copy-paste the `read_csv` function from dlt code and add one column `file_name` to the dataframe:
+`filesystem` ソースはファイルに関する情報を生成するので、トランスフォーマーを変更して利用可能なメタデータを追加することができます。カスタムトランスフォーマー関数を作成しましょう。dlt コードから `read_csv` 関数をコピーして貼り付け、データフレームに `file_name` 列を 1 つ追加するだけです:
 
 ```py
 from typing import Any, Iterator
@@ -318,15 +318,15 @@ info = pipeline.run(reader, write_disposition="merge")
 print(info)
 ```
 
-After executing this code, you'll see a new column in the `encounters` table:
+このコードを実行すると、`encounters`テーブルに新しい列が表示されます:
 
 ![Streamlit Explore data](/img/filesystem-tutorial/streamlit-new-col.png)
 
-## 9. Load any other type of files
+## 9. 他の種類のファイルをロードする
 
-dlt natively supports three file types: CSV, Parquet, and JSONL (more details in [filesystem transformer resource](../dlt-ecosystem/verified-sources/filesystem/basic#2-choose-the-right-transformer-resource)). But you can easily create your own. In order to do this, you just need a function that takes as input a `FileItemDict` iterator and yields a list of records (recommended for performance) or individual records.
+dlt は、CSV、Parquet、JSONL の 3 つのファイルタイプをネイティブにサポートしています (詳細については、[ファイルシステムのトランスフォーマーリソース](../dlt-ecosystem/verified-sources/filesystem/basic#2-choose-the-right-transformer-resource) を参照してください)。ただし、独自のトランスフォーマーを簡単に作成できます。これを行うには、`FileItemDict` イテレータを入力として受け取り、レコードのリスト (パフォーマンスのために推奨) または個々のレコードを生成する関数が必要です。
 
-Let's create and apply a transformer that reads JSON files instead of CSV (the implementation for JSON is a little bit different from JSONL).
+CSV ではなく JSON ファイルを読み取るトランスフォーマーを作成して適用してみましょう (JSON の実装は JSONL とは少し異なります)。
 
 ```py
 from typing import Iterator
@@ -353,15 +353,15 @@ info = pipeline.run(json_resource, write_disposition="replace")
 print(info)
 ```
 
-Check out [other examples](../dlt-ecosystem/verified-sources/filesystem/advanced#create-your-own-transformer) showing how to read data from `excel` and `xml` files.
+`excel` ファイルと `xml` ファイルからデータを読み取る方法を示した[その他の例](../dlt-ecosystem/verified-sources/filesystem/advanced#create-your-own-transformer) を確認してください。
 
-## What's next?
+## 次は？
 
-Congratulations on completing the tutorial! You've learned how to set up a filesystem source in dlt and run a data pipeline to load the data into DuckDB.
+チュートリアルの完了おめでとうございます。dlt でファイルシステムソースを設定し、データパイプラインを実行してデータを DuckDB にロードする方法を学びました。
 
-Interested in learning more about dlt? Here are some suggestions:
+dlt についてさらに詳しく知りたいですか? いくつか提案があります。
 
-- Learn more about the filesystem source configuration in [filesystem source](../dlt-ecosystem/verified-sources/filesystem)
-- Learn more about different credential types in [Built-in credentials](../general-usage/credentials/complex_types#built-in-credentials)
-- Learn how to [create a custom source](./load-data-from-an-api.md) in the advanced tutorial
+- ファイルシステム ソース構成の詳細については、[ファイルシステム ソース](../dlt-ecosystem/verified-sources/filesystem) を参照してください。
+- [組み込みの認証情報](../general-usage/credentials/complex_types#built-in-credentials) のさまざまな認証情報タイプについて詳しく学びます。
+- 上級チュートリアルで[カスタムソースを作成する](./load-data-from-an-api.md)方法を学びます
 

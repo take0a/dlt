@@ -4,16 +4,13 @@ description: Explanation of what a dlt state is
 keywords: [state, metadata, dlt.current.resource_state, dlt.current.source_state]
 ---
 
-# State
+# 状態
 
-The pipeline state is a Python dictionary that lives alongside your data; you can store values in
-it and, on the next pipeline run, request them back.
+パイプラインの状態は、データと一緒に存在する Python 辞書です。そこに値を保存し、次回のパイプライン実行時に値を戻すように要求できます。
 
-## Read and write pipeline state in a resource
+## リソース内のパイプラインの状態の読み取りと書き込み
 
-You read and write the state in your resources. Below, we use the state to create a list of chess
-game archives, which we then use to
-[prevent requesting duplicates](incremental-loading.md#advanced-state-usage-storing-a-list-of-processed-entities).
+リソースの状態を読み書きします。以下では、状態を使用してチェスの試合のアーカイブのリストを作成し、それを使用して [重複したリクエストを防止](incremental-loading.md#advanced-state-usage-storing-a-list-of-processed-entities) します。
 
 ```py
 @dlt.resource(write_disposition="append")
@@ -35,83 +32,50 @@ def players_games(chess_url, player, start_month=None, end_month=None):
         yield r.json().get("games", [])
 ```
 
-Above, we request the resource-scoped state. The `checked_archives` list stored under the `archives`
-dictionary key is private and visible only to the `players_games` resource.
+上記では、リソース スコープの状態を要求しています。`archives` 辞書キーの下に格納されている `checked_archives` リストはプライベートであり、`players_games` リソースにのみ表示されます。
 
-The pipeline state is stored locally in the
-[pipeline working directory](pipeline.md#pipeline-working-directory) and, as a consequence, it
-cannot be shared with pipelines with different names. You must also make sure that data written into
-the state is JSON serializable. Except for standard Python types, `dlt` handles `DateTime`, `Decimal`,
-`bytes`, and `UUID`.
+パイプラインの状態は [パイプライン作業ディレクトリ](pipeline.md#pipeline-working-directory) にローカルに保存されるため、異なる名前のパイプラインと共有することはできません。また、状態に書き込まれるデータが JSON シリアル化可能であることを確認する必要があります。標準の Python 型以外に、`dlt` は `DateTime`、`Decimal`、`bytes`、および `UUID` を処理します。
 
-## Share state across resources and read state in a source
+## リソース間で状態を共有し、ソース内の状態を読み取る
 
-You can also access the source-scoped state with `dlt.current.source_state()`, which can be shared
-across resources of a particular source and is also available read-only in the source-decorated
-functions. The most common use case for the source-scoped state is to store a mapping of custom fields
-to their displayable names. You can take a look at our
-[pipedrive source](https://github.com/dlt-hub/verified-sources/blob/master/sources/pipedrive/__init__.py#L118)
-for an example of state passed across resources.
+また、`dlt.current.source_state()` を使用してソース スコープの状態にアクセスすることもできます。これは、特定のソースのリソース間で共有でき、ソース装飾関数では読み取り専用で使用できます。ソース スコープの状態の最も一般的な使用例は、カスタム フィールドと表示可能な名前のマ​​ッピングを保存することです。リソース間で渡される状態の例については、[pipedrive ソース](https://github.com/dlt-hub/verified-sources/blob/master/sources/pipedrive/__init__.py#L118) を参照してください。
 
 :::tip
-[Decompose your source](../reference/performance.md#source-decomposition-for-serial-and-parallel-resource-execution)
-to, for example, run it on Airflow in parallel. If you cannot avoid that, designate one of
-the resources as the state writer and all others as state readers. This is exactly what the `pipedrive`
-pipeline does. With such a structure, you will still be able to run some of your resources in
-parallel.
+[ソースを分解](../reference/performance.md#source-decomposition-for-serial-and-parallel-resource-execution)して、たとえば Airflow で並列実行します。これを避けられない場合は、リソースの 1 つを状態ライターとして指定し、その他すべてを状態リーダーとして指定します。これはまさに `pipedrive` パイプラインが行うことです。このような構造でも、一部のリソースを並列で実行できます。
 :::
 :::caution
-The `dlt.state()` is a deprecated alias to `dlt.current.source_state()` and will soon be
-removed.
-:::
+`dlt.state()` は `dlt.current.source_state()` の非推奨のエイリアスであり、まもなく削除されます。:::
 
-## Syncing state with destination
+## 宛先と状態の同期
 
-What if you run your pipeline on, for example, Airflow, where every task gets a clean filesystem and
-the [pipeline working directory](pipeline.md#pipeline-working-directory) is always deleted? `dlt` loads
-your state into the destination along with all other data, and when faced with a clean start, it
-will try to restore the state from the destination.
+たとえば、すべてのタスクがクリーンなファイルシステムを取得し、[パイプライン作業ディレクトリ](pipeline.md#pipeline-working-directory)が常に削除される Airflow でパイプラインを実行するとどうなるでしょうか？ `dlt` は、他のすべてのデータとともに状態を宛先に読み込み、クリーンな開始に直面すると、宛先から状態を復元しようとします。
 
-The remote state is identified by the pipeline name, the destination location (as given by the
-credentials), and the destination dataset. To reuse the same state, use the same pipeline name and
-destination.
+リモート状態は、パイプライン名、宛先の場所 (資格情報によって指定)、および宛先データセットによって識別されます。同じ状態を再利用するには、同じパイプライン名と宛先を使用します。
 
-The state is stored in the `_dlt_pipeline_state` table at the destination and contains information
-about the pipeline, the pipeline run (to which the state belongs), and the state blob.
+状態は宛先の `_dlt_pipeline_state` テーブルに保存され、パイプライン、パイプライン実行 (状態が属する)、および状態 BLOB に関する情報が含まれます。
 
-`dlt` has a `dlt pipeline sync` command where you can
-[request the state back from that table](../reference/command-line-interface.md#sync-pipeline-with-the-destination).
+`dlt` には `dlt pipeline sync` コマンドがあり、[そのテーブルから状態を返すように要求](../reference/command-line-interface.md#sync-pipeline-with-the-destination) できます。
 
-> 💡 If you can keep the pipeline working directory across the runs, you can disable the state sync
-> by setting `restore_from_destination=false` in your `config.toml`.
+> 💡 実行間でパイプラインの作業ディレクトリを維持できる場合は、`config.toml` で `restore_from_destination=false` を設定することで状態の同期を無効にすることができます。
 
-## When to use pipeline state
+## パイプラインの状態を使用する場合
 
-- `dlt` uses the state internally to implement
-  [last value incremental loading](incremental-loading.md#incremental_loading-with-last-value). This
-  use case should cover around 90% of your needs to use the pipeline state.
-- [Store a list of already requested entities](incremental-loading.md#advanced-state-usage-storing-a-list-of-processed-entities)
-  if the list is not much bigger than 100k elements.
-- [Store large dictionaries of last values](incremental-loading.md#advanced-state-usage-tracking-the-last-value-for-all-search-terms-in-twitter-api)
-  if you are not able to implement it with the standard incremental construct.
-- Store custom fields dictionaries, dynamic configurations, and other source-scoped state.
+- `dlt` は内部的に状態を使用して、[インクリメンタルロードの最後の値](incremental-loading.md#incremental_loading-with-last-value)を実装します。このユースケースは、パイプライン状態を使用するニーズの約 90% をカバーするはずです。
+- リストが 10 万要素より大幅に大きくない場合は、[既に要求されたエンティティのリストを保存します](incremental-loading.md#advanced-state-usage-storing-a-list-of-processed-entities)。
+- 標準のインクリメンタルな構造で実装できない場合は、[最後の値の大きな辞書を保存](incremental-loading.md#advanced-state-usage-tracking-the-last-value-for-all-search-terms-in-twitter-api)します。
+- カスタムフィールドのディクショナリ、動的構成、およびその他のソーススコープの状態を保存します。
 
-## Do not use pipeline state if it can grow to millions of records
+## 数百万レコードにまで増加する可能性がある場合は、パイプライン状態を使用しないでください。
 
-Do not use `dlt` state when it may grow to millions of elements. Do you plan to store modification
-timestamps of all your millions of user records? This is probably a bad idea! In that case, you
-could:
+`dlt` 状態は、数百万の要素にまで拡大する可能性がある場合には使用しないでください。数百万のユーザーレコードの変更タイムスタンプをすべて保存するつもりですか? これはおそらく悪い考えです! その場合は、次のようにすることができます:
 
-- Store the state in DynamoDB, Redis, etc., taking into account that if the extract stage fails,
-  you'll end up with an invalid state.
-- Use your loaded data as the state. `dlt` exposes the current pipeline via `dlt.current.pipeline()`
-  from which you can obtain
-  [sqlclient](../dlt-ecosystem/transformations/sql.md)
-  and load the data of interest. In that case, try at least to process your user records in batches.
+- 抽出ステージが失敗した場合、無効な状態になってしまうことを考慮に入れて、状態を DynamoDB、Redis などに保存します。
+- ロードしたデータを状態として使用します。`dlt` は `dlt.current.pipeline()` を介して現在のパイプラインを公開し、そこから [sqlclient](../dlt-ecosystem/transformations/sql.md) を取得して、目的のデータをロードできます。その場合は、少なくともユーザー レコードをバッチで処理するようにしてください。
 
-### Access data in the destination instead of pipeline state
+### パイプライン状態ではなく宛先のデータにアクセスする
 
-In the example below, we load recent comments made by a given `user_id`. We access the `user_comments` table to select the maximum comment id for a given user.
+以下の例では、特定の `user_id` によって作成された最近のコメントを読み込みます。特定のユーザーの最大コメント ID を選択するために、`user_comments` テーブルにアクセスします。
+
 ```py
 import dlt
 
@@ -137,28 +101,29 @@ def comments(user_id: str):
         if i > max_id
     ]
 ```
-When the pipeline is first run, the destination dataset and `user_comments` table do not yet exist. We skip the destination query by using the `first_run` property of the pipeline. We also handle a situation where there are no comments for a user_id by replacing None with 0 as `max_id`.
 
-## Inspect the pipeline state
+パイプラインを初めて実行したとき、宛先データセットと `user_comments` テーブルはまだ存在していません。パイプラインの `first_run` プロパティを使用して、宛先クエリをスキップします。また、`max_id` として None を 0 に置き換えることで、user_id にコメントがない状況を処理します。
 
-You can inspect the pipeline state with the [`dlt pipeline` command](../reference/command-line-interface.md#dlt-pipeline):
+## パイプラインの状態を検査する
+
+[`dlt pipeline` コマンド](../reference/command-line-interface.md#dlt-pipeline)を使用してパイプラインの状態を検査できます。:
 
 ```sh
 dlt pipeline -v chess_pipeline info
 ```
 
-This will display the source and resource state slots for all known sources.
+これにより、すべての既知のソースのソースおよびリソース状態スロットが表示されます。
 
-## Reset the pipeline state: full or partial
+## パイプラインの状態をリセット: 完全または部分的に
 
-**To fully reset the state:**
+**状態を完全にリセットするには:**
 
-- Drop the destination dataset to fully reset the pipeline.
-- [Set the `dev_mode` flag when creating the pipeline](pipeline.md#do-experiments-with-dev-mode).
-- Use the `dlt pipeline drop --drop-all` command to [drop the state and tables for a given schema name](../reference/command-line-interface.md#selectively-drop-tables-and-reset-state).
+- パイプラインを完全にリセットするには、宛先データセットをドロップします。
+- [パイプラインを作成するときに `dev_mode` フラグを設定します](pipeline.md#do-experiments-with-dev-mode)。
+- `dlt pipeline drop --drop-all` コマンドを使用して、[指定されたスキーマ名の状態とテーブルを削除します](../reference/command-line-interface.md#selectively-drop-tables-and-reset-state).
 
-**To partially reset the state:**
+**状態を部分的にリセットするには:**
 
-- Use the `dlt pipeline drop <resource_name>` command to [drop the state and tables for a given resource](../reference/command-line-interface.md#selectively-drop-tables-and-reset-state).
-- Use the `dlt pipeline drop --state-paths` command to [reset the state at a given path without touching the tables and data](../reference/command-line-interface.md#selectively-drop-tables-and-reset-state).
+- `dlt pipeline drop <resource_name>` コマンドを使用して、[特定のリソースの状態とテーブルを削除します](../reference/command-line-interface.md#selectively-drop-tables-and-reset-state).
+- `dlt pipeline drop --state-paths` コマンドを使用して、[テーブルやデータに触れることなく、指定されたパスの状態をリセットします](../reference/command-line-interface.md#selectively-drop-tables-and-reset-state).
 

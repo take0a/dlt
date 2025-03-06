@@ -4,14 +4,14 @@ description: Loads data from REST APIs using a declarative configuration
 keywords: [rest api, restful api]
 ---
 
-You can use the REST API source to extract data from any REST API. Using a [declarative configuration](./basic.md#source-configuration), you can define:
+REST APIソースを使用して、任意のREST APIからデータを抽出できます。[宣言型の構成](./basic.md#source-configuration)を使用すると、次のように定義できます。:
 
-* the API endpoints to pull data from,
-* their [relationships](./basic.md#define-resource-relationships),
-* how to handle [pagination](./basic.md#pagination),
-* [authentication](./basic.md#authentication).
+* データを取得する API エンドポイント、
+* それらの[関係](./basic.md#define-resource-relationships)、
+* how to handle [ページング](./basic.md#pagination)の処理方法、
+* [認証](./basic.md#authentication).
 
-dlt will take care of the rest: unnesting the data, inferring the schema, etc., and writing to the destination.
+dlt は、データのネスト解除、スキーマの推測など、残りの処理、および宛先への書き込みを処理します。
 
 import DocCardList from '@theme/DocCardList';
 

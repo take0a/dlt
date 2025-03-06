@@ -4,33 +4,33 @@ description: How to extract data from a SQL Database using dlt's SQL Database co
 keywords: [sql connector, sql database pipeline, sql database]
 ---
 
-This tutorial will show you how you can use dlt to load data from a SQL Database (PostgreSQL, MySQL, Microsoft SQL Server, Oracle, IBM DB2, etc.) into any dlt-compatible destination (Postgres, BigQuery, Snowflake, DuckDB, etc.).
+このチュートリアルでは、dlt を使用して SQL データベース (PostgreSQL、MySQL、Microsoft SQL Server、Oracle、IBM DB2 など) から任意の dlt が対応する宛先 (Postgres、BigQuery、Snowflake、DuckDB など) にデータをロードする方法を説明します。
 
-To make it easy to reproduce, we will be loading data from the [public MySQL RFam database](https://docs.rfam.org/en/latest/database.html) into a local DuckDB instance.
+再現を容易にするために、[パブリックな MySQL の RFam データベース](https://docs.rfam.org/en/latest/database.html) からローカル DuckDB インスタンスにデータをロードします。
 
-## What you will learn
+## 学ぶ内容
 
-- How to set up and configure a basic SQL database pipeline
-- How to implement "append," "replace," and "merge" loading strategies
-- How to load data incrementally
+- 基本的なSQLデータベースパイプラインの設定方法
+- 「追加」、「置換」、「マージ」ロード戦略を実装する方法
+- データをインクリメンタルにロードする方法
 
-## 0. Prerequisites
+## 0. 前提条件
 
-- Python 3.9 or higher installed
-- Virtual environment set up
-- dlt installed. Follow the instructions in the [installation guide](../reference/installation) to create a new virtual environment and install the `dlt` package.
+- Python 3.9 以上がインストールされている
+- 仮想環境がセットアップされている
+- dlt がインストールされている。[インストールガイド](../reference/installation)の指示に従って、新しい仮想環境を作成し、`dlt` パッケージをインストールしてください。
 
-## 1. Create a new dlt project
+## 1. 新しい dlt プロジェクトを作成する
 
-Initialize a new dlt project in your current working directory using the `dlt init` command:
+`dlt init`コマンドを使用して、現在の作業ディレクトリに新しい dlt プロジェクトを初期化します:
 
 ```sh
 dlt init sql_database duckdb
 ```
 
-This is a handy CLI command that creates files and folders required for a SQL Database to DuckDB pipeline. You can easily replace `duckdb` with any other [supported destinations](../dlt-ecosystem/destinations).
+これは、SQL データベースから DuckDB パイプラインに必要なファイルとフォルダーを作成する便利な CLI コマンドです。`duckdb` を他の [サポートされている宛先](../dlt-ecosystem/destinations) に簡単に置き換えることができます。
 
-After running this command, your project will have the following structure:
+このコマンドを実行すると、プロジェクトは次の構造になります。:
 
 ```text
 ├── .dlt
@@ -40,28 +40,28 @@ After running this command, your project will have the following structure:
 └── requirements.txt
 ```
 
-Here’s what each file does:
+各ファイルの機能は次のとおりです:
 
-- `sql_database_pipeline.py`: This is the main script where you'll define your data pipeline. It contains several different examples of how you can configure your SQL Database pipeline.
-- `requirements.txt`: This file lists all the Python dependencies required for your project.
-- `.dlt/`: This directory contains the [configuration files](../general-usage/credentials/) for your project:
-    - `secrets.toml`: This file stores your credentials, API keys, tokens, and other sensitive information.
-    - `config.toml`: This file contains the configuration settings for your `dlt` project.
-
-:::note
-When deploying your pipeline in a production environment, managing all configurations with the TOML files might not be convenient. In this case, we highly recommend using environment variables or other [configuration providers](../general-usage/credentials/setup#available-config-providers) available in dlt to store secrets and configs instead.
-:::
-
-## 2. Configure the pipeline script
-
-With the necessary files in place, we can now start writing our pipeline script. The existing file `sql_database_pipeline.py` already contains many pre-configured example functions that can help you get started with different data loading scenarios. However, for the purpose of this tutorial, we will be writing a new function from scratch.
+- `sql_database_pipeline.py`: これは、データパイプラインを定義するメインスクリプトです。SQL データベースのパイプラインを構成する方法を示すさまざまな例が含まれています。
+- `requirements.txt`: このファイルには、プロジェクトに必要なすべての Python 依存関係がリストされます。
+- `.dlt/`: このディレクトリには、プロジェクトの[構成ファイル](../general-usage/credentials/)が含まれています。:
+    - `secrets.toml`: このファイルには、資格情報、API キー、トークン、その他の機密情報が保存されます。
+    - `config.toml`: このファイルには、`dlt` プロジェクトの構成設定が含まれています。
 
 :::note
-Running the script as it is will execute the function `load_standalone_table_resource()`, so remember to comment out the function call from inside the main block.
+パイプラインを本番環境にデプロイする場合、すべての構成を TOML ファイルで管理するのは不便な場合があります。この場合、代わりに dlt で利用可能な環境変数またはその他の [構成プロバイダー](../general-usage/credentials/setup#available-config-providers) を使用してシークレットと構成を保存することを強くお勧めします。
+:::
+
+## 2. パイプラインスクリプトを構成する
+
+必要なファイルが準備できたら、パイプライン スクリプトの作成を開始できます。既存のファイル `sql_database_pipeline.py` には、さまざまなデータ読み込みシナリオを開始するのに役立つ、事前設定されたサンプル関数が多数含まれています。ただし、このチュートリアルでは、新しい関数を最初から作成します。
+
+:::note
+スクリプトをそのまま実行すると、関数 `load_standalone_table_resource()` が実行されるので、メイン ブロック内からの関数呼び出しをコメント アウトすることを忘れないでください。
 :::
 
 
-The following function will load the tables `family` and `genome`.
+次の関数は、テーブル `family` と `genome` をロードします。
 
 ```py
 import dlt
@@ -90,18 +90,18 @@ if __name__ == '__main__':
 
 ```
 
-Explanation:
-- The `sql_database` source has two built-in helper functions: `sql_database()` and `sql_table()`:
-    - `sql_database()` is a [dlt source function](../general-usage/source) that iteratively loads the tables (in this example, `"family"` and `"genome"`) passed inside the `with_resource()` method.
-    - `sql_table()` is a [dlt resource function](../general-usage/resource) that loads standalone tables. For example, if we wanted to only load the table `"family"`, then we could have done it using `sql_table(table="family")`.
-- `dlt.pipeline()` creates a `dlt` pipeline with the name `"sql_to_duckdb_pipeline"` with the destination DuckDB.
-- `pipeline.run()` method loads the data into the destination.
+説明:
+- `sql_database` ソースには `sql_database()` と `sql_table()` という 2 つの組み込みヘルパー関数があります。:
+    - `sql_database()` は、`with_resource()` メソッド内で渡されたテーブル (この例では、`"family"` と `"genome"`) を反復的にロードする [dlt ソース関数](../general-usage/source) です。
+    - `sql_table()` は、スタンドアロン テーブルをロードする [dlt リソース関数](../general-usage/resource) です。たとえば、テーブル `"family"` のみをロードしたい場合は、`sql_table(table="family")` を使用して実行できます。
+- `dlt.pipeline()` は、宛先が DuckDB となる `"sql_to_duckdb_pipeline"` という名前の `dlt` パイプラインを作成します。
+- `pipeline.run()` メソッドはデータを宛先にロードします。
 
-## 3. Add credentials
+## 3. 資格情報を追加する
 
-To successfully connect to your SQL database, you will need to pass credentials into your pipeline. dlt automatically looks for this information inside the generated TOML files.
+SQL データベースに正常に接続するには、パイプラインに資格情報を渡す必要があります。dlt は、生成された TOML ファイル内でこの情報を自動的に検索します。
 
-Simply paste the [connection details](https://docs.rfam.org/en/latest/database.html) inside `secrets.toml` as follows:
+次のように、[接続の詳細](https://docs.rfam.org/en/latest/database.html)を `secrets.toml` 内に貼り付けるだけです。:
 ```toml
 [sources.sql_database.credentials]
 drivername = "mysql+pymysql" # database+dialect
@@ -112,66 +112,66 @@ host = "mysql-rfam-public.ebi.ac.uk"
 port = 4497
 ```
 
-Alternatively, you can also paste the credentials as a connection string:
+あるいは、資格情報を接続文字列として貼り付けることもできます:
 ```toml
 sources.sql_database.credentials="mysql+pymysql://rfamro@mysql-rfam-public.ebi.ac.uk:4497/Rfam"
 ```
 
-For more details on the credentials format and other connection methods, read the section on [configuring connection to the SQL Database](../dlt-ecosystem/verified-sources/sql_database#credentials-format).
+資格情報の形式とその他の接続方法の詳細については、[SQL データベースへの接続の構成](../dlt-ecosystem/verified-sources/sql_database#credentials-format) のセクションを参照してください。
 
 
-## 4. Install dependencies
+## 4. 依存関係をインストールする
 
-Before running the pipeline, make sure to install all the necessary dependencies:
-1. **General dependencies**: These are the general dependencies needed by the `sql_database` source.
+パイプラインを実行する前に、必要な依存関係をすべてインストールしてください:
+1. **一般的な依存関係**: これらは、`sql_database` ソースに必要な一般的な依存関係です。
     ```sh
     pip install -r requirements.txt
     ```
-2. **Database-specific dependencies**: In addition to the general dependencies, you will also need to install `pymysql` to connect to the MySQL database in this tutorial:
+2. **データベース特有の依存関係**: 一般的な依存関係に加えて、このチュートリアルでは MySQL データベースに接続するために `pymysql` もインストールする必要があります:
     ```sh
     pip install pymysql
     ```
 
-    Explanation: dlt uses SQLAlchemy to connect to the source database and hence, also requires the database-specific SQLAlchemy dialect, such as `pymysql` (MySQL), `psycopg2` (Postgres), `pymssql` (MSSQL), `snowflake-sqlalchemy` (Snowflake), etc. See the [SQLAlchemy docs](https://docs.sqlalchemy.org/en/20/dialects/#external-dialects) for a full list of available dialects.
+    説明: dlt は SQLAlchemy を使用してソース データベースに接続するため、`pymysql` (MySQL)、`psycopg2` (Postgres)、`pymssql` (MSSQL)、`snowflake-sqlalchemy` (Snowflake) などのデータベース固有の SQLAlchemy 方言も必要です。使用可能な方言の完全なリストについては、[SQLAlchemy ドキュメント](https://docs.sqlalchemy.org/en/20/dialects/#external-dialects) を参照してください。
 
-## 5. Run the pipeline
+## 5. パイプラインを実行する
 
-After performing steps 1-4, you should now be able to successfully run the pipeline by executing the following command:
+手順1～4を実行した後、次のコマンドを実行することでパイプラインを正常に実行できるはずです:
 
 ```sh
 python sql_database_pipeline.py
 ```
-This will create the file `sql_to_duckdb_pipeline.duckdb` in your dlt project directory, which contains the loaded data.
+実行すると、dlt プロジェクトのディレクトリに `sql_to_duckdb_pipeline.duckdb` ファイルが作成され、そこにロードされたデータが含まれます。
 
-## 6. Explore the data
+## 6. データを探索する
 
-dlt comes with a built-in browser application that allows you to interact with the loaded data. To enable it, run the following command:
+dlt には、ロードされたデータを操作できる組み込みのブラウザアプリケーションが付属しています。これを有効にするには、次のコマンドを実行します:
 
 ```sh
 pip install streamlit
 ```
 
-Next, run the following command to launch the data browser app:
+次に、以下のコマンドを実行してデータブラウザアプリを起動します。:
 
 ```sh
 dlt pipeline sql_to_duckdb_pipeline show
 ```
 
-You can explore the loaded data, run queries, and see some pipeline execution details.
+読み込まれたデータを調べたり、クエリを実行したり、パイプライン実行の詳細を確認したりできます。
 
 ![streamlit-screenshot](https://storage.googleapis.com/dlt-blog-images/docs-sql-database-tutorial-streamlit-screenshot.png)
 
-## 7. Append, replace, or merge loaded data
+## 7. 読み込んだデータを追加、置換、または結合する
 
-Try running the pipeline again with `python sql_database_pipeline.py`. You will notice that all the tables have the data duplicated. This happens as dlt, by default, appends data to the destination tables in every load. This behavior can be adjusted by setting the `write_disposition` parameter inside the `pipeline.run()` method. The possible settings are:
+`python sql_database_pipeline.py` でパイプラインを再度実行してみてください。すべてのテーブルにデータが重複していることがわかります。これは、dlt がデフォルトでロードごとに宛先テーブルにデータを追加するためです。この動作は、`pipeline.run()` メソッド内の `write_disposition` パラメータを設定することで調整できます。設定可能な値は次のとおりです。:
 
-- `append`: Appends the data to the destination table. This is the default.
-- `replace`: Replaces the data in the destination table with the new data.
-- `merge`: Merges the new data with the existing data in the destination table based on a primary key.
+- `append`: データを宛先テーブルに追加します。これがデフォルトです。
+- `replace`: 宛先テーブル内のデータを新しいデータに置き換えます。
+- `merge`: 主キーに基づいて、新しいデータを宛先テーブル内の既存のデータとマージします。
 
-### Load with replace
+### 置換するロード
 
-To prevent the data from being duplicated in each row, set `write_disposition` to `replace`:
+各行でデータが重複するのを防ぐには、`write_disposition` を `replace` に設定します:
 
 ```py
 import dlt
@@ -196,13 +196,13 @@ if __name__ == '__main__':
 
 ```
 
-Run the pipeline again with `sql_database_pipeline.py`. This time, the data will be replaced in the destination table instead of being appended.
+`sql_database_pipeline.py` を使用してパイプラインを再度実行します。今回は、宛先テーブルでデータが追加されるのではなく、置き換えられます。
 
-### Load with merge
+### マージするロード
 
-When you want to update the existing data as new data is loaded, you can use the `merge` write disposition. This requires specifying a primary key for the table. The primary key is used to match the new data with the existing data in the destination table.
+新しいデータがロードされるときに既存のデータを更新する場合は、`merge` 書き込み処理を使用できます。これには、テーブルの主キーを指定する必要があります。主キーは、新しいデータを宛先テーブルの既存のデータと一致させるために使用されます。
 
-In the previous example, we set `write_disposition="replace"` inside `pipeline.run()` which caused all the tables to be loaded with `replace`. However, it's also possible to define the `write_disposition` strategy separately for each table using the `apply_hints` method. In the example below, we use `apply_hints` on each table to specify different primary keys for merge:
+前の例では、`pipeline.run()` 内で `write_disposition="replace"` を設定し、すべてのテーブルが `replace` でロードされるようにしました。ただし、`apply_hints` メソッドを使用して、各テーブルごとに `write_disposition` 戦略を個別に定義することもできます。以下の例では、各テーブルで `apply_hints` を使用して、マージに異なる主キーを指定しています。:
 
 ```py
 import dlt
@@ -230,11 +230,11 @@ if __name__ == '__main__':
     load_tables_family_and_genome()
 ```
 
-## 8. Load data incrementally
+## 8. インクリメンタルにデータをロードする
 
-Often, you don't want to load the entire dataset in each load, but rather only the new or modified data. dlt makes this easy with [incremental loading](../general-usage/incremental-loading).
+多くの場合、各ロードでデータセット全体をロードするのではなく、新しいデータまたは変更されたデータのみをロードします。dlt は、[インクリメンタルなロード](../general-usage/incremental-loading) によりこれを簡単にします。
 
-In the example below, we configure the table `"family"` to load incrementally based on the column `"updated"`:
+以下の例では、テーブル「family」を列「updated」に基づいて増分ロードするように設定しています:
 
 ```py
 import dlt
@@ -263,14 +263,14 @@ if __name__ == '__main__':
     load_tables_family_and_genome()
 ```
 
-In the first run of the pipeline `python sql_database_pipeline.py`, the entire table `"family"` will be loaded. In every subsequent run, only the newly updated rows (as tracked by the column `"updated"`) will be loaded.
+パイプライン `python sql_database_pipeline.py` の最初の実行では、テーブル `"family"` 全体がロードされます。その後の実行では、新しく更新された行 (列 `"updated"` によって追跡される) のみがロードされます。
 
-## What's next?
+## 次は？
 
-Congratulations on completing the tutorial! You learned how to set up a SQL Database source in dlt and run a data pipeline to load the data into DuckDB.
+チュートリアルの完了おめでとうございます。dlt で SQL データベース ソースを設定し、データ パイプラインを実行してデータを DuckDB にロードする方法を学びました。
 
-Interested in learning more about dlt? Here are some suggestions:
-- Learn more about the SQL Database source configuration in [the SQL Database source reference](../dlt-ecosystem/verified-sources/sql_database)
-- Learn how to extract [single tables and use fast `arrow` and `connectorx` backends](../dlt-ecosystem/verified-sources/sql_database/configuration.md)
-- Learn how to [rewrite table schemas and queries](../dlt-ecosystem/verified-sources/sql_database/usage.md)
-- Learn how to [create a custom source](./load-data-from-an-api.md) in the advanced tutorial
+dlt についてもっと知りたいですか？いくつか提案があります:
+- SQL データベースソース構成の詳細については、[SQL データベースソースのリファレンス](../dlt-ecosystem/verified-sources/sql_database) を参照してください。
+- [単一のテーブルを抽出し、高速な `arrow` および `connectorx` バックエンドを使用する](../dlt-ecosystem/verified-sources/sql_database/configuration.md) 方法を学びます
+- [テーブル スキーマとクエリを書き換える](../dlt-ecosystem/verified-sources/sql_database/usage.md) 方法を学びます
+- 上級チュートリアルで[カスタムソースを作成する](./load-data-from-an-api.md)方法を学びます

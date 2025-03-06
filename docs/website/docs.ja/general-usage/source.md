@@ -4,27 +4,22 @@ description: Explanation of what a dlt source is
 keywords: [source, api, dlt.source]
 ---
 
-# Source
+# ソース
 
-A [source](glossary.md#source) is a logical grouping of resources, i.e., endpoints of a
-single API. The most common approach is to define it in a separate Python module.
+[ソース](glossary.md#source)は、リソース、つまり単一の API のエンドポイントの論理的なグループです。最も一般的なアプローチは、別の Python モジュールで定義することです。
 
-- A source is a function decorated with `@dlt.source` that returns one or more resources.
-- A source can optionally define a [schema](schema.md) with tables, columns, performance hints, and
-  more.
-- The source Python module typically contains optional customizations and data transformations.
-- The source Python module typically contains the authentication and pagination code for a particular
-  API.
+- ソースは、1 つ以上のリソースを返す `@dlt.source` で装飾された関数です。
+- ソースでは、オプションでテーブル、列、パフォーマンス ヒントなどを含む [スキーマ](schema.md) を定義できます。
+- ソース Python モジュールには通常、オプションのカスタマイズとデータ変換が含まれています。
+- ソース Python モジュールには通常、特定の API の認証およびページネーション コードが含まれています。
 
-## Declare sources
+## ソースを宣言する
 
-You declare a source by decorating an (optionally async) function that returns or yields one or more resources with `@dlt.source`. Our
-[Create a pipeline](../walkthroughs/create-a-pipeline.md) how-to guide teaches you how to do that.
+ソースを宣言するには、1 つ以上のリソースを返すか生成する (オプションで非同期の) 関数を `@dlt.source` で装飾します。[パイプラインを作成する](../walkthroughs/create-a-pipeline.md) ハウツー ガイドで、その方法を説明しています。
 
-### Create resources dynamically
+### リソースを動的に作成する
 
-You can create resources by using `dlt.resource` as a function. In the example below, we reuse a
-single generator function to create a list of resources for several Hubspot endpoints.
+`dlt.resource` を関数として使用してリソースを作成できます。以下の例では、単一のジェネレーター関数を再利用して、複数の Hubspot エンドポイントのリソースのリストを作成します。
 
 ```py
 @dlt.source
@@ -41,23 +36,21 @@ def hubspot(api_key=dlt.secrets.value):
         yield dlt.resource(get_resource(endpoint), name=endpoint)
 ```
 
-### Attach and configure schemas
+### スキーマをアタッチ、構成する
 
-You can [create, attach, and configure schemas](schema.md#attaching-schemas-to-sources) that will be
-used when loading the source.
+ソースをロードするときに使用される [スキーマを作成、アタッチ、および構成](schema.md#attaching-schemas-to-sources) できます。
 
-### Avoid long-lasting operations in source function
+### source 関数での長時間の操作を避ける
 
-Do not extract data in the source function. Leave that task to your resources if possible. The source function is executed immediately when called (contrary to resources which delay execution - like Python generators). There are several benefits (error handling, execution metrics, parallelization) you get when you extract data in `pipeline.run` or `pipeline.extract`.
+sorce 関数でデータを抽出しないでください。可能であれば、そのタスクはリソースに任せてください。ソース関数は、呼び出されるとすぐに実行されます (Python ジェネレーターなどの実行を遅らせるリソースとは異なります)。`pipeline.run` または `pipeline.extract` 内でデータを抽出すると、いくつかの利点 (エラー処理、実行メトリック、並列化) が得られます。
 
-If this is impractical (for example, you want to reflect a database to create resources for tables), make sure you do not call the source function too often. [See this note if you plan to deploy on Airflow](../walkthroughs/deploy-a-pipeline/deploy-with-airflow-composer.md#2-modify-dag-file)
+これが現実的でない場合（たとえば、データベースを反映してテーブルのリソースを作成する場合）、source 関数を頻繁に呼び出さないようにしてください。[Airflow にデプロイする予定の場合は、この注記を参照してください](../walkthroughs/deploy-a-pipeline/deploy-with-airflow-composer.md#2-modify-dag-file)
 
-## Customize sources
+## ソースをカスタマイズする
 
-### Access and select resources to load
+### ロードするリソースにアクセスして選択する
 
-You can access resources present in a source and select which of them you want to load. In the case of
-the `hubspot` resource above, we could select and load the "companies", "deals", and "products" resources:
+ソース内に存在するリソースにアクセスし、読み込むリソースを選択できます。上記の `hubspot` リソースの場合、「companies」、「deals」、「products」のリソースを選択して読み込むことができます:
 
 ```py
 from hubspot import hubspot
@@ -71,7 +64,7 @@ print(source.resources.selected.keys())
 pipeline.run(source.with_resources("companies", "deals"))
 ```
 
-Resources can be individually accessed and selected:
+リソースは個別にアクセスして選択できます:
 
 ```py
 # resources are accessible as attributes of a source
@@ -84,20 +77,19 @@ print(source.deals.selected)
 source.deals.selected = False
 ```
 
-### Filter, transform, and pivot data
+### データのフィルタリング、変換、ピボット
 
-You can modify and filter data in resources, for example, if we want to keep only deals after a certain
-date:
+リソース内のデータを変更したりフィルタリングしたりすることができます。たとえば、特定の日付以降の取引のみを保持したい場合などです:
 
 ```py
 source.deals.add_filter(lambda deal: deal["created_at"] > yesterday)
 ```
 
-Find more on transforms [here](resource.md#filter-transform-and-pivot-data).
+変換の詳細については、[こちら](resource.md#filter-transform-and-pivot-data)を参照してください。
 
-### Load data partially
+### データを部分的に読み込む
 
-You can limit the number of items produced by each resource by calling the `add_limit` method on a source. This is useful for testing, debugging, and generating sample datasets for experimentation. You can easily get your test dataset in a few minutes, when otherwise you'd need to wait hours for the full loading to complete. Below, we limit the `pipedrive` source to just get **10 pages** of data from each endpoint. Mind that the transformers will be evaluated fully:
+ソースで `add_limit` メソッドを呼び出すことで、各リソースによって生成されるアイテムの数を制限できます。これは、テスト、デバッグ、および実験用のサンプルデータセットの生成に役立ちます。テストデータセットを数分で簡単に取得できます。そうでなければ、完全な読み込みが完了するまで何時間も待つ必要があります。以下では、`pipedrive` ソースを各エンドポイントから **10 ページ** のデータのみを取得するように制限しています。トランスフォーマーは完全に評価されることに注意してください:
 
 ```py
 from pipedrive import pipedrive_source
@@ -107,43 +99,45 @@ load_info = pipeline.run(pipedrive_source().add_limit(10))
 print(load_info)
 ```
 
-You can also apply a time limit to the source:
+ソースに時間制限を適用することもできます:
 
 ```py
 pipeline.run(pipedrive_source().add_limit(max_time=10))
 ```
 
-Or limit by both, the limit that is reached first will stop the extraction:
+または件数と時間の両方で制限し、最初に到達した制限で抽出を停止します:
 
 ```py
 pipeline.run(pipedrive_source().add_limit(max_items=10, max_time=10))
 ```
 
 :::note
-Note that `add_limit` **does not limit the number of records** but rather the "number of yields". `dlt` will close the iterator/generator that produces data after the limit is reached. Please read in more detail about the `add_limit` on the resource page.
+`add_limit` は **レコード数を制限するのではなく**、「yield の数」を制限することに注意してください。`dlt` は、制限に達した後にデータを生成するイテレータ/ジェネレータを閉じます。リソース ページで `add_limit` の詳細をお読みください。
 :::
 
-Find more on sampling data [here](resource.md#sample-from-large-data).
+データのサンプリングの詳細については、[こちら](resource.md#sample-from-large-data)を参照してください。
 
-### Rename the source
-`dlt` allows you to rename the source ie. to place the source configuration into custom section or to have many instances
-of the source created side by side. For example:
+### ソースの名前を変更する
+
+`dlt` を使用すると、ソースの名前を変更したり、ソース構成をカスタムセクションに配置したり、ソースのインスタンスを複数並べて作成したりできます。たとえば、:
+
 ```py
 from dlt.sources.sql_database import sql_database
 
 my_db = sql_database.clone(name="my_db", section="my_db")(table_names=["table_1"])
 print(my_db.name)
 ```
-Here we create a renamed version of the `sql_database` and then instantiate it. Such source will read
-credentials from:
+
+ここでは、`sql_database`の名前を変更したバージョンを作成し、それをインスタンス化します。このようなソースは、以下から資格情報を読み取ります:
+
 ```toml
 [sources.my_db.my_db.credentials]
 password="..."
 ```
 
-### Add more resources to existing source
+### 既存のソースにリソースを追加する
 
-You can add a custom resource to a source after it was created. Imagine that you want to score all the deals with a keras model that will tell you if the deal is a fraud or not. In order to do that, you declare a new [transformer that takes the data from](resource.md#feeding-data-from-one-resource-into-another) `deals` resource and add it to the source.
+ソースを作成した後で、カスタムリソースをソースに追加できます。すべての取引を Keras モデルでスコアリングして、取引が詐欺であるかどうかを判断したいとします。そのためには、新しい `deals` リソースから[データを取得するトランスフォーマー](resource.md#feeding-data-from-one-resource-into-another) を宣言し、ソースに追加します。
 
 ```py
 import dlt
@@ -163,21 +157,25 @@ source.resources.add(source.deals | deal_scores)
 # load the data: you'll see the new table `deal_scores` in your destination!
 pipeline.run(source)
 ```
-You can also set the resources in the source as follows:
+
+ソース内のリソースを次のように設定することもできます:
+
 ```py
 source.deal_scores = source.deals | deal_scores
 ```
-or
+
+もしくは
+
 ```py
 source.resources["deal_scores"] = source.deals | deal_scores
 ```
 :::note
-When adding a resource to the source, `dlt` clones the resource so your existing instance is not affected.
+ソースにリソースを追加しても、`dlt` はリソースを複製するため、既存のインスタンスには影響しません。
 :::
 
-### Reduce the nesting level of generated tables
+### 生成されたテーブルのネストレベルを減らす
 
-You can limit how deep `dlt` goes when generating nested tables and flattening dicts into columns. By default, the library will descend and generate nested tables for all nested lists and columns from dicts, without limit.
+ネストされたテーブルを生成し、辞書を列に平坦化するときに、`dlt` がどこまで深く進むかを制限できます。デフォルトでは、ライブラリは辞書からネストされたすべてのリストと列を制限なく降下してネストされたテーブルを生成します。
 
 ```py
 @dlt.source(max_table_nesting=1)
@@ -185,12 +183,12 @@ def mongo_db():
     ...
 ```
 
-In the example above, we want only 1 level of nested tables to be generated (so there are no nested tables of a nested table). Typical settings:
+上記の例では、ネストされたテーブルを 1 レベルだけ生成します (つまり、ネストされたテーブルのネストされたテーブルは存在しません)。一般的な設定は:
 
-- `max_table_nesting=0` will not generate nested tables and will not flatten dicts into columns at all. All nested data will be represented as JSON.
-- `max_table_nesting=1` will generate nested tables of root tables and nothing more. All nested data in nested tables will be represented as JSON.
+- `max_table_nesting=0` ネストされたテーブルは生成されず、辞書は列にフラット化されません。ネストされたデータはすべて JSON として表現されます。
+- `max_table_nesting=1` ルートテーブルのネストされたテーブルのみが生成されます。ネストされたテーブル内のすべてのネストされたデータは JSON として表されます。
 
-You can achieve the same effect after the source instance is created:
+ソースインスタンスを作成した後でも同じ効果が得られます:
 
 ```py
 from mongo_db import mongo_db
@@ -199,42 +197,40 @@ source = mongo_db()
 source.max_table_nesting = 0
 ```
 
-Several data sources are prone to contain semi-structured documents with very deep nesting, e.g., MongoDB databases. Our practical experience is that setting the `max_nesting_level` to 2 or 3 produces the clearest and human-readable schemas.
+いくつかのデータ ソースには、MongoDB データベースなど、非常に深いネストを持つ半構造化ドキュメントが含まれる傾向があります。実際の経験では、`max_nesting_level` を 2 または 3 に設定すると、最も明確で人間が判読できるスキーマが生成されます。
 
 :::tip
-The `max_table_nesting` parameter at the source level doesn't automatically apply to individual resources when accessed directly (e.g., using `source.resources["resource_1"]`). To make sure it works, either use `source.with_resources("resource_1")` or set the parameter directly on the resource.
+ソース レベルの `max_table_nesting` パラメータは、直接アクセスした場合 (例: `source.resources["resource_1"]` を使用)、個々のリソースに自動的には適用されません。確実に機能させるには、`source.with_resources("resource_1")` を使用するか、リソースに直接パラメータを設定します。
 :::
 
-You can directly configure the `max_table_nesting` parameter on the resource level as:
+リソースレベルで`max_table_nesting`パラメータを直接設定することができます。:
 
 ```py
 @dlt.resource(max_table_nesting=0)
 def my_resource():
     ...
 ```
-or
+
+もしくは
+
 ```py
 source.my_resource.max_table_nesting = 0
 ```
 
-### Modify schema
+### スキーマの変更
 
-The schema is available via the `schema` property of the source.
-[You can manipulate this schema, i.e., add tables, change column definitions, etc., before the data is loaded.](schema.md#schema-is-modified-in-the-source-function-body)
+スキーマは、ソースの `schema` プロパティを介して利用できます。[データがロードされる前に、このスキーマを操作できます。つまり、テーブルの追加、列定義の変更などを行うことができます。](schema.md#schema-is-modified-in-the-source-function-body)
 
-The source provides two other convenience properties:
+ソースには他に2つの便利なプロパティがあります:
 
-1. `max_table_nesting` to set the maximum nesting level for nested tables and flattened columns.
-1. `root_key` to propagate the `_dlt_id` from a root table to all nested tables.
+1. `max_table_nesting` は、ネストされたテーブルとフラット化された列の最大ネストレベルを設定します。
+1. `root_key` は、`_dlt_id` をルートテーブルからすべてのネストされたテーブルに伝播します。
 
-## Load sources
+## ソースをロードする
 
-You can pass individual sources or a list of sources to the `dlt.pipeline` object. By default, all the
-sources will be loaded into a single dataset.
+個々のソースまたはソースのリストを `dlt.pipeline` オブジェクトに渡すことができます。デフォルトでは、すべてのソースが 1 つのデータセットにロードされます。
 
-You are also free to decompose a single source into several ones. For example, you may want to break
-down a 50-table copy job into an Airflow DAG with high parallelism to load the data faster. To do
-so, you could get the list of resources as:
+1つのソースを複数のソースに分解することもできます。たとえば、50テーブルのコピージョブを、データをより速くロードするために、高並列処理のAirflow DAGに分割したい場合があります。これを行うには、次のようにリソースのリストを取得します:
 
 ```py
 # get a list of resources' names
@@ -245,18 +241,16 @@ for res in resource_list:
     pipeline.run(sql_source().with_resources(res))
 ```
 
-### Do a full refresh
+### 完全にリフレッシュする
 
-You can temporarily change the "write disposition" to `replace` on all (or selected) resources within
-a source to force a full refresh:
+ソース内のすべての（または選択した）リソースの「 write disposition 」を一時的に `replace` に変更して、完全な更新を強制することができます:
 
 ```py
 p.run(merge_source(), write_disposition="replace")
 ```
 
-With selected resources:
+選択したリソースに対して:
 
 ```py
 p.run(tables.with_resources("users"), write_disposition="replace")
 ```
-
