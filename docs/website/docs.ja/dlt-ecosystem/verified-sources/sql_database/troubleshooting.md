@@ -6,95 +6,104 @@ keywords: [sql connector, sql database pipeline, sql database]
 
 import Header from '../_source-info-header.md';
 
-# Troubleshooting
+# トラブルシューティング
 
 <Header/>
 
-## Troubleshooting connection
+## 接続のトラブルシューティング
 
-#### Connecting to MySQL with SSL 
-Here, we use the `mysql` and `pymysql` dialects to set up an SSL connection to a server, with all information taken from the [SQLAlchemy docs](https://docs.sqlalchemy.org/en/14/dialects/mysql.html#ssl-connections).
+#### SSL で MySQL に接続する
 
-1. To enforce SSL on the client without a client certificate, you may pass the following DSN:
+ここでは、`mysql` および `pymysql` 方言を使用してサーバーへの SSL 接続を設定します。すべての情報は [SQLAlchemy ドキュメント](https://docs.sqlalchemy.org/en/14/dialects/mysql.html#ssl-connections) から取得されています。
+
+1. クライアント証明書なしでクライアントにSSLを強制するには、次のDSNを渡します:
 
    ```toml
    sources.sql_database.credentials="mysql+pymysql://root:<pass>@<host>:3306/mysql?ssl_ca="
    ```
 
-1. You can also pass the server's public certificate (potentially bundled with your pipeline) and disable host name checks:
+1. サーバーの公開証明書（パイプラインにバンドルされている可能性があります）を渡して、ホスト名のチェックを無効にすることもできます:
 
    ```toml
    sources.sql_database.credentials="mysql+pymysql://root:<pass>@<host>:3306/mysql?ssl_ca=server-ca.pem&ssl_check_hostname=false"
    ```
 
-1. For servers requiring a client certificate, provide the client's private key (a secret value). In Airflow, this is usually saved as a variable and exported to a file before use. The server certificate is omitted in the example below:
+1. クライアント証明書を必要とするサーバーの場合は、クライアントの秘密鍵（秘密値）を指定します。Airflow では、通常、これは変数として保存され、使用前にファイルにエクスポートされます。以下の例では、サーバー証明書は省略されています:
 
    ```toml
    sources.sql_database.credentials="mysql+pymysql://root:<pass>@35.203.96.191:3306/mysql?ssl_ca=&ssl_cert=client-cert.pem&ssl_key=client-key.pem"
    ```
 
-#### SQL Server connection options
+#### SSQL Server の接続オプション
 
-**To connect to an `mssql` server using Windows authentication**, include `trusted_connection=yes` in the connection string.
+**Windows 認証を使用して** `mssql` **サーバーに接続するには、** 接続文字列に `trusted_connection=yes` を含めます。
 
 ```toml
 sources.sql_database.credentials="mssql+pyodbc://loader.database.windows.net/dlt_data?trusted_connection=yes&driver=ODBC+Driver 17+for+SQL+Server"
 ```
 
-**To connect to a local SQL server instance running without SSL**, pass the `encrypt=no` parameter:
+**SSL なしで実行されているローカル SQL Server インスタンスに接続するには、** `encrypt=no` パラメータを渡します:
+
 ```toml
 sources.sql_database.credentials="mssql+pyodbc://loader:loader@localhost/dlt_data?encrypt=no&driver=ODBC+Driver 17+for+SQL+Server"
 ```
 
-**To allow a self-signed SSL certificate** when you are getting `certificate verify failed: unable to get local issuer certificate`:
+`証明書の検証に失敗しました。ローカル発行者の証明書を取得できません。` となった時に**自己署名 SSL 証明書を許可するには**:
+
 ```toml
 sources.sql_database.credentials="mssql+pyodbc://loader:loader@localhost/dlt_data?TrustServerCertificate=yes&driver=ODBC+Driver 17+for+SQL+Server"
 ```
 
-**To use long strings (>8k) and avoid collation errors**:
+**長い文字列 (>8k) を使用して照合エラーを回避するには**:
+
 ```toml
 sources.sql_database.credentials="mssql+pyodbc://loader:loader@localhost/dlt_data?LongAsMax=yes&driver=ODBC+Driver 17+for+SQL+Server"
 ```
 
-**To fix MS SQL Server connection issues with ConnectorX**:
+**ConnectorX を使用して MS SQL Server 接続の問題を修正するには**:
 
-Some users have reported issues with MS SQL Server and Connector X. The problems are not caused by dlt, but by how connections are made. A big thanks to [Mark-James M](https://github.com/markjamesm) for suggesting a solution.
+一部のユーザーから、MS SQL Server と Connector X に関する問題が報告されています。この問題は dlt が原因ではなく、接続の確立方法に起因しています。解決策を提案してくださった [Mark-James M](https://github.com/markjamesm) に深く感謝いたします。
 
-To fix connection issues with ConnectorX and MS SQL Server, include both `Encrypt=yes` and `encrypt=true` in your connection string:
+ConnectorX と MS SQL Server の接続の問題を修正するには、接続文字列に `Encrypt=yes` と `encrypt=true` の両方を含めます:
+
 ```toml
 sources.sql_database.credentials="mssql://user:password@server:1433/database?driver=ODBC+Driver+17+for+SQL+Server&Encrypt=yes&encrypt=true"
 ```
-This approach can help resolve connection-related issues.
+このアプローチは、接続関連の問題を解決するのに役立ちます。
 
-## Troubleshooting backends
+## バックエンドのトラブルシューティング
 
-### Notes on specific databases
+### 特定のデータベースに関する注意事項
 
 #### Oracle
-1. When using the `oracledb` dialect in thin mode, we are getting protocol errors. Use thick mode or the `cx_oracle` (old) client.
-2. Mind that `SQLAlchemy` translates Oracle identifiers into lower case! Keep the default `dlt` naming convention (`snake_case`) when loading data. We'll support more naming conventions soon.
-3. `Connectorx` is for some reason slower for Oracle than the `PyArrow` backend.  
+
+1. `oracledb` 方言を Thin モードで使用すると、プロトコル エラーが発生します。Thick モードまたは `cx_oracle` (古い) クライアントを使用してください。
+2. `SQLAlchemy` は Oracle 識別子を小文字に変換することに注意してください。データをロードするときは、デフォルトの `dlt` 命名規則 (`snake_case`) を維持してください。すぐにさらに多くの命名規則をサポートする予定です。
+3. 何らかの理由で、`Connectorx` は Oracle では `PyArrow` バックエンドよりも遅くなります。
   
-See [here](https://github.com/dlt-hub/sql_database_benchmarking/tree/main/oracledb#installing-and-setting-up-oracle-db) for information and code on setting up and benchmarking on Oracle.
+Oracle のセットアップとベンチマークに関する情報とコードについては、[こちら](https://github.com/dlt-hub/sql_database_benchmarking/tree/main/oracledb#installing-and-setting-up-oracle-db) を参照してください。
 
 #### DB2
-1. Mind that `SQLAlchemy` translates DB2 identifiers into lower case! Keep the default `dlt` naming convention (`snake_case`) when loading data. We'll support more naming conventions soon.
-2. The DB2 type `DOUBLE` gets incorrectly mapped to the Python type `float` (instead of the `SQLAlchemy` type `Numeric` with default precision). This requires `dlt` to perform additional casts. The cost of the cast, however, is minuscule compared to the cost of reading rows from the database.  
 
-See [here](https://github.com/dlt-hub/sql_database_benchmarking/tree/main/db2#installing-and-setting-up-db2) for information and code on setting up and benchmarking on DB2.
+1. `SQLAlchemy` は DB2 識別子を小文字に変換することに注意してください。データをロードするときは、デフォルトの `dlt` 命名規則 (`snake_case`) を維持してください。すぐにさらに多くの命名規則をサポートする予定です。
+2. DB2 型 `DOUBLE` は、Python 型 `float` (デフォルトの精度の `SQLAlchemy` 型 `Numeric` ではなく) に誤ってマップされます。これにより、`dlt` が追加のキャストを実行する必要があります。ただし、キャストのコストは、データベースから行を読み取るコストと比較するとごくわずかです。
+
+DB2 のセットアップとベンチマークに関する情報とコードについては、[こちら](https://github.com/dlt-hub/sql_database_benchmarking/tree/main/db2#installing-and-setting-up-db2) を参照してください。
 
 #### MySQL
-1. The `SQLAlchemy` dialect converts doubles to decimals. (This can be disabled via the table adapter argument as shown in the code example [here](./configuration#pyarrow))
+
+1. `SQLAlchemy` 方言は、倍精度数を小数点数に変換します。(これは、コード例 [こちら](./configuration#pyarrow) に示すように、テーブル アダプタ引数によって無効にできます)
 
 #### Postgres / MSSQL
-No issues were found for these databases. Postgres is the only backend where we observed a 2x speedup with `ConnectorX` (see [here](https://github.com/dlt-hub/sql_database_benchmarking/tree/main/postgres) for the benchmarking code). On other db systems, it performs the same as (or sometimes worse than) the `PyArrow` backend.
 
-### Notes on specific data types
+これらのデータベースでは問題は見つかりませんでした。Postgres は、`ConnectorX` で 2 倍の高速化が観測された唯一のバックエンドです (ベンチマーク コードについては、[こちら](https://github.com/dlt-hub/sql_database_benchmarking/tree/main/postgres) を参照してください)。他のデータベース システムでは、`PyArrow` バックエンドと同じ (または場合によってはそれよりも悪い) パフォーマンスになります。
+
+### 特定のデータ型に関する注意事項
 
 #### JSON
 
-In the `SQLAlchemy` backend, the JSON data type is represented as a Python object, and in the `PyArrow` backend, it is represented as a JSON string. At present, it does not work correctly with `pandas` and `ConnectorX`, which cast Python objects to `str`, generating invalid JSON strings that cannot be loaded into the destination.
+`SQLAlchemy` バックエンドでは、JSON データ型は Python オブジェクトとして表現され、`PyArrow` バックエンドでは JSON 文字列として表現されます。現時点では、Python オブジェクトを `str` にキャストする `pandas` および `ConnectorX` では正しく動作せず、宛先に読み込むことができない無効な JSON 文字列が生成されます。
 
 #### UUID  
-UUIDs are represented as strings by default. You can switch this behavior by using `table_adapter_callback` to modify properties of the UUID type for a particular column. (See the code example [here](./configuration#pyarrow) for how to modify the data type properties of a particular column.)
 
+UUID は、デフォルトでは文字列として表されます。`table_adapter_callback` を使用して特定の列の UUID タイプのプロパティを変更することで、この動作を切り替えることができます。(特定の列のデータ型プロパティを変更する方法については、[こちら](./configuration#pyarrow) のコード例を参照してください。)

@@ -6,27 +6,28 @@ keywords: [sql connector, sql database pipeline, sql database]
 
 import Header from '../_source-info-header.md';
 
-# Configuration
+# 構成
 
 <Header/>
 
-## Configuring the SQL database source
+## SQL データベースソースの構成
 
-`dlt` sources are Python scripts made up of source and resource functions that can be easily customized. The SQL Database verified source has the following built-in source and resource:
-1. `sql_database`: a `dlt` source that can be used to load multiple tables and views from a SQL database.
-2. `sql_table`: a `dlt` resource that loads a single table from the SQL database.
+`dlt` ソースは、簡単にカスタマイズできるソース関数とリソース関数で構成された Python スクリプトです。SQL データベース検証済みソースには、次の組み込みソースとリソースがあります:
 
-Read more about sources and resources here: [General usage: source](../../../general-usage/source.md) and [General usage: resource](../../../general-usage/resource.md).
+1. `sql_database`: SQL データベースから複数のテーブルとビューをロードするために使用できる `dlt` ソース。
+2. `sql_table`: SQL データベースから単一のテーブルをロードする `dlt` リソース。
 
-### Example usage:
+ソースとリソースの詳細については、こちらをご覧ください: [一般的な使用法: ソース](../../../general-usage/source.md) および [一般的な使用法: リソース](../../../general-usage/resource.md).
+
+### 使用例:
 
 :::tip
-We intend our sources to be fully hackable. Feel free to change the source code of the sources and resources to customize it to your needs.
+私たちのソースは完全にハッキング可能なものになる予定です。ソースやリソースのソース コードを自由に変更して、ニーズに合わせてカスタマイズしてください。
 :::
 
-1. **Load all the tables from a database**
+1. **データベースからすべてのテーブルをロードする**
 
-    Calling `sql_database()` loads all tables from the database.
+    `sql_database()` を呼び出すと、データベースからすべてのテーブルがロードされます。
 
     ```py
     import dlt
@@ -50,9 +51,9 @@ We intend our sources to be fully hackable. Feel free to change the source code 
         print(info)
     ```
 
-2. **Load select tables from a database**
+2. **データベースから選択したテーブルをロードする**
 
-    Calling `sql_database(table_names=["family", "clan"])` or `sql_database().with_resources("family", "clan")` loads only the tables `"family"` and `"clan"` from the database.
+    `sql_database(table_names=["family", "clan"])` または `sql_database().with_resources("family", "clan")` を呼び出すと、データベースからテーブル `"family"` と `"clan"` のみがロードされます。
 
     ```py
     import dlt
@@ -80,12 +81,12 @@ We intend our sources to be fully hackable. Feel free to change the source code 
     ```
 
     :::note
-    When using the `sql_database` source, specifying table names directly in the source arguments (e.g., `sql_database(table_names=["family", "clan"])`) ensures that only those tables are reflected and turned into resources. In contrast, if you use `.with_resources("family", "clan")`, the entire schema is reflected first, and resources are generated for all tables before filtering for the specified ones. For large schemas, specifying `table_names` can improve performance.
+    `sql_database` ソースを使用する場合、ソース引数でテーブル名を直接指定すると (例: `sql_database(table_names=["family", "clan"])`)、それらのテーブルのみが反映され、リソースに変換されます。対照的に、`.with_resources("family", "clan")` を使用する場合は、最初にスキーマ全体が反映され、指定されたテーブルをフィルタリングする前にすべてのテーブルのリソースが生成されます。大規模なスキーマの場合、`table_names` を指定するとパフォーマンスが向上する可能性があります。
     :::
 
-3. **Load a standalone table**
+3. **スタンドアロンテーブルをロードする**
 
-    Calling `sql_table(table="family")` fetches only the table `"family"`
+    `sql_table(table="family")` を呼び出すと、テーブル `"family"` のみが取得されます。
 
     ```py
     import dlt
@@ -110,11 +111,12 @@ We intend our sources to be fully hackable. Feel free to change the source code 
 
     ```
 
-4. **Configuring table and column selection in `config.toml`**
+4. **`config.toml` でテーブルと列の選択を構成する**
 
-   To manage table and column selections outside of your Python scripts, you can configure them directly in the `config.toml` file. This approach is especially beneficial when dealing with multiple tables or when you prefer to keep configuration separate from code.
+   Python スクリプトの外部でテーブルと列の選択を管理するには、`config.toml` ファイルで直接構成することができます。この方法は、複数のテーブルを扱う場合や、構成をコードから分離しておく場合に特に便利です。
 
-   Below is an example of how to define table and column selections in the `config.toml` file:
+   以下は`config.toml`ファイルでテーブルと列の選択を定義する方法の例です。:
+
    ```toml
    # to select tables names
    [sources.sql_database]
@@ -130,44 +132,44 @@ We intend our sources to be fully hackable. Feel free to change the source code 
    ]
    ```
    :::note
-   *Case-Sensitivity:* 
+   *大文字と小文字の区別:* 
    
-   Table and column names specified in `config.toml` must exactly match their counterparts in the SQL database, as they are case-sensitive.
+   `config.toml` で指定されたテーブル名と列名は、大文字と小文字が区別されるため、SQL データベース内の対応するものと完全に一致する必要があります。
    :::
 
-## Configuring the connection
+## 接続の設定
 
-### Connection string format
+### 接続文字列の形式
 
-`sql_database` uses SQLAlchemy to create database connections and reflect table schemas. You can pass credentials using
-[database URLs](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls), which have the general format:
+`sql_database` は SQLAlchemy を使用してデータベース接続を作成し、テーブル スキーマを反映します。[データベース URL](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls) を使用して資格情報を渡すことができます。一般的な形式は次のとおりです。
 
 ```py
 "dialect+database_type://username:password@server:port/database_name"
 ```
 
-For example, to connect to a MySQL database using the `pymysql` dialect, you can use the following connection string:
+たとえば、`pymysql` 方言を使用して MySQL データベースに接続するには、次の接続文字列を使用できます。
+
 ```py
 "mysql+pymysql://rfamro:PWD@mysql-rfam-public.ebi.ac.uk:4497/Rfam"
 ```
 
-Database-specific drivers can be passed into the connection string using query parameters. For example, to connect to Microsoft SQL Server using the ODBC Driver, you would need to pass the driver as a query parameter as follows:
+データベース固有のドライバーは、クエリ パラメーターを使用して接続文字列に渡すことができます。たとえば、ODBC ドライバーを使用して Microsoft SQL Server に接続するには、次のようにドライバーをクエリ パラメーターとして渡す必要があります:
 
 ```py
 "mssql+pyodbc://username:password@server/database?driver=ODBC+Driver+17+for+SQL+Server"
 ```
 
-### Passing connection credentials to the `dlt` pipeline
+### 接続資格情報を `dlt` パイプラインに渡す
 
-There are several options for adding your connection credentials into your `dlt` pipeline:
+`dlt`パイプラインに接続資格情報を追加するにはいくつかのオプションがあります:
 
-#### 1. Setting them in `secrets.toml` or as environment variables (recommended)
+#### 1. `secrets.toml` または環境変数として設定する (推奨)
 
-You can set up credentials using [any method](../../../general-usage/credentials/setup#available-config-providers) supported by `dlt`. We recommend using `.dlt/secrets.toml` or the environment variables. See Step 2 of the [setup](./setup) for how to set credentials inside `secrets.toml`. For more information on passing credentials, read [here](../../../general-usage/credentials/setup).
+`dlt` でサポートされている [任意の方法](../../../general-usage/credentials/setup#available-config-providers) を使用して資格情報を設定できます。`.dlt/secrets.toml` または環境変数を使用することをお勧めします。`secrets.toml` 内で資格情報を設定する方法については、[セットアップ](./setup) の手順 2 を参照してください。資格情報の受け渡しの詳細については、[こちら](../../../general-usage/credentials/setup) を参照してください。
 
-#### 2. Passing them directly in the script
+#### 2. スクリプト内で直接渡す
 
-It is also possible to explicitly pass credentials inside the source. Example:
+ソース内で資格情報を明示的に渡すこともできます。例:
 
 ```py
 from dlt.sources.credentials import ConnectionStringCredentials
@@ -181,15 +183,14 @@ source = sql_database(credentials).with_resources("family")
 ```
 
 :::note
-It is recommended to configure credentials in `.dlt/secrets.toml` and to not include any sensitive information in the pipeline code.
+`.dlt/secrets.toml` で資格情報を設定し、パイプライン コードに機密情報を含めないようにすることをお勧めします。
 :::
 
-### Other connection options
+### その他の接続オプション
 
-#### Using SqlAlchemy Engine as credentials
+#### SqlAlchemy エンジンを認証情報として使用する
 
-You are able to pass an instance of SqlAlchemy Engine instead of credentials:
-
+資格情報の代わりに SqlAlchemy エンジンのインスタンスを渡すこともできます:
 ```py
 from dlt.sources.sql_database import sql_table
 from sqlalchemy import create_engine
@@ -198,21 +199,21 @@ engine = create_engine("mysql+pymysql://rfamro@mysql-rfam-public.ebi.ac.uk:4497/
 table = sql_table(engine, table="chat_message", schema="data")
 ```
 
-This engine is used by `dlt` to open database connections and can work across multiple threads, so it is compatible with the `parallelize` setting of dlt sources and resources.
+このエンジンは、`dlt` によってデータベース接続を開くために使用され、複数のスレッドにまたがって動作できるため、dlt ソースおよびリソースの `parallelize` 設定と互換性があります。
 
-## Configuring the backend
+## バックエンドの設定
 
-Table backends convert streams of rows from database tables into batches in various formats. The default backend, `SQLAlchemy`, follows standard `dlt` behavior of extracting and normalizing Python dictionaries. We recommend this for smaller tables, initial development work, and when minimal dependencies or a pure Python environment is required. This backend is also the slowest. Other backends make use of the structured data format of the tables and provide significant improvement in speeds. For example, the `PyArrow` backend converts rows into `Arrow` tables, which results in good performance and preserves exact data types. We recommend using this backend for larger tables.
+テーブル バックエンドは、データベース テーブルからの行のストリームをさまざまな形式のバッチに変換します。デフォルトのバックエンドである `SQLAlchemy` は、Python 辞書を抽出して正規化する標準の `dlt` 動作に従います。これは、小さなテーブル、初期の開発作業、および最小限の依存関係または純粋な Python 環境が必要な場合に推奨されます。このバックエンドは最も低速でもあります。他のバックエンドは、テーブルの構造化データ形式を利用し、速度を大幅に向上させます。たとえば、`PyArrow` バックエンドは行を `Arrow` テーブルに変換します。これにより、パフォーマンスが向上し、正確なデータ型が保持されます。大きなテーブルには、このバックエンドを使用することをお勧めします。
 
 ### SQLAlchemy
 
-The `SQLAlchemy` backend (the default) yields table data as a list of Python dictionaries. This data goes through the regular extract and normalize steps and does not require additional dependencies to be installed. It is the most robust (works with any destination, correctly represents data types) but also the slowest. You can set `reflection_level="full_with precision"` to pass exact data types to the `dlt` schema.
+`SQLAlchemy` バックエンド (デフォルト) は、テーブル データを Python 辞書のリストとして生成します。このデータは、通常の抽出および正規化の手順を経るため、追加の依存関係をインストールする必要はありません。これは最も堅牢 (任意の宛先で動作し、データ型を正しく表す) ですが、最も低速でもあります。`reflection_level="full_with precision"` を設定すると、正確なデータ型を `dlt` スキーマに渡すことができます。
 
 ### PyArrow
 
-The `PyArrow` backend yields data as `Arrow` tables. It uses `SQLAlchemy` to read rows in batches but then immediately converts them into `ndarray`, transposes it, and sets it as columns in an `Arrow` table. This backend always fully reflects the database table and preserves original types (i.e., **decimal** / **numeric** data will be extracted without loss of precision). If the destination loads parquet files, this backend will skip the `dlt` normalizer, and you can gain two orders of magnitude (20x - 30x) speed increase.
+`PyArrow` バックエンドは、データを `Arrow` テーブルとして生成します。`SQLAlchemy` を使用して行をバッチで読み取りますが、その後すぐにそれらを `ndarray` に変換し、転置して、`Arrow` テーブルの列として設定します。このバックエンドは常にデータベース テーブルを完全に反映し、元の型を保持します (つまり、**decimal** / **numeric** データは精度を失うことなく抽出されます)。宛先が parquet ファイルを読み込む場合、このバックエンドは `dlt` ノーマライザーをスキップし、2 桁 (20 倍 - 30 倍) の速度向上が得られます。
 
-Note that if `pandas` is installed, we'll use it to convert `SQLAlchemy` tuples into `ndarray` as it seems to be 20-30% faster than using `numpy` directly.
+`pandas` がインストールされている場合は、`numpy` を直接使用するよりも 20 ～ 30% 高速になると思われるため、`SQLAlchemy` タプルを `ndarray` に変換するためにこれを使用することに注意してください。
 
 ```py
 import dlt
@@ -240,23 +241,24 @@ sql_alchemy_source = sql_database(
 info = pipeline.run(sql_alchemy_source)
 print(info)
 ```
-For more information on the `tz` parameter within `backend_kwargs` supported by PyArrow, please refer to the
-[official documentation.](https://arrow.apache.org/docs/python/generated/pyarrow.timestamp.html)
+
+PyArrow でサポートされている `backend_kwargs` 内の `tz` パラメータの詳細については、[公式ドキュメント](https://arrow.apache.org/docs/python/generated/pyarrow.timestamp.html)を参照してください。
 
 ### Pandas
 
-The `pandas` backend yields data as DataFrames using the `pandas.io.sql` module. `dlt` uses `PyArrow` dtypes by default as they generate more stable typing.
+`pandas` バックエンドは、`pandas.io.sql` モジュールを使用して、データを DataFrames として生成します。`dlt` は、より安定した型を生成するため、デフォルトで `PyArrow` dtype を使用します。
 
-With the default settings, several data types will be coerced to dtypes in the yielded data frame:
-* **decimal** is mapped to double, so it is possible to lose precision
-* **date** and **time** are mapped to strings
-* all types are nullable
+デフォルト設定では、生成されたデータ フレーム内のいくつかのデータ型が dtype に強制変換されます:
+
+* **decimal** は倍精度にマッピングされるため、精度が失われる可能性があります。
+* **date** と **time** 文字列にマッピングされます。
+* すべての型はnull可能です
 
 :::note
-`dlt` will still use the data types reflected from the source database when creating destination tables. How the type differences resulting from the `pandas` backend are reconciled/parsed is up to the destination. Most of the destinations will be able to parse date/time strings and convert doubles into decimals (Please note that you'll still lose precision on decimals with default settings.). **However, we strongly suggest not to use the** `pandas` **backend if your source tables contain date, time, or decimal columns.**
+`dlt` は、宛先テーブルを作成するときに、ソース データベースから反映されたデータ型を引き続き使用します。`pandas` バックエンドから生じる型の違いをどのように調整/解析するかは、宛先によって異なります。ほとんどの宛先では、日付/時刻文字列を解析し、倍精度を小数に変換できます (デフォルト設定では、小数の精度が失われることに注意してください)。 **ただし、ソース テーブルに日付、時刻、または小数点の列が含まれている場合は、** `pandas` **バックエンドを使用しないことを強くお勧めします。**
 :::
 
-Internally, `dlt` uses `pandas.io.sql._wrap_result` to generate `pandas` frames. To adjust [pandas-specific settings,](https://pandas.pydata.org/docs/reference/api/pandas.read_sql_table.html) pass it in the `backend_kwargs` parameter. For example, below we set `coerce_float` to `False`:
+内部的には、`dlt` は `pandas.io.sql._wrap_result` を使用して `pandas` フレームを生成します。[pandas 固有の設定](https://pandas.pydata.org/docs/reference/api/pandas.read_sql_table.html) を調整するには、それを `backend_kwargs` パラメータに渡します。たとえば、以下では `coerce_float` を `False` に設定します:
 
 ```py
 import dlt
@@ -289,22 +291,23 @@ print(info)
 
 ### ConnectorX
 
-The [`ConnectorX`](https://sfu-db.github.io/connector-x/intro.html) backend completely skips `SQLALchemy` when reading table rows, in favor of doing that in Rust. This is claimed to be significantly faster than any other method (validated only on PostgreSQL). With the default settings, it will emit `PyArrow` tables, but you can configure this by specifying the `return_type` in `backend_kwargs`. (See the [`ConnectorX` docs](https://sfu-db.github.io/connector-x/api.html) for a full list of configurable parameters.)
+[`ConnectorX`](https://sfu-db.github.io/connector-x/intro.html) バックエンドは、テーブル行の読み取り時に `SQLALchemy` を完全にスキップし、Rust で読み取ります。これは、他のどの方法よりも大幅に高速であるとされています (PostgreSQL でのみ検証済み)。デフォルト設定では、`PyArrow` テーブルが出力されますが、`backend_kwargs` で `return_type` を指定することでこれを構成できます。(構成可能なパラメーターの完全なリストについては、[`ConnectorX` ドキュメント](https://sfu-db.github.io/connector-x/api.html) を参照してください。)
 
-There are certain limitations when using this backend:
-* It will ignore `chunk_size`. `ConnectorX` cannot yield data in batches.
-* In many cases, it requires a connection string that differs from the `SQLAlchemy` connection string. Use the `conn` argument in `backend_kwargs` to set this.
-* It will convert **decimals** to **doubles**, so you will lose precision.
-* Nullability of the columns is ignored (always true).
-* It uses different mappings for each data type. (Check [here](https://sfu-db.github.io/connector-x/databases.html) for more details.)
-* JSON fields (at least those coming from PostgreSQL) are double-wrapped in strings. To unwrap this, you can pass the in-built transformation function `unwrap_json_connector_x` (for example, with `add_map`):
+このバックエンドを使用する場合、一定の制限があります:
+
+* `chunk_size` は無視されます。`ConnectorX` はバッチでデータを生成できません。
+* 多くの場合、`SQLAlchemy` 接続文字列とは異なる接続文字列が必要です。これを設定するには、`backend_kwargs` の `conn` 引数を使用します。
+* **decimal** を **double** に変換するため、精度が失われます。
+* 列の NULL 可能性は無視されます (常に true)。
+* データ型ごとに異なるマッピングを使用します。(詳細については、[こちら](https://sfu-db.github.io/connector-x/databases.html)を参照してください。)
+* JSON フィールド (少なくとも PostgreSQL からのもの) は文字列で二重にラップされています。これをラップ解除するには、組み込みの変換関数 `unwrap_json_connector_x` を渡します (たとえば、`add_map` を使用)。
 
     ```py
     from dlt.sources.sql_database.helpers import unwrap_json_connector_x
     ```
 
 :::note
-`dlt` will still use the data types reflected from the source database when creating destination tables. It is up to the destination to reconcile/parse type differences. Please note that you'll still lose precision on decimals with default settings.
+`dlt` は、宛先テーブルを作成するときに、ソース データベースから反映されたデータ型を引き続き使用します。 型の違いを調整/解析するのは宛先次第です。 デフォルト設定では、小数の精度が失われることに注意してください。
 :::
 
 ```py
@@ -342,5 +345,6 @@ info = pipeline.run(
 )
 print(info)
 ```
-With the dataset above and a local PostgreSQL instance, the `ConnectorX` backend is 2x faster than the `PyArrow` backend.
+
+上記のデータセットとローカル PostgreSQL インスタンスを使用すると、`ConnectorX` バックエンドは `PyArrow` バックエンドよりも 2 倍高速になります。
 

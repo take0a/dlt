@@ -4,36 +4,36 @@ description: Learn custom response processing
 keywords: [rest api, restful api]
 ---
 
-`rest_api_source()` function creates the [dlt source](../../../general-usage/source.md) and lets you configure the following parameters:
+`rest_api_source()` 関数は [dlt ソース](../../../general-usage/source.md)を作成し、次のパラメータを設定できます:
 
-- `config`: The REST API configuration dictionary.
-- `name`: An optional name for the source.
-- `section`: An optional section name in the configuration file.
-- `max_table_nesting`: Sets the maximum depth of nested tables above which the remaining nodes are loaded as structs or JSON.
-- `root_key` (bool): Enables merging on all resources by propagating the root foreign key to nested tables. This option is most useful if you plan to change the write disposition of a resource to disable/enable merge. Defaults to False.
-- `schema_contract`: Schema contract settings that will be applied to this resource.
-- `spec`: A specification of configuration and secret values required by the source.
+- `config`: REST API 構成辞書。
+- `name`: ソースのオプションの名前。
+- `section`: 構成ファイル内のオプションのセクション名。
+- `max_table_nesting`: ネストされたテーブルの最大深度を設定します。これを超えると、残りのノードが構造体または JSON としてロードされます。
+- `root_key` (bool): ルート外部キーをネストされたテーブルに伝播することで、すべてのリソースのマージを有効にします。このオプションは、リソースの書き込み処理を変更してマージを無効/有効にする場合に最も役立ちます。デフォルトは False です。
+- `schema_contract`: このリソースに適用されるスキーマ コントラクト設定。
+- `spec`: ソースに必要な構成とシークレット値の仕様。
 
-### Response actions
+### レスポンスに対するアクション
 
-The `response_actions` field in the endpoint configuration allows you to specify how to handle specific responses or all responses from the API. For example, responses with specific status codes or content substrings can be ignored.
-Additionally, all responses or only responses with specific status codes or content substrings can be transformed with a custom callable, such as a function. This callable is passed on to the requests library as a [response hook](https://requests.readthedocs.io/en/latest/user/advanced/#event-hooks). The callable can modify the response object and must return it for the modifications to take effect.
+エンドポイント構成の `response_actions` フィールドを使用すると、API からの特定のレスポンスまたはすべてのレスポンスの処理方法を指定できます。たとえば、特定のステータス コードまたはコンテンツ サブストリングを含むレスポンスは無視できます。
+さらに、すべてのレスポンスまたは特定のステータス コードまたはコンテンツ サブストリングを含むレスポンスのみを、関数などのカスタム呼び出し可能オブジェクトで変換できます。この呼び出し可能オブジェクトは、[レスポンスフック](https://requests.readthedocs.io/en/latest/user/advanced/#event-hooks)としてリクエスト ライブラリに渡されます。呼び出し可能オブジェクトはレスポンスオブジェクトを変更することができ、変更を有効にするにはそれを返す必要があります。
 
 :::caution Experimental Feature
-This is an experimental feature and may change in future releases.
+これは実験的な機能であり、将来のリリースで変更される可能性があります。
 :::
 
-**Fields:**
+**フィールド:**
 
-- `status_code` (int, optional): The HTTP status code to match.
-- `content` (str, optional): A substring to search for in the response content.
-- `action` (str or Callable or List[Callable], optional): The action to take when the condition is met. Currently supported actions:
-  - `"ignore"`: Ignore the response.
-  - a callable accepting and returning the response object.
-  - a list of callables, each accepting and returning the response object.
+- `status_code` (int, optional): 一致する HTTP ステータス コード。
+- `content` (str, optional): レスポンスコンテンツ内で検索するサブ文字列。
+- `action` (str or Callable or List[Callable], optional):条件が満たされたときに実行されるアクション。現在サポートされているアクション:
+  - `"ignore"`: レスポンスを無視します。
+  - レスポンスオブジェクトを受けて、返す、呼び出し可能なオブジェクト
+  - レスポンスオブジェクトを受けて、返す、呼び出し可能なオブジェクトのリスト
 
 
-#### Example A
+#### 例 A
 
 ```py
 {
@@ -46,9 +46,9 @@ This is an experimental feature and may change in future releases.
 }
 ```
 
-In this example, the source will ignore responses with a status code of 404, responses with the content "Not found", and responses with a status code of 200 _and_ content "some text".
+この例では、ソースはステータス コードが 404 の応答、コンテンツが「見つかりません」の応答、およびステータス コードが 200 でコンテンツが「何らかのテキスト」の応答を無視します。
 
-#### Example B
+#### 例 B
 
 ```py
 from requests.models import Response
@@ -93,9 +93,9 @@ source_config = {
 }
 ```
 
-In this example, the resource will set the correct encoding for all responses first. Thereafter, for all responses that have the status code 200, we will add a field `custom_field` and remove the field `email`.
+この例では、リソースはまずすべての応答に対して正しいエンコーディングを設定します。その後、ステータス コード 200 のすべての応答に対して、フィールド `custom_field` を追加し、フィールド `email` を削除します。
 
-#### Example C
+#### 例 C
 
 ```py
 def set_encoding(response, *args, **kwargs):
@@ -121,5 +121,5 @@ source_config = {
 }
 ```
 
-In this example, the resource will set the correct encoding for all responses. More callables can be added to the list of response_actions.
+この例では、リソースはすべての応答に対して正しいエンコーディングを設定します。response_actions のリストに、さらに呼び出し可能項目を追加できます。
 

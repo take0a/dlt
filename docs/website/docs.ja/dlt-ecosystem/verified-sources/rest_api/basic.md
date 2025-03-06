@@ -7,11 +7,11 @@ import Header from '../_source-info-header.md';
 
 <Header/>
 
-This is a dlt source you can use to extract data from any REST API. It uses [declarative configuration](#source-configuration) to define the API endpoints, their [relationships](#define-resource-relationships), how to handle [pagination](#pagination), and [authentication](#authentication).
+これは、任意の REST API からデータを抽出するために使用できる dlt ソースです。[宣言型の構成](#source-configuration) を使用して、API エンドポイント、それらの [関係](#define-resource-relationships)、[ページネーション](#pagination) の処理方法、および[認証](#authentication) を定義します。
 
-### Quick example
+### 簡単な例
 
-Here's an example of how to configure the REST API source to load posts and related comments from a hypothetical blog API:
+架空のブログAPIから投稿と関連コメントを読み込むためのREST APIソースの設定例を示します:
 
 ```py
 import dlt
@@ -57,79 +57,80 @@ pipeline = dlt.pipeline(
 load_info = pipeline.run(source)
 ```
 
-Running this pipeline will create two tables in DuckDB: `posts` and `comments` with the data from the respective API endpoints. The `comments` resource will fetch comments for each post by using the `id` field from the `posts` resource.
+このパイプラインを実行すると、DuckDB に `posts` と `comments` の 2 つのテーブルが作成され、それぞれの API エンドポイントからのデータが格納されます。`comments` リソースは、`posts` リソースの `id` フィールドを使用して、各投稿のコメントを取得します。
 
 ## Setup
 
-### Prerequisites
+### 前提条件
 
-Please make sure the `dlt` library is installed. Refer to the [installation guide](../../../intro).
+`dlt` ライブラリがインストールされていることを確認してください。[インストール ガイド](../../../intro)を参照してください。
 
-### Initialize the REST API source
+### REST APIソースを初期化する
 
-Enter the following command in your terminal:
+ターミナルに次のコマンドを入力してください:
 
 ```sh
 dlt init rest_api duckdb
 ```
 
-[dlt init](../../../reference/command-line-interface) will initialize the pipeline examples for REST API as the [source](../../../general-usage/source) and [duckdb](../../destinations/duckdb.md) as the [destination](../../destinations).
+[dlt init](../../../reference/command-line-interface) は、REST API を [source](../../../general-usage/source) として、[duckdb](../../destinations/duckdb.md) を [destination](../../destinations) としてパイプラインの例を初期化します。
 
-Running `dlt init` creates the following in the current folder:
-- `rest_api_pipeline.py` file with a sample pipelines definition:
-    - GitHub API example
-    - Pokemon API example
-- `.dlt` folder with:
-     - `secrets.toml` file to store your access tokens and other sensitive information
-     - `config.toml` file to store the configuration settings
-- `requirements.txt` file with the required dependencies
+`dlt init`を実行すると、現在のフォルダに次のものが作成されます:
 
-Change the REST API source to your needs by modifying the `rest_api_pipeline.py` file. See the detailed [source configuration](#source-configuration) section below.
+- `rest_api_pipeline.py` パイプラインの例の定義のファイル:
+    - GitHub API の例
+    - Pokemon API の例
+- `.dlt` フォルダには:
+     - `secrets.toml` アクセストークンやその他の機密情報を保存するファイル
+     - `config.toml` 設定を保存するファイル
+- `requirements.txt` 必要な依存関係を持つファイル
+
+`rest_api_pipeline.py` ファイルを変更して、REST API ソースをニーズに合わせて変更します。詳細な [ソース構成](#source-configuration) セクションについては、以下を参照してください。
 
 :::note
-For the rest of the guide, we will use the [GitHub API](https://docs.github.com/en/rest?apiVersion=2022-11-28) and [Pokemon API](https://pokeapi.co/) as example sources.
+ガイドの残りの部分では、[GitHub API](https://docs.github.com/en/rest?apiVersion=2022-11-28) と [Pokemon API](https://pokeapi.co/) をサンプルソースとして使用します。
 :::
 
-This source is based on the [RESTClient class](../../../general-usage/http/rest-client.md).
+このソースは、[RESTClient クラス](../../../general-usage/http/rest-client.md) に基づいています。
 
-### Add credentials
+### 資格情報を追加する
 
-In the `.dlt` folder, you'll find a file called `secrets.toml`, where you can securely store your access tokens and other sensitive information. It's important to handle this file with care and keep it safe.
+`.dlt` フォルダには、`secrets.toml` というファイルがあり、アクセス トークンやその他の機密情報を安全に保存できます。このファイルは慎重に取り扱い、安全に保管することが重要です。
 
-The GitHub API [requires an access token](https://docs.github.com/en/rest/authentication/authenticating-to-the-rest-api?apiVersion=2022-11-28) to access some of its endpoints and to increase the rate limit for the API calls. To get a GitHub token, follow the GitHub documentation on [managing your personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
+GitHub API では、一部のエンドポイントにアクセスし、API 呼び出しのレート制限を増やすために [アクセス トークン](https://docs.github.com/en/rest/authentication/authenticating-to-the-rest-api?apiVersion=2022-11-28) が必要です。GitHub トークンを取得するには、[個人用アクセス トークンの管理](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) に関する GitHub ドキュメントに従ってください。
 
-After you get the token, add it to the `secrets.toml` file:
+トークンを取得したら、それを `secrets.toml` ファイルに追加します。
 
 ```toml
 [sources.rest_api_pipeline.github_source]
 github_token = "your_github_token"
 ```
 
-## Run the pipeline
+## パイプラインを実行する
 
-1. Install the required dependencies by running the following command:
+1. 次のコマンドを実行して必要な依存関係をインストールします:
 
    ```sh
    pip install -r requirements.txt
    ```
 
-2. Run the pipeline:
+2. パイプラインを実行する:
 
    ```sh
    python rest_api_pipeline.py
    ```
 
-3. Verify that everything loaded correctly by using the following command:
+3. 次のコマンドを使用して、すべてが正しくロードされたことを確認します:
 
    ```sh
    dlt pipeline rest_api show
    ```
 
-## Source configuration
+## ソース構成
 
-### Quick example
+### 簡単な例
 
-Let's take a look at the GitHub example in the `rest_api_pipeline.py` file:
+`rest_api_pipeline.py`ファイルのGitHubの例を見てみましょう:
 
 ```py
 from dlt.sources.rest_api import RESTAPIConfig, rest_api_resources
@@ -192,30 +193,30 @@ def load_github() -> None:
     print(load_info)
 ```
 
-The declarative resource configuration is defined in the `config` dictionary. It contains the following key components:
+宣言型リソース構成は `config` 辞書で定義されます。これには次のキーコンポーネントが含まれます:
 
-1. `client`: Defines the base URL and authentication method for the API. In this case, it uses token-based authentication. The token is stored in the `secrets.toml` file.
+1. `client`: API のベース URL と認証方法を定義します。この場合、トークンベースの認証を使用します。トークンは `secrets.toml` ファイルに保存されます。
 
-2. `resource_defaults`: Contains default settings for all [resources](#resource-configuration). In this example, we define that all resources:
-    - Have `id` as the [primary key](../../../general-usage/resource#define-schema)
-    - Use the `merge` [write disposition](../../../general-usage/incremental-loading#choosing-a-write-disposition) to merge the data with the existing data in the destination.
-    - Send a `per_page=100` query parameter with each request to get more results per page.
+2. `resource_defaults`: すべての[リソース](#resource-configuration)のデフォルト設定が含まれます。この例では、すべてのリソースが以下のように定義されます:
+    - `id` を [主キー](../../../general-usage/resource#define-schema)とする
+    - [write disposition](../../../general-usage/incremental-loading#choosing-a-write-disposition)に `merge` を指定して、宛先の既存データをマージする
+    - ページあたりより多くの結果を取得するため、各リクエストで `per_page=100` クエリパラメータを送信します。
 
-3. `resources`: A list of [resources](#resource-configuration) to be loaded. Here, we have two resources: `issues` and `issue_comments`, which correspond to the GitHub API endpoints for [repository issues](https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28#list-repository-issues) and [issue comments](https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#list-issue-comments). Note that we need an issue number to fetch comments for each issue. This number is taken from the `issues` resource. More on this in the [resource relationships](#define-resource-relationships) section.
+3. `resources`: ロードする[リソース](#resource-configuration)のリスト。ここでは、GitHub API のエンドポイントである[repository issues](https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28#list-repository-issues) と [issue comments](https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#list-issue-comments) に対応する `issues ` と `issue_comments` という２つのリソースがあります。各問題のコメントを取得するには問題番号が必要であることに注意してください。この番号は `issues` リソースから取得されます。詳細については、[リソース関係](#define-resource-relationships) セクションを参照してください。
 
-Let's break down the configuration in more detail.
+構成を詳しく見てみましょう。
 
-### Configuration structure
+### 設定の構造
 
 :::tip
-Import the `RESTAPIConfig` type from the `rest_api` module to have convenient hints in your editor/IDE and use it to define the configuration object.
+`rest_api` モジュールから `RESTAPIConfig` タイプをインポートして、エディター/IDE で便利なヒントを取得し、それを使用して構成オブジェクトを定義します。
 
 ```py
 from dlt.sources.rest_api import RESTAPIConfig
 ```
 :::
 
-The configuration object passed to the REST API Generic Source has three main elements:
+REST API汎用ソースに渡される構成オブジェクトには3つの主要な要素があります:
 
 ```py
 config: RESTAPIConfig = {
@@ -233,18 +234,18 @@ config: RESTAPIConfig = {
 
 #### `client`
 
-The `client` configuration is used to connect to the API's endpoints. It includes the following fields:
+`client` 構成は、API のエンドポイントに接続するために使用されます。これには次のフィールドが含まれます:
 
-- `base_url` (str): The base URL of the API. This string is prepended to all endpoint paths. For example, if the base URL is `https://api.example.com/v1/`, and the endpoint path is `users`, the full URL will be `https://api.example.com/v1/users`.
-- `headers` (dict, optional): Additional headers that are sent with each request.
-- `auth` (optional): Authentication configuration. This can be a simple token, an `AuthConfigBase` object, or a more complex authentication method.
-- `paginator` (optional): Configuration for the default pagination used for resources that support pagination. Refer to the [pagination](#pagination) section for more details.
+- `base_url` (str): API のベース URL。この文字列は、すべてのエンドポイント パスの先頭に追加されます。たとえば、ベース URL が `https://api.example.com/v1/` で、エンドポイント パスが `users` の場合、完全な URL は `https://api.example.com/v1/users` になります。
+- `headers` (dict, optional): 各リクエストとともに送信される追加のヘッダー。
+- `auth` (optional): 認証構成。これは、単純なトークン、`AuthConfigBase` オブジェクト、またはより複雑な認証方法が設定できます。
+- `paginator` (optional): ページネーションをサポートするリソースに使用されるデフォルトのページネーションの設定。詳細については、[ページネーション](#pagination) セクションを参照してください。
 
 #### `resource_defaults` (optional)
 
-`resource_defaults` contains the default values to [configure the dlt resources](#resource-configuration). This configuration is applied to all resources unless overridden by the resource-specific configuration.
+`resource_defaults` には、[dlt リソースを構成する](#resource-configuration)ためのデフォルト値が含まれています。この構成は、リソース固有の構成によって上書きされない限り、すべてのリソースに適用されます。
 
-For example, you can set the primary key, write disposition, and other default settings here:
+たとえば、主キー、書き込み処理、その他のデフォルト設定をここで設定できます:
 
 ```py
 config = {
@@ -275,26 +276,27 @@ config = {
 }
 ```
 
-Above, all resources will have `primary_key` set to `id`, `resource1` will have `write_disposition` set to `merge`, and `resource2` will override the default `write_disposition` with `append`.
-Both `resource1` and `resource2` will have the `per_page` parameter set to 100.
+上記では、すべてのリソースの `primary_key` が `id` に設定され、`resource1` の `write_disposition` が `merge` に設定され、`resource2` はデフォルトの `write_disposition` を `append` で上書きします。
+`resource1` と `resource2` の両方で `per_page` パラメータが 100 に設定されます。
 
 #### `resources`
 
-This is a list of resource configurations that define the API endpoints to be loaded. Each resource configuration can be:
-- a dictionary with the [resource configuration](#resource-configuration).
-- a string. In this case, the string is used as both the endpoint path and the resource name, and the resource configuration is taken from the `resource_defaults` configuration if it exists.
+これは、ロードされる API エンドポイントを定義するリソース構成のリストです。各リソース構成は:
+- [リソース設定](#resource-configuration)の辞書
+- 文字列。この場合、文字列はエンドポイント パスとリソース名の両方として使用され、リソース構成は `resource_defaults` 構成が存在する場合はそこから取得されます。
 
-### Resource configuration
+### リソースの設定
 
-A resource configuration is used to define a [dlt resource](../../../general-usage/resource.md) for the data to be loaded from an API endpoint. It contains the following key fields:
+リソースの設定は、APIエンドポイントからロードされるデータの[dltリソース](../../../general-usage/resource.md)を定義するために使用されます。これには次のキーフィールドが含まれます:
 
-- `endpoint`: The endpoint configuration for the resource. It can be a string or a dict representing the endpoint settings. See the [endpoint configuration](#endpoint-configuration) section for more details.
-- `write_disposition`: The write disposition for the resource.
-- `primary_key`: The primary key for the resource.
-- `include_from_parent`: A list of fields from the parent resource to be included in the resource output. See the [resource relationships](#include-fields-from-the-parent-resource) section for more details.
-- `processing_steps`: A list of [processing steps](#processing-steps-filter-and-transform-data) to filter and transform your data.
-- `selected`: A flag to indicate if the resource is selected for loading. This could be useful when you want to load data only from child resources and not from the parent resource.
-- `auth`: An optional `AuthConfig` instance. If passed, is used over the one defined in the [client](#client) definition. Example:
+- `endpoint`: リソースのエンドポイント構成。エンドポイント設定を表す文字列または辞書になります。詳細については、[エンドポイント設定](#endpoint-configuration) セクションを参照してください。
+- `write_disposition`: リソースの書き込み処理。
+- `primary_key`: リソースの主キー。
+- `include_from_parent`: リソース出力に含める親リソースのフィールドのリスト。詳細については、[リソース関係](#include-fields-from-the-parent-resource) セクションを参照してください。
+- `processing_steps`: データをフィルタリングおよび変換するための[処理手順](#processing-steps-filter-and-transform-data)のリスト
+- `selected`: リソースが読み込み対象として選択されているかどうかを示すフラグ。これは、親リソースからではなく子リソースからのみデータを読み込む場合に役立ちます。
+- `auth`: オプションの `AuthConfig` インスタンス。渡された場合、[client](#client) 定義で定義されたインスタンスよりも優先して使用されます。例:
+
 ```py
 from dlt.sources.helpers.rest_client.auth import HttpBasicAuth
 
@@ -319,13 +321,14 @@ config = {
     # ...
 }
 ```
-This would use `Bearer` auth as defined in the `client` for `resource-using-bearer-auth` and `Http Basic` auth for `my-resource-with-special-auth`.
 
-You can also pass additional resource parameters that will be used to configure the dlt resource. See [dlt resource API reference](../../../api_reference/extract/decorators#resource) for more details.
+これにより、`resource-using-bearer-auth` には `client` で定義されている `Bearer` 認証が使用され、`my-resource-with-special-auth` には `Http Basic` 認証が使用されます。
 
-### Endpoint configuration
+dlt リソースを構成するために使用される追加のリソースパラメータを渡すこともできます。詳細については、[dlt リソース API リファレンス](../../../api_reference/extract/decorators#resource)を参照してください。
 
-The endpoint configuration defines how to query the API endpoint. Quick example:
+### Endpoint 設定
+
+エンドポイント設定は、APIエンドポイントをクエリする方法を定義します。簡単な例:
 
 ```py
 {
@@ -345,29 +348,28 @@ The endpoint configuration defines how to query the API endpoint. Quick example:
 }
 ```
 
-The fields in the endpoint configuration are:
+エンドポイント構成のフィールドは:
 
-- `path`: The path to the API endpoint. By default this path is appended to the given `base_url`. If this is a fully qualified URL starting with `http:` or `https:` it will be
-used as-is and `base_url` will be ignored.
-- `method`: The HTTP method to be used. The default is `GET`.
-- `params`: Query parameters to be sent with each request. For example, `sort` to order the results or `since` to specify [incremental loading](#incremental-loading). This is also may be used to define [resource relationships](#define-resource-relationships).
-- `json`: The JSON payload to be sent with the request (for POST and PUT requests).
-- `paginator`: Pagination configuration for the endpoint. See the [pagination](#pagination) section for more details.
-- `data_selector`: A JSONPath to select the data from the response. See the [data selection](#data-selection) section for more details.
-- `response_actions`: A list of actions that define how to process the response data. See the [response actions](./advanced#response-actions) section for more details.
-- `incremental`: Configuration for [incremental loading](#incremental-loading).
+- `path`: API エンドポイントへのパス。デフォルトでは、このパスは指定された `base_url` に追加されます。これが `http:` または `https:` で始まる完全修飾 URL である場合は、そのまま使用され、`base_url` は無視されます。
+- `method`: 使用する HTTP メソッド。デフォルトは `GET` です。
+- `params`: 各リクエストとともに送信されるクエリ パラメータ。たとえば、結果を並べ替える `sort` や、[インクリメンタルローディング](#incremental-loading) を指定する `since` などがあります。これは、[リソース関係](#define-resource-relationships) を定義するためにも使用できます。
+- `json`: リクエストとともに送信される JSON ペイロード (POST および PUT リクエストの場合)。
+- `paginator`: エンドポイントのページネーション設定。詳細については、[ページネーション](#pagination) セクションを参照してください。
+- `data_selector`: レスポンスからデータを選択するための JSONPath。詳細については、[データ選択](#data-selection) セクションを参照してください。
+- `response_actions`: 応答データの処理方法を定義するアクションのリスト。詳細については、[応答アクション](./advanced#response-actions)セクションを参照してください。
+- `incremental`: [インクリメンタルローディング](#incremental-loading)の設定
 
-### Pagination
+### ページネーション
 
-The REST API source will try to automatically handle pagination for you. This works by detecting the pagination details from the first API response.
+REST API ソースは、ページ区切りを自動的に処理しようとします。これは、最初の API 応答からページ区切りの詳細を検出することによって機能します。
 
-In some special cases, you may need to specify the pagination configuration explicitly.
+特別な場合には、ページネーション設定を明示的に指定する必要があります。
 
-To specify the pagination configuration, use the `paginator` field in the [client](#client) or [endpoint](#endpoint-configuration) configurations. You may either use a dictionary with a string alias in the `type` field along with the required parameters, or use a [paginator class instance](../../../general-usage/http/rest-client.md#paginators).
+ページネーション設定を指定するには、[client](#client) または [endpoint](#endpoint-configuration) 設定の `paginator` フィールドを使用します。 `type` フィールドに文字列エイリアスを含む辞書と必要なパラメータを使用するか、[paginator クラスのインスタンス](../../../general-usage/http/rest-client.md#paginators) を使用します。
 
-#### Example
+#### 例
 
-Suppose the API response for `https://api.example.com/posts` contains a `next` field with the URL to the next page:
+`https://api.example.com/posts` のAPIレスポンスに次のページのURLを含む `next`フィールドが含まれているとします:
 
 ```json
 {
@@ -382,7 +384,7 @@ Suppose the API response for `https://api.example.com/posts` contains a `next` f
 }
 ```
 
-You can configure the pagination for the `posts` resource like this:
+`posts`リソースのページネーションは次のように設定できます:
 
 ```py
 {
@@ -394,7 +396,7 @@ You can configure the pagination for the `posts` resource like this:
 }
 ```
 
-Alternatively, you can use the paginator instance directly:
+あるいは、ページネーターインスタンスを直接使用することもできます:
 
 ```py
 from dlt.sources.helpers.rest_client.paginators import JSONLinkPaginator
@@ -410,24 +412,24 @@ from dlt.sources.helpers.rest_client.paginators import JSONLinkPaginator
 ```
 
 :::note
-Currently, pagination is supported only for GET requests. To handle POST requests with pagination, you need to implement a [custom paginator](../../../general-usage/http/rest-client.md#custom-paginator).
+現在、ページネーションはGETリクエストに対してのみサポートされています。ページネーションを使用してPOSTリクエストを処理するには、[カスタムページネーター](../../../general-usage/http/rest-client.md#custom-paginator)を実装する必要があります。
 :::
 
-These are the available paginators:
+利用可能なページネーターは次のとおりです:
 
 | `type` | Paginator class | Description |
 | ------------ | -------------- | ----------- |
-| `json_link` | [JSONLinkPaginator](../../../general-usage/http/rest-client.md#jsonresponsepaginator) | The link to the next page is in the body (JSON) of the response.<br/>*Parameters:*<ul><li>`next_url_path` (str) - the JSONPath to the next page URL</li></ul> |
-| `header_link` | [HeaderLinkPaginator](../../../general-usage/http/rest-client.md#headerlinkpaginator) | The links to the next page are in the response headers.<br/>*Parameters:*<ul><li>`links_next_key` (str) - the name of the header containing the links. Default is "next".</li></ul> |
-| `offset` | [OffsetPaginator](../../../general-usage/http/rest-client.md#offsetpaginator) | The pagination is based on an offset parameter, with the total items count either in the response body or explicitly provided.<br/>*Parameters:*<ul><li>`limit` (int) - the maximum number of items to retrieve in each request</li><li>`offset` (int) - the initial offset for the first request. Defaults to `0`</li><li>`offset_param` (str) - the name of the query parameter used to specify the offset. Defaults to "offset"</li><li>`limit_param` (str) - the name of the query parameter used to specify the limit. Defaults to "limit"</li><li>`total_path` (str) - a JSONPath expression for the total number of items. If not provided, pagination is controlled by `maximum_offset` and `stop_after_empty_page`</li><li>`maximum_offset` (int) - optional maximum offset value. Limits pagination even without total count</li><li>`stop_after_empty_page` (bool) - Whether pagination should stop when a page contains no result items. Defaults to `True`</li></ul> |
-| `page_number` | [PageNumberPaginator](../../../general-usage/http/rest-client.md#pagenumberpaginator) | The pagination is based on a page number parameter, with the total pages count either in the response body or explicitly provided.<br/>*Parameters:*<ul><li>`base_page` (int) - the starting page number. Defaults to `0`</li><li>`page_param` (str) - the query parameter name for the page number. Defaults to "page"</li><li>`total_path` (str) - a JSONPath expression for the total number of pages. If not provided, pagination is controlled by `maximum_page` and `stop_after_empty_page`</li><li>`maximum_page` (int) - optional maximum page number. Stops pagination once this page is reached</li><li>`stop_after_empty_page` (bool) - Whether pagination should stop when a page contains no result items. Defaults to `True`</li></ul> |
-| `cursor` | [JSONResponseCursorPaginator](../../../general-usage/http/rest-client.md#jsonresponsecursorpaginator) | The pagination is based on a cursor parameter, with the value of the cursor in the response body (JSON).<br/>*Parameters:*<ul><li>`cursor_path` (str) - the JSONPath to the cursor value. Defaults to "cursors.next"</li><li>`cursor_param` (str) - the query parameter name for the cursor. Defaults to "after"</li></ul> |
-| `single_page` | SinglePagePaginator | The response will be interpreted as a single-page response, ignoring possible pagination metadata. |
-| `auto` | `None` | Explicitly specify that the source should automatically detect the pagination method. |
+| `json_link` | [JSONLinkPaginator](../../../general-usage/http/rest-client.md#jsonresponsepaginator) | 次のページへのリンクは、レスポンスの本文 (JSON) にあります。<br/>*パラメータ:*<ul><li>`next_url_path` (str) - 次のページの URL への JSONPath</li></ul> |
+| `header_link` | [HeaderLinkPaginator](../../../general-usage/http/rest-client.md#headerlinkpaginator) | 次のページへのリンクは、レスポンス ヘッダーにあります。<br/>*パラメーター:*<ul><li>`links_next_key` (str) - リンクを含むヘッダーの名前。デフォルトは "next" です。</li></ul> |
+| `offset` | [OffsetPaginator](../../../general-usage/http/rest-client.md#offsetpaginator) | ページ区切りはオフセット パラメータに基づいており、合計アイテム数はレスポンス本文内または明示的に提供されます。<br/>*パラメータ:*<ul><li>`limit` (int) - 各リクエストで取得するアイテムの最大数</li><li>`offset` (int) - 最初のリクエストの初期オフセット。デフォルトは `0` です</li><li>`offset_param` (str) - オフセットを指定するために使用されるクエリ パラメータの名前。デフォルトは "offset" です</li><li>`limit_param` (str) - 制限を指定するために使用されるクエリ パラメータの名前。デフォルトは "limit" です</li><li>`total_path` (str) - アイテムの合計数の JSONPath 式。指定されていない場合、ページ区切りは `maximum_offset` と `stop_after_empty_page` によって制御されます</li><li>`maximum_offset` (int) - オプションの最大オフセット値。合計数がなくてもページ区切りを制限します</li><li>`stop_after_empty_page` (bool) - ページに結果項目が含まれていない場合にページ区切りを停止するかどうか。デフォルトは `True` です</li></ul> |
+| `page_number` | [PageNumberPaginator](../../../general-usage/http/rest-client.md#pagenumberpaginator) | ページ区切りはページ番号パラメータに基づいており、総ページ数はレスポンス本文内または明示的に提供されます。<br/>*パラメータ:*<ul><li>`base_page` (int) - 開始ページ番号。デフォルトは `0` です。</li><li>`page_param` (str) - ページ番号のクエリパラメータ名。デフォルトは "page" です。</li><li>`total_path` (str) - 総ページ数の JSONPath 式。指定されていない場合、ページ区切りは `maximum_page` と `stop_after_empty_page` によって制御されます。</li><li>`maximum_page` (int) - オプションの最大ページ番号。このページに到達するとページ区切りが停止します。</li><li>`stop_after_empty_page` (bool) - ページに結果項目が含まれていない場合にページ区切りを停止するかどうか。デフォルトは `True` です。</li></ul> |
+| `cursor` | [JSONResponseCursorPaginator](../../../general-usage/http/rest-client.md#jsonresponsecursorpaginator) | ページネーションはカーソル パラメータに基づいており、カーソルの値はレスポンス本文 (JSON) に含まれています。<br/>*パラメータ:*<ul><li>`cursor_path` (str) - カーソル値への JSONPath。デフォルトは "cursors.next" です。</li><li>`cursor_param` (str) - カーソルのクエリ パラメータ名。デフォルトは "after" です。</li></ul> |
+| `single_page` | SinglePagePaginator | 応答は、ページ区切りのメタデータを無視して、単一ページの応答として解釈されます。 |
+| `auto` | `None` | ソースがページ区切り方法を自動的に検出するように明示的に指定します。 |
 
-For more complex pagination methods, you can implement a [custom paginator](../../../general-usage/http/rest-client.md#implementing-a-custom-paginator), instantiate it, and use it in the configuration.
+より複雑なページネーション方法の場合は、[カスタムページネーター](../../../general-usage/http/rest-client.md#implementing-a-custom-paginator)を実装し、インスタンス化して、構成で使用することができます。
 
-Alternatively, you can use the dictionary configuration syntax also for custom paginators. For this, you need to register your custom paginator:
+あるいは、カスタムページネーターにも辞書設定構文を使用できます。そのためには、カスタムページネーターを登録する必要があります:
 
 ```py
 from dlt.sources.rest_api.config_setup import register_paginator
@@ -447,13 +449,13 @@ register_paginator("custom_paginator", CustomPaginator)
 }
 ```
 
-### Data selection
+### データの選択
 
-The `data_selector` field in the endpoint configuration allows you to specify a JSONPath to select the data from the response. By default, the source will try to detect the locations of the data automatically.
+エンドポイント構成の `data_selector` フィールドを使用すると、レスポンスからデータを選択するための JSONPath を指定できます。デフォルトでは、ソースはデータの場所を自動的に検出しようとします。
 
-Use this field when you need to specify the location of the data in the response explicitly.
+応答内のデータの場所を明示的に指定する必要がある場合にこのフィールドを使用します。
 
-For example, if the API response looks like this:
+たとえば、APIレスポンスが次のようになる場合:
 
 ```json
 {
@@ -465,7 +467,7 @@ For example, if the API response looks like this:
 }
 ```
 
-You can use the following endpoint configuration:
+次のエンドポイント構成を使用できます:
 
 ```py
 {
@@ -474,7 +476,7 @@ You can use the following endpoint configuration:
 }
 ```
 
-For a nested structure like this:
+このようなネストされた構造の場合:
 
 ```json
 {
@@ -488,7 +490,7 @@ For a nested structure like this:
 }
 ```
 
-You can use the following endpoint configuration:
+次のエンドポイント構成を使用できます:
 
 ```py
 {
@@ -497,15 +499,15 @@ You can use the following endpoint configuration:
 }
 ```
 
-Read more about [JSONPath syntax](https://github.com/h2non/jsonpath-ng?tab=readme-ov-file#jsonpath-syntax) to learn how to write selectors.
+セレクターの記述方法については、[JSONPath 構文](https://github.com/h2non/jsonpath-ng?tab=readme-ov-file#jsonpath-syntax) の詳細をご覧ください。
 
-### Authentication
+### 認証
 
-For APIs that require authentication to access their endpoints, the REST API source supports various authentication methods, including token-based authentication, query parameters, basic authentication, and custom authentication. The authentication configuration is specified in the `auth` field of the [client](#client) either as a dictionary or as an instance of the [authentication class](../../../general-usage/http/rest-client.md#authentication).
+エンドポイントにアクセスするために認証を必要とする API の場合、REST API ソースは、トークンベースの認証、クエリ パラメータ、基本認証、カスタム認証など、さまざまな認証方法をサポートしています。認証構成は、[クライアント](#client) の `auth` フィールドで、辞書または [authentication クラス](../../../general-usage/http/rest-client.md#authentication) のインスタンスとして指定されます。
 
-#### Quick example
+#### 簡単な例
 
-Here's how to configure authentication using a bearer token:
+bearer トークンを使用して認証を構成する方法は次のとおりです:
 
 ```py
 {
@@ -520,7 +522,7 @@ Here's how to configure authentication using a bearer token:
 }
 ```
 
-Alternatively, you can use the authentication class directly:
+あるいは、authentication クラスを直接使用することもできます:
 
 ```py
 from dlt.sources.helpers.rest_client.auth import BearerTokenAuth
@@ -535,7 +537,7 @@ config = {
 }
 ```
 
-Since token-based authentication is one of the most common methods, you can use the following shortcut:
+トークンベースの認証は最も一般的な方法の1つであるため、次のショートカットを使用できます:
 
 ```py
 {
@@ -550,36 +552,35 @@ Since token-based authentication is one of the most common methods, you can use 
 ```
 
 :::warning
-Make sure to store your access tokens and other sensitive information in the `secrets.toml` file and never commit it to the version control system.
+アクセス トークンやその他の機密情報は必ず `secrets.toml` ファイルに保存し、バージョン管理システムにコミットしないでください。
 :::
 
-Available authentication types:
+利用可能な認証タイプ:
 
 | Authentication class | String Alias (`type`) | Description |
 | ------------------- | ----------- | ----------- |
-| [BearerTokenAuth](../../../general-usage/http/rest-client.md#bearer-token-authentication) | `bearer` | Bearer token authentication. |
-| [HTTPBasicAuth](../../../general-usage/http/rest-client.md#http-basic-authentication) | `http_basic` | Basic HTTP authentication. |
-| [APIKeyAuth](../../../general-usage/http/rest-client.md#api-key-authentication) | `api_key` | API key authentication with key defined in the query parameters or in the headers. |
-| [OAuth2ClientCredentials](../../../general-usage/http/rest-client.md#oauth20-authorization) | `oauth2_client_credentials` | OAuth 2.0 authorization with a temporary access token obtained from the authorization server. |
+| [BearerTokenAuth](../../../general-usage/http/rest-client.md#bearer-token-authentication) | `bearer` | Bearer トークン認証 |
+| [HTTPBasicAuth](../../../general-usage/http/rest-client.md#http-basic-authentication) | `http_basic` | HTTP ベーシック認証 |
+| [APIKeyAuth](../../../general-usage/http/rest-client.md#api-key-authentication) | `api_key` | クエリパラメータまたはヘッダーで定義されたキーを使用した API キー認証。 |
+| [OAuth2ClientCredentials](../../../general-usage/http/rest-client.md#oauth20-authorization) | `oauth2_client_credentials` | 認可サーバーから取得した一時アクセス トークンを使用した OAuth 2.0 認可。 |
 
 
 :::warning
-Make sure to store your access tokens and other sensitive information in the `secrets.toml` file and never commit it to the version control system.
+アクセス トークンやその他の機密情報は必ず `secrets.toml` ファイルに保存し、バージョン管理システムにコミットしないでください。
 :::
 
-Available authentication types:
+利用可能な認証タイプ:
 
 | `type` | Authentication class | Description |
 | ----------- | ------------------- | ----------- |
-| `bearer` | [BearerTokenAuth](../../../general-usage/http/rest-client.md#bearer-token-authentication) | Bearer token authentication.<br/>Parameters:<ul><li>`token` (str)</li></ul> |
-| `http_basic` | [HTTPBasicAuth](../../../general-usage/http/rest-client.md#http-basic-authentication) | Basic HTTP authentication.<br/>Parameters:<ul><li>`username` (str)</li><li>`password` (str)</li></ul> |
-| `api_key` | [APIKeyAuth](../../../general-usage/http/rest-client.md#api-key-authentication) | API key authentication with key defined in the query parameters or in the headers. <br/>Parameters:<ul><li>`name` (str) - the name of the query parameter or header</li><li>`api_key` (str) - the API key value</li><li>`location` (str, optional) - the location of the API key in the request. Can be `query` or `header`. Default is `header`</li></ul> |
-| `oauth2_client_credentials` | [OAuth2ClientCredentials](../../../general-usage/http/rest-client.md#oauth-20-authorization) | OAuth 2.0 Client Credentials authorization for server-to-server communication without user consent. <br/>Parameters:<ul><li>`access_token` (str, optional) - the temporary token. Usually not provided here because it is automatically obtained from the server by exchanging `client_id` and `client_secret`. Default is `None`</li><li>`access_token_url` (str) - the URL to request the `access_token` from</li><li>`client_id` (str) - identifier for your app. Usually issued via a developer portal</li><li>`client_secret` (str) - client credential to obtain authorization. Usually issued via a developer portal</li><li>`access_token_request_data` (dict, optional) - A dictionary with data required by the authorization server apart from the `client_id`, `client_secret`, and `"grant_type": "client_credentials"`. Defaults to `None`</li><li>`default_token_expiration` (int, optional) - The time in seconds after which the temporary access token expires. Defaults to 3600.</li><li>`session` (requests.Session, optional) - a custom session object. Mostly used for testing</li></ul> |
+| `bearer` | [BearerTokenAuth](../../../general-usage/http/rest-client.md#bearer-token-authentication) | Bearer トークン認証<br/>パラメータ:<ul><li>`token` (str)</li></ul> |
+| `http_basic` | [HTTPBasicAuth](../../../general-usage/http/rest-client.md#http-basic-authentication) | HTTP ベーシック認証<br/>パラメータ:<ul><li>`username` (str)</li><li>`password` (str)</li></ul> |
+| `api_key` | [APIKeyAuth](../../../general-usage/http/rest-client.md#api-key-authentication) | クエリパラメータまたはヘッダーで定義されたキーを使用した API キー認証。<br/>パラメータ:<ul><li>`name` (str) - クエリパラメータまたはヘッダーの名前</li><li>`api_key` (str) - API キーの値</li><li>`location` (str, optional) - リクエスト内の API キーの場所。`query` または `header` を指定できます。デフォルトは `header` です。</li></ul> |
+| `oauth2_client_credentials` | [OAuth2ClientCredentials](../../../general-usage/http/rest-client.md#oauth-20-authorization) | ユーザーの同意なしにサーバー間通信を行うための OAuth 2.0 クライアント資格情報の承認。 <br/>パラメータ:<ul><li>`access_token` (str, optional) - 一時トークン。通常はここでは指定しません。`client_id` と `client_secret` を交換することでサーバーから自動的に取得されるためです。デフォルトは `None` です。</li><li>`access_token_url` (str) - `access_token` を要求するURL</li><li>`client_id` (str) - アプリの識別子。通常は開発者ポータルから発行されます</li><li>`client_secret` (str) - 承認を得るためのクライアント認証情報。通常は開発者ポータル経由で発行されます。</li><li>`access_token_request_data` (dict, optional) -`client_id`、`client_secret`、`"grant_type": "client_credentials"` 以外に認可サーバーが必要とするデータを含む辞書。デフォルトは `None` です。</li><li>`default_token_expiration` (int, optional) - 一時アクセス トークンの有効期限が切れるまでの時間 (秒数)。デフォルトは 3600 です。</li><li>`session` (requests.Session, optional) - カスタムセッションオブジェクト。主にテストに使用されます</li></ul> |
 
+より複雑な認証方法の場合は、[カスタム authentication クラス](../../../general-usage/http/rest-client.md#implementing-custom-authentication)を実装し、構成で使用することができます。
 
-For more complex authentication methods, you can implement a [custom authentication class](../../../general-usage/http/rest-client.md#implementing-custom-authentication) and use it in the configuration.
-
-You can use the dictionary configuration syntax also for custom authentication classes after registering them as follows:
+次のように登録すれば、カスタム authentication クラスに対しても、辞書設定構文が使用できます:
 
 ```py
 from dlt.sources.rest_api.config_setup import register_auth
@@ -598,14 +599,14 @@ register_auth("custom_auth", CustomAuth)
 }
 ```
 
-### Define resource relationships
+### リソース関係を定義する
 
-When you have a resource that depends on another resource (for example, you must fetch a parent resource to get an ID needed to fetch the child), you can reference fields in the parent resource using special placeholders.
-This allows you to link one or more [path](#via-request-path), [query string](#via-query-string-parameters) or [JSON body](#via-json-body) parameters in the child resource to fields in the parent resource's data.
+別のリソースに依存するリソースがある場合 (たとえば、子リソースを取得するために必要な ID を取得するには親リソースを取得する必要があるような場合)、特別なプレースホルダーを使用して親リソース内のフィールドを参照できます。
+これにより、子リソース内の 1 つ以上の[パス](#via-request-path)、[クエリ文字列](#via-query-string-parameters)、または [JSON 本文](#via-json-body)パラメータを親リソースのデータ内のフィールドにリンクできます。
 
-#### Via request path
+#### リクエストパスを通して
 
-In the GitHub example, the `issue_comments` resource depends on the `issues` resource. The `resources.issues.number` placeholder links the `number` field in the `issues` resource data to the current request's path parameter.
+GitHub の例では、`issue_comments` リソースは `issues` リソースに依存しています。`resources.issues.number` プレースホルダーは、`issues` リソース データの `number` フィールドを現在のリクエストのパス パラメータにリンクします。
 
 ```py
 {
@@ -628,8 +629,8 @@ In the GitHub example, the `issue_comments` resource depends on the `issues` res
 }
 ```
 
-This configuration tells the source to get issue numbers from the `issues` resource data and use them to fetch comments for each issue number. So for each issue item, `"{resources.issues.number}"` is replaced by the issue number in the request path.
-For example, if the `issues` resource yields the following data:
+この構成は、ソースに `issues` リソース データから issue 番号を取得し、それを使用して各 issue 番号のコメントを取得するように指示します。したがって、各 issue 項目について、`"{resources.issues.number}"` はリクエスト パス内の issue 番号に置き換えられます。
+たとえば、`issues`リソースが次のデータを生成する場合:
 
 ```json
 [
@@ -639,17 +640,17 @@ For example, if the `issues` resource yields the following data:
 ]
 ```
 
-The `issue_comments` resource will make requests to the following endpoints:
+`issue_comments`リソースは次のエンドポイントにリクエストを送信します:
 
 - `issues/123/comments`
 - `issues/124/comments`
 - `issues/125/comments`
 
-The syntax for the placeholder is `resources.<parent_resource_name>.<field_name>`.
+プレースホルダーの構文は `resources.<parent_resource_name>.<field_name>` です。
 
-#### Via query string parameters
+#### クエリ文字列パラメータを通して
 
-The placeholder syntax can also be used in the query string parameters. For example, in an API which lets you fetch a blog posts (via `/posts`) and their comments (via `/comments?post_id=<post_id>`), you can define a resource `posts` and a resource `post_comments` which depends on the `posts` resource. You can then reference the `id` field from the `posts` resource in the `post_comments` resource:
+プレースホルダ構文は、クエリ文字列パラメータでも使用できます。たとえば、ブログ投稿 (`/posts` 経由) とそのコメント (`/comments?post_id=<post_id>` 経由) を取得できる API では、リソース `posts` と、`posts` リソースに依存するリソース `post_comments` を定義できます。その後、`post_comments` リソースで `posts` リソースの `id` フィールドを参照できます:
 
 ```py
 {
@@ -668,7 +669,7 @@ The placeholder syntax can also be used in the query string parameters. For exam
 }
 ```
 
-Similar to the GitHub example above, if the `posts` resource yields the following data:
+上記の GitHub の例と同様に、`posts` リソースから次のデータが生成される場合:
 
 ```json
 [
@@ -678,17 +679,17 @@ Similar to the GitHub example above, if the `posts` resource yields the followin
 ]
 ```
 
-The `post_comments` resource will make requests to the following endpoints:
+`post_comments`リソースは次のエンドポイントにリクエストを送信します:
 
 - `comments?post_id=1`
 - `comments?post_id=2`
 - `comments?post_id=3`
 
-#### Via JSON body
+#### JSON本文を通して
 
-In many APIs, you can send a complex query or configuration through a POST request’s JSON body rather than in the request path or query parameters. For example, consider an imaginary `/search` endpoint that supports multiple filters and settings. You might have a parent resource `posts` with each post’s `id` and a second resource, `post_details`, that uses `id` to perform a custom search.
+多くの API では、リクエスト パスやクエリ パラメータではなく、POST リクエストの JSON 本文を通じて複雑なクエリや構成を送信できます。たとえば、複数のフィルターと設定をサポートする架空の `/search` エンドポイントを考えてみましょう。各投稿の `id` を持つ親リソース `posts` と、`id` を使用してカスタム検索を実行する 2 番目のリソース `post_details` があるとします。
 
-In the example below we reference the `posts` resource’s `id` field in the JSON body via placeholders:
+以下の例では、JSON 本文の `posts` リソースの `id` フィールドをプレースホルダー経由で参照しています:
 
 ```py
 {
@@ -713,14 +714,14 @@ In the example below we reference the `posts` resource’s `id` field in the JSO
 ```
 
 
-#### Legacy syntax: `resolve` field in parameter configuration
+#### レガシー構文: パラメータ設定の `resolve` フィールド
 
 :::warning
-`resolve` works only for path parameters. The new placeholder syntax is more flexible and recommended for new configurations.
+`resolve` はパスパラメータに対してのみ機能します。新しいプレースホルダ構文はより柔軟であり、新しい構成が推奨されます。
 :::
 
-An alternative, legacy way to define resource relationships is to use the `resolve` field in the parameter configuration.
-Here's the same example as above that uses the `resolve` field:
+リソース関係を定義する従来の代替方法は、パラメータ設定で `resolve` フィールドを使用することです。
+以下は、上記と同じ `resolve` フィールドを使用する例です:
 
 ```py
 {
@@ -750,7 +751,7 @@ Here's the same example as above that uses the `resolve` field:
 }
 ```
 
-The syntax for the `resolve` field in parameter configuration is:
+パラメータ設定の`resolve`フィールドの構文は:
 
 ```py
 {
@@ -762,12 +763,12 @@ The syntax for the `resolve` field in parameter configuration is:
 }
 ```
 
-The `field` value can be specified as a [JSONPath](https://github.com/h2non/jsonpath-ng?tab=readme-ov-file#jsonpath-syntax) to select a nested field in the parent resource data. For example: `"field": "items[0].id"`.
+`field` 値を [JSONPath](https://github.com/h2non/jsonpath-ng?tab=readme-ov-file#jsonpath-syntax) として指定して、親リソース データ内のネストされたフィールドを選択できます。例: `"field": "items[0].id"`。
 
 
-#### Resolving multiple path parameters from a parent resource
+#### 親リソースから複数のパスパラメータを解決
 
-When a child resource depends on multiple fields from a single parent resource, you can define multiple `resolve` parameters in the endpoint configuration. For example:
+子リソースが単一の親リソースの複数のフィールドに依存する場合、エンドポイント構成で複数の `resolve` パラメータを定義できます。たとえば:
 
 ```py
 {
@@ -808,14 +809,14 @@ When a child resource depends on multiple fields from a single parent resource, 
 }
 ```
 
-In the configuration above:
+上記の構成では:
 
-- The `users` resource depends on the `groups` resource, resolving the `group_id` parameter from the `id` field in `groups`.
-- The `user_details` resource depends on the `users` resource, resolving both `group_id` and `user_id` parameters from fields in `users`.
+- `users` リソースは `groups` リソースに依存し、`groups` の `id` フィールドから `group_id` パラメータを解決します。
+- `user_details` リソースは `users` リソースに依存し、`users` のフィールドから `group_id` と `user_id` の両方のパラメータを解決します。
 
-#### Include fields from the parent resource
+#### 親リソースのフィールドを含める
 
-You can include data from the parent resource in the child resource by using the `include_from_parent` field in the resource configuration. For example:
+リソース設定の `include_from_parent` フィールドを使用すると、親リソースのデータを子リソースに含めることができます。たとえば:
 
 ```py
 {
@@ -827,15 +828,15 @@ You can include data from the parent resource in the child resource by using the
 }
 ```
 
-This will include the `id`, `title`, and `created_at` fields from the `issues` resource in the `issue_comments` resource data. The names of the included fields will be prefixed with the parent resource name and an underscore (`_`) like so: `_issues_id`, `_issues_title`, `_issues_created_at`.
+これにより、`issues` リソースの `id`、`title`、および `created_at` フィールドが `issue_comments` リソース データに含まれます。含まれるフィールドの名前には、親リソース名とアンダースコア (`_`) がプレフィックスとして付けられます (例: `_issues_id`、`_issues_title`、`_issues_created_at`)。
 
-### Define a resource which is not a REST endpoint
+### REST エンドポイントではないリソースを定義する
 
-Sometimes, we want to request endpoints with specific values that are not returned by another endpoint.
-Thus, you can also include arbitrary dlt resources in your `RESTAPIConfig` instead of defining a resource for every path!
+場合によっては、別のエンドポイントによって返されない特定の値を持つエンドポイントを要求したいことがあります。
+したがって、すべてのパスに対してリソースを定義する代わりに、`RESTAPIConfig` に任意の dlt リソースを含めることもできます。
 
-In the following example, we want to load the issues belonging to three repositories.
-Instead of defining three different issues resources, one for each of the paths `dlt-hub/dlt/issues/`, `dlt-hub/verified-sources/issues/`, `dlt-hub/dlthub-education/issues/`, we have a resource `repositories` which yields a list of repository names that will be fetched by the dependent resource `issues`.
+次の例では、3 つのリポジトリに属する​​ issue をロードします。
+パス `dlt-hub/dlt/issues/`、`dlt-hub/verified-sources/issues/`、`dlt-hub/dlthub-education/issues/` ごとに 1 つずつ、3 つの異なる issue リソースを定義する代わりに、依存リソース `issues` によって取得されるリポジトリ名のリストを生成するリソース `repositories` を使用します。
 
 ```py
 from dlt.sources.rest_api import RESTAPIConfig
@@ -867,7 +868,7 @@ config: RESTAPIConfig = {
 }
 ```
 
-Be careful that the parent resource needs to return `Generator[List[Dict[str, Any]]]`. Thus, the following will NOT work:
+親リソースは `Generator[List[Dict[str, Any]]]` を返す必要があることに注意してください。したがって、以下は機能しません:
 
 ```py
 @dlt.resource
@@ -876,13 +877,13 @@ def repositories() -> Generator[Dict[str, Any], Any, Any]:
     yield from [{"name": "dlt"}, {"name": "verified-sources"}, {"name": "dlthub-education"}]
 ```
 
-### Processing steps: filter and transform data
+### 処理手順: データのフィルタリングと変換
 
-The `processing_steps` field in the resource configuration allows you to apply transformations to the data fetched from the API before it is loaded into your destination. This is useful when you need to filter out certain records, modify the data structure, or anonymize sensitive information.
+リソース構成の `processing_steps` フィールドを使用すると、API から取得したデータを宛先にロードする前に変換を適用できます。これは、特定のレコードをフィルター処理したり、データ構造を変更したり、機密情報を匿名化したりする必要がある場合に便利です。
 
-Each processing step is a dictionary specifying the type of operation (`filter` or `map`) and the function to apply. Steps apply in the order they are listed.
+各処理ステップは、操作のタイプ (`filter` または `map`) と適用する関数を指定する辞書です。ステップはリストされている順序で適用されます。
 
-#### Quick example
+#### 簡単な例
 
 ```py
 def lower_title(record):
@@ -905,14 +906,14 @@ config: RESTAPIConfig = {
 }
 ```
 
-In the example above:
+上記の例では:
 
-- First, the `filter` step uses a lambda function to include only records where `id` is less than 10.
-- Thereafter, the `map` step applies the `lower_title` function to each remaining record.
+- まず、`filter` ステップでは、ラムダ関数を使用して、`id` が 10 未満のレコードのみを含めます。
+- その後、`map` ステップは残りの各レコードに `lower_title` 関数を適用します。
 
-#### Using `filter`
+#### `filter` の使用
 
-The `filter` step allows you to exclude records that do not meet certain criteria. The provided function should return `True` to keep the record or `False` to exclude it:
+`filter` ステップを使用すると、特定の基準を満たさないレコードを除外できます。提供された関数は、レコードを保持する場合は `True` を返し、除外する場合は `False` を返す必要があります:
 
 ```py
 {
@@ -924,11 +925,11 @@ The `filter` step allows you to exclude records that do not meet certain criteri
 }
 ```
 
-In this example, only records with `id` equal to 10, 20, or 30 will be included.
+この例では、`id` が 10、20、または 30 であるレコードのみが含まれます。
 
-#### Using `map`
+#### `map` の使用
 
-The `map` step allows you to modify the records fetched from the API. The provided function should take a record as an argument and return the modified record. For example, to anonymize the `email` field:
+`map`ステップでは、APIから取得したレコードを変更できます。提供された関数は、レコードを引数として受け取り、変更されたレコードを返します。たとえば、`email`フィールドを匿名化するには:
 
 ```py
 def anonymize_email(record):
@@ -950,9 +951,9 @@ config: RESTAPIConfig = {
 }
 ```
 
-#### Combining `filter` and `map`
+#### `filter` と `map` を組み合わせる
 
-You can combine multiple processing steps to achieve complex transformations:
+複数の処理ステップを組み合わせて複雑な変換を実現できます:
 
 ```py
 {
@@ -967,32 +968,34 @@ You can combine multiple processing steps to achieve complex transformations:
 ```
 
 :::tip
-#### Best practices
-1. Order matters: Processing steps are applied in the order they are listed. Be mindful of the sequence, especially when combining `map` and `filter`.
-2. Function definition: Define your filter and map functions separately for clarity and reuse.
-3. Use `filter` to exclude records early in the process to reduce the amount of data that needs to be processed.
-4. Combine consecutive `map` steps into a single function for faster execution.
+#### ベストプラクティス
+
+1. 順序は重要です: 処理手順はリストされている順序で適用されます。特に `map` と `filter` を組み合わせる場合は、順序に注意してください。
+2. 関数定義: 明確さと再利用のために、フィルター関数とマップ関数を個別に定義します。
+3. 処理する必要があるデータの量を減らすために、プロセスの早い段階で `filter` を使用してレコードを除外します。
+4. 連続する `map` ステップを 1 つの関数に結合して、実行を高速化します。
 :::
 
-## Incremental loading
+## インクリメンタルなローディング
 
-Some APIs provide a way to fetch only new or changed data (most often by using a timestamp field like `updated_at`, `created_at`, or incremental IDs).
-This is called [incremental loading](../../../general-usage/incremental-loading.md) and is very useful as it allows you to reduce the load time and the amount of data transferred.
+一部の API では、新しいデータまたは変更されたデータのみを取得する方法が提供されています (ほとんどの場合、`updated_at`、`created_at` などのタイムスタンプ フィールドや増分 ID を使用します)。
+これは [インクリメンタルなローディング](../../../general-usage/incremental-loading.md) と呼ばれ、読み込み時間と転送されるデータ量を削減できるため非常に便利です。
 
-When the API endpoint supports incremental loading, you can configure dlt to load only the new or changed data using these two methods:
+APIエンドポイントが増分読み込みをサポートしている場合、次の2つの方法を使用して、新しいデータまたは変更されたデータのみを読み込むようにdltを構成できます:
 
-1. Defining a special parameter in the `params` section of the [endpoint configuration](#endpoint-configuration).
-2. Specifying the `incremental` field in the endpoint configuration.
+1. [エンドポイント構成](#endpoint-configuration)の`params`セクションで特別なパラメータを定義します。
+2. エンドポイント構成で `incremental` フィールドを指定します。
 
-Let's start with the first method.
+最初の方法から始めましょう。
 
-### Incremental loading in `params`
+### `params` でインクリメンタルローディング
 
-Imagine we have the following endpoint `https://api.example.com/posts` and it:
-1. Accepts a `created_since` query parameter to fetch posts created after a certain date.
-2. Returns a list of posts with the `created_at` field for each post.
+次のようなエンドポイント「https://api.example.com/posts」があるとします:
 
-For example, if we query the endpoint with `https://api.example.com/posts?created_since=2024-01-25`, we get the following response:
+1. 特定の日付以降に作成された投稿を取得するために、`created_since` クエリ パラメータを受け入れます。
+2. 各投稿の `created_at` フィールドを含む投稿のリストを返します。
+
+たとえば、エンドポイントを `https://api.example.com/posts?created_since=2024-01-25` でクエリすると、次の応答が返されます:
 
 ```json
 {
@@ -1004,7 +1007,7 @@ For example, if we query the endpoint with `https://api.example.com/posts?create
 }
 ```
 
-To enable incremental loading for this endpoint, you can use the following endpoint configuration:
+このエンドポイントの増分読み込みを有効にするには、次のエンドポイント構成を使用します:
 
 ```py
 {
@@ -1020,13 +1023,13 @@ To enable incremental loading for this endpoint, you can use the following endpo
 }
 ```
 
-After you run the pipeline, dlt will keep track of the last `created_at` from all the posts fetched and use it as the `created_since` parameter in the next request.
-So in our case, the next request will be made to `https://api.example.com/posts?created_since=2024-01-28` to fetch only the new posts created after `2024-01-28`.
+パイプラインを実行すると、dlt は取得したすべての投稿の最後の `created_at` を追跡し、それを次のリクエストの `created_since` パラメータとして使用します。
+したがって、このケースでは、次のリクエストは `https://api.example.com/posts?created_since=2024-01-28` に対して行われ、`2024-01-28` 以降に作成された新しい投稿のみが取得されます。
 
-Let's break down the configuration.
+構成を詳しく見ていきましょう。
 
-1. We explicitly set `data_selector` to `"results"` to select the list of posts from the response. This is optional; if not set, dlt will try to auto-detect the data location.
-2. We define the `created_since` parameter as an incremental parameter with the following fields:
+1. レスポンスから投稿のリストを選択するために、`data_selector` を `"results"` に明示的に設定します。これはオプションです。設定されていない場合、dlt はデータの場所を自動検出しようとします。
+2. `created_since` パラメータを、次のフィールドを持つ増分パラメータとして定義します:
 
 ```py
 {
@@ -1038,15 +1041,15 @@ Let's break down the configuration.
 }
 ```
 
-- `type`: The type of the parameter definition. In this case, it must be set to `incremental`.
-- `cursor_path`: The JSONPath to the field within each item in the list. The value of this field will be used in the next request. In the example above, our items look like `{"id": 1, "title": "Post 1", "created_at": "2024-01-26"}` so to track the created time, we set `cursor_path` to `"created_at"`. Note that the JSONPath starts from the root of the item (dict) and not from the root of the response.
-- `initial_value`: The initial value for the cursor. This is the value that will initialize the state of incremental loading. In this case, it's `2024-01-25`. The value type should match the type of the field in the data item.
+- `type`: パラメータ定義のタイプ。この場合、`incremental` に設定する必要があります。
+- `cursor_path`: リスト内の各アイテム内のフィールドへの JSONPath。このフィールドの値は、次のリクエストで使用されます。上記の例では、アイテムは `{"id": 1, "title": "Post 1", "created_at": "2024-01-26"}` のようになっているため、作成時間を追跡するには、`cursor_path` を `"created_at"` に設定します。JSONPath は、レスポンスのルートからではなく、アイテム (dict) のルートから始まることに注意してください。
+- `initial_value`: カーソルの初期値。これはインクリメンタルローディングの状態を初期化する値です。この場合、`2024-01-25` です。値の型は、データ項目内のフィールドの型と一致する必要があります。
 
-### Incremental loading using the `incremental` field
+### `incremental` フィールドを使用したインクリメンタルローディング
 
-The alternative method is to use the `incremental` field in the [endpoint configuration](#endpoint-configuration). This configuration is more powerful than the method shown above because it also allows you to specify not only the start parameter and value but also the end parameter and value for the incremental loading.
+別の方法としては、[エンドポイント設定](#endpoint-configuration)の `incremental` フィールドを使用する方法があります。この設定は、インクリメンタルローディングの開始パラメータと値だけでなく、終了パラメータと値も指定できるため、上記の方法よりも強力です。
 
-Let's take the same example as above and configure it using the `incremental` field:
+上記と同じ例を取り上げ、`incremental`フィールドを使用して設定してみましょう:
 
 ```py
 {
@@ -1060,9 +1063,9 @@ Let's take the same example as above and configure it using the `incremental` fi
 }
 ```
 
-Note that we specify the query parameter name `created_since` in the `start_param` field and not in the `params` section.
+クエリパラメータ名 `created_since` を `params` セクションではなく `start_param` フィールドに指定することに注意してください。
 
-The full available configuration for the `incremental` field is:
+`incremental`フィールドの利用可能な完全な設定は次のとおりです。:
 
 ```py
 {
@@ -1077,26 +1080,26 @@ The full available configuration for the `incremental` field is:
 }
 ```
 
-The fields are:
+フィールドは:
 
-- `start_param` (str): The name of the query parameter to be used as the start condition. If we use the example above, it would be `"created_since"`.
-- `end_param` (str): The name of the query parameter to be used as the end condition. This is optional and can be omitted if you only need to track the start condition. This is useful when you need to fetch data within a specific range and the API supports end conditions (like the `created_before` query parameter).
-- `cursor_path` (str): The JSONPath to the field within each item in the list. This is the field that will be used to track the incremental loading. In the example above, it's `"created_at"`.
-- `initial_value` (str): The initial value for the cursor. This is the value that will initialize the state of incremental loading.
-- `end_value` (str): The end value for the cursor to stop the incremental loading. This is optional and can be omitted if you only need to track the start condition. If you set this field, `initial_value` needs to be set as well.
-- `convert` (callable): A callable that converts the cursor value into the format that the query parameter requires. For example, a UNIX timestamp can be converted into an ISO 8601 date or a date can be converted into `created_at+gt+{date}`.
+- `start_param` (str): 開始条件として使用されるクエリ パラメータの名前。上記の例を使用する場合は、`"created_since"` になります。
+- `end_param` (str): 終了条件として使用されるクエリ パラメータの名前。これはオプションであり、開始条件のみを追跡する必要がある場合は省略できます。これは、特定の範囲内でデータを取得する必要があり、API が終了条件 (`created_before` クエリ パラメータなど) をサポートしている場合に便利です。
+- `cursor_path` (str): リスト内の各項目内のフィールドへの JSONPath。これはインクリメンタルローディングを追跡するために使用されるフィールドです。上記の例では、`"created_at"` です。
+- `initial_value` (str): カーソルの初期値。これはインクリメンタルローディングの状態を初期化する値です。
+- `end_value` (str): インクリメンタルローディングを停止するカーソルの終了値。これはオプションであり、開始条件のみを追跡する必要がある場合は省略できます。このフィールドを設定する場合は、`initial_value` も設定する必要があります。
+- `convert` (callable): カーソル値をクエリ パラメータに必要な形式に変換する呼び出し可能オブジェクト。たとえば、UNIX タイムスタンプを ISO 8601 の日付に変換したり、日付を `created_at+gt+{date}` に変換したりできます。
 
-See the [incremental loading](../../../general-usage/incremental-loading.md#incremental-loading-with-a-cursor-field) guide for more details.
+詳細については、[インクリメンタルローディング](../../../general-usage/incremental-loading.md#incremental-loading-with-a-cursor-field)ガイドを参照してください。
 
-If you encounter issues with incremental loading, see the [troubleshooting section](../../../general-usage/incremental-loading.md#troubleshooting) in the incremental loading guide.
+インクリメンタルローディングで問題が発生した場合は、インクリメンタルローディングガイドの[トラブルシューティング セクション](../../../general-usage/incremental-loading.md#troubleshooting)を参照してください。
 
-### Convert the incremental value before calling the API
+### APIを呼び出す前に増分値を変換する
 
-If you need to transform the values in the cursor field before passing them to the API endpoint, you can specify a callable under the key `convert`. For example, the API might return UNIX epoch timestamps but expects to be queried with an ISO 8601 date. To achieve that, we can specify a function that converts from the date format returned by the API to the date format required for API requests.
+カーソル フィールドの値を API エンドポイントに渡す前に変換する必要がある場合は、キー `convert` で呼び出し可能関数を指定できます。たとえば、API は UNIX エポック タイムスタンプを返す可能性がありますが、ISO 8601 日付でクエリされることを想定しています。これを実現するには、API によって返される日付形式を API リクエストに必要な日付形式に変換する関数を指定できます。
 
-In the following examples, `1704067200` is returned from the API in the field `updated_at`, but the API will be called with `?created_since=2024-01-01`.
+次の例では、フィールド `updated_at` で API から `1704067200` が返されますが、API は `?created_since=2024-01-01` で呼び出されます。
 
-Incremental loading using the `params` field:
+`params` フィールドを使用したインクリメンタルローディング:
 ```py
 {
     "created_since": {
@@ -1108,7 +1111,8 @@ Incremental loading using the `params` field:
 }
 ```
 
-Incremental loading using the `incremental` field:
+`incremental` フィールドを使用したインクリメンタルロード:
+
 ```py
 {
     "path": "posts",
@@ -1122,24 +1126,23 @@ Incremental loading using the `incremental` field:
 }
 ```
 
+## トラブルシューティング
 
-## Troubleshooting
-
-If you encounter issues while running the pipeline, enable [logging](../../../running-in-production/running.md#set-the-log-level-and-format) for detailed information about the execution:
+パイプラインの実行中に問題が発生した場合は、[ログ記録](../../../running-in-production/running.md#set-the-log-level-and-format)を有効にして、実行に関する詳細情報を取得します。:
 
 ```sh
 RUNTIME__LOG_LEVEL=INFO python my_script.py
 ```
 
-This also provides details on the HTTP requests.
+これには、HTTP リクエストの詳細も提供されます。
 
-### Configuration issues
+### 設定の課題
 
-#### Getting validation errors
+#### 検証エラーが発生する
 
-When you are running the pipeline and getting a `DictValidationException`, it means that the [source configuration](#source-configuration) is incorrect. The error message provides details on the issue, including the path to the field and the expected type.
+パイプラインを実行していて `DictValidationException` が発生した場合は、[ソース構成](#source-configuration) が正しくないことを意味します。エラー メッセージには、フィールドへのパスや予想されるタイプなど、問題の詳細が示されます。
 
-For example, if you have a source configuration like this:
+たとえば、次のようなソース構成の場合:
 
 ```py
 config: RESTAPIConfig = {
@@ -1164,7 +1167,7 @@ config: RESTAPIConfig = {
 }
 ```
 
-You will get an error like this:
+次のようなエラーが表示されます:
 
 ```sh
 dlt.common.exceptions.DictValidationException: In path .: field 'resources[0]'
@@ -1173,42 +1176,42 @@ expects the following types: str, EndpointResource. Provided value {'name': 'iss
 For EndpointResource: In path ./resources[0]: following fields are unexpected {'params'}
 ```
 
-It means that in the first resource configuration (`resources[0]`), the `params` field should be inside the `endpoint` field.
+これは、最初のリソース構成 (`resources[0]`) では、`params` フィールドが `endpoint` フィールド内にある必要があることを意味します。
 
 :::tip
-Import the `RESTAPIConfig` type from the `rest_api` module to have convenient hints in your editor/IDE and use it to define the configuration object.
+`rest_api` モジュールから `RESTAPIConfig` タイプをインポートして、エディター/IDE で便利なヒントを取得し、それを使用して構成オブジェクトを定義します。
 
 ```py
 from dlt.sources.rest_api import RESTAPIConfig
 ```
 :::
 
-#### Getting wrong data or no data
+#### 間違ったデータやデータがない
 
-If incorrect data is received from an endpoint, check the `data_selector` field in the [endpoint configuration](#endpoint-configuration). Ensure the JSONPath is accurate and points to the correct data in the response body. `rest_api` attempts to auto-detect the data location, which may not always succeed. See the [data selection](#data-selection) section for more details.
+エンドポイントから間違ったデータを受信した場合は、[エンドポイント構成](#endpoint-configuration) の `data_selector` フィールドを確認してください。JSONPath が正確であり、応答本文の正しいデータを指していることを確認してください。`rest_api` はデータの場所を自動検出しようとしますが、必ずしも成功するとは限りません。詳細については、[データ選択](#data-selection) セクションを参照してください。
 
-#### Getting insufficient data or incorrect pagination
+#### データが不十分であるか、ページ番号が正しくありません
 
-Check the `paginator` field in the configuration. When not explicitly specified, the source tries to auto-detect the pagination method. If auto-detection fails, or the system is unsure, a warning is logged. For production environments, we recommend specifying an explicit paginator in the configuration. See the [pagination](#pagination) section for more details. Some APIs may have non-standard pagination methods, and you may need to implement a [custom paginator](../../../general-usage/http/rest-client.md#implementing-a-custom-paginator).
+設定の `paginator` フィールドを確認してください。明示的に指定されていない場合、ソースはページ区切り方法を自動検出しようとします。自動検出が失敗した場合、またはシステムが不明な場合は、警告が記録されます。実稼働環境では、設定で明示的にページ区切りを指定することをお勧めします。詳細については、[ページネーション](#pagination)のセクションを参照してください。一部の API には非標準のページ区切り方法がある場合があり、[カスタムページ区切り](../../../general-usage/http/rest-client.md#implementing-a-custom-paginator)を実装する必要がある場合があります。
 
-#### Incremental loading not working
+#### インクリメンタルローディングが機能しない
 
-See the [troubleshooting guide](../../../general-usage/incremental-loading.md#troubleshooting) for incremental loading issues.
+インクリメンタルなローディングの問題については、[トラブルシューティング ガイド](../../../general-usage/incremental-loading.md#troubleshooting)を参照してください。
 
-#### Getting HTTP 404 errors
+#### HTTP 404 エラーが発生する
 
-Some APIs may return 404 errors for resources that do not exist or have no data. Manage these responses by configuring the `ignore` action in [response actions](./advanced#response-actions).
+一部の API は、存在しないリソースやデータがないリソースに対して 404 エラーを返す場合があります。これらの応答を管理するには、[応答アクション](./advanced#response-actions)で `ignore` アクションを設定します。
 
-### Authentication issues
+### 認証の問題
 
-If you are experiencing 401 (Unauthorized) errors, this could indicate:
+401（Unauthorized）エラーが発生した場合、これは次のことを示している可能性があります:
 
-- Incorrect authorization credentials. Verify credentials in the `secrets.toml`. Refer to [Secret and configs](../../../general-usage/credentials/setup#understanding-the-exceptions) for more information.
-- An incorrect authentication type. Consult the API documentation for the proper method. See the [authentication](#authentication) section for details. For some APIs, a [custom authentication method](../../../general-usage/http/rest-client.md#custom-authentication) may be required.
+- 認証資格情報が正しくありません。`secrets.toml` 内の資格情報を確認してください。詳細については、[シークレットと構成](../../../general-usage/credentials/setup#understanding-the-exceptions)を参照してください。
+- 認証タイプが正しくありません。適切な方法については、API ドキュメントを参照してください。詳細については、[認証](#authentication) セクションを参照してください。一部の API では、[カスタム認証方法](../../../general-usage/http/rest-client.md#custom-authentication) が必要になる場合があります。
 
-### General guidelines
+### 一般的なガイドライン
 
-The `rest_api` source uses the [RESTClient](../../../general-usage/http/rest-client.md) class for HTTP requests. Refer to the RESTClient [troubleshooting guide](../../../general-usage/http/rest-client.md#troubleshooting) for debugging tips.
+`rest_api` ソースは、HTTP リクエストで [RESTClient](../../../general-usage/http/rest-client.md) クラスを使用します。デバッグのヒントについては、RESTClient [トラブルシューティング ガイド](../../../general-usage/http/rest-client.md#troubleshooting) を参照してください。
 
-For further assistance, join our [Slack community](https://dlthub.com/community). We're here to help!
+さらにサポートが必要な場合は、[Slack コミュニティ](https://dlthub.com/community) にご参加ください。喜んでお手伝いいたします!
 

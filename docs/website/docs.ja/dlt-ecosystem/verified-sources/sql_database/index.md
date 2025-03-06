@@ -5,33 +5,33 @@ keywords: [sql connector, sql database pipeline, sql database]
 ---
 import Header from '../_source-info-header.md';
 
-# 30+ SQL databases
+# 30 以上の SQL データベース
 
 <Header/>
 
-SQL databases are management systems (DBMS) that store data in a structured format, commonly used for efficient and reliable data retrieval.
+SQL データベースは、構造化された形式でデータを保存する管理システム (DBMS) であり、効率的で信頼性の高いデータ取得によく使用されます。
 
-The SQL Database verified source loads data to your specified destination using one of the following backends: SQLAlchemy, PyArrow, pandas, or ConnectorX.
+SQL データベース検証済みソースは、SQLAlchemy、PyArrow、pandas、または ConnectorX のいずれかのバックエンドを使用して、指定された宛先にデータを読み込みます。
 
-Sources and resources that can be loaded using this verified source are:
+この検証済みソースを使用してロードできるソースとリソースは:
 
-| Name         | Description                                                          |
+| 名前         | 説明                                                                  |
 | ------------ | -------------------------------------------------------------------- |
-| sql_database | Reflects the tables and views in an SQL database and retrieves the data |
-| sql_table    | Retrieves data from a particular SQL database table                  |
+| sql_database | SQLデータベースのテーブルとビューを反映し、データを取得します             |
+| sql_table    | 特定のSQLデータベーステーブルからデータを取得します                      |
 |              |                                                                      |
 
 :::tip
-If you prefer to skip the tutorial and see the code example right away, check out the pipeline example [here](https://github.com/dlt-hub/verified-sources/blob/master/sources/sql_database_pipeline.py).
+チュートリアルをスキップしてすぐにコード例を確認したい場合は、[こちら](https://github.com/dlt-hub/verified-sources/blob/master/sources/sql_database_pipeline.py) のパイプライン例を確認してください。
 :::
 
-### Supported databases
+### サポートされているデータベース
 
 :::tip dlt+
-Check out [dlt+](../../../plus/ecosystem/ms-sql.md) for support of change tracking for Microsoft SQL Server.
+Microsoft SQL Server の変更追跡のサポートについては、[dlt+](../../../plus/ecosystem/ms-sql.md) を参照してください。
 :::
 
-We support all [SQLAlchemy dialects](https://docs.sqlalchemy.org/en/20/dialects/), which include, but are not limited to, the following database engines:
+私たちはすべての[SQLAlchemy方言](https://docs.sqlalchemy.org/en/20/dialects/)をサポートしています。これには以下のデータベースエンジンが含まれますが、これらに限定されません。:
 
 
 * [PostgreSQL](./troubleshooting#postgres--mssql)
@@ -51,6 +51,6 @@ We support all [SQLAlchemy dialects](https://docs.sqlalchemy.org/en/20/dialects/
 * Teradata Vantage
 
 :::note
-Note that there are many unofficial dialects, such as [DuckDB](https://duckdb.org/).
+[DuckDB](https://duckdb.org/) など、非公式の方言が多数存在することに注意してください。
 :::
 

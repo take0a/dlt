@@ -6,15 +6,15 @@ keywords: [sql connector, sql database pipeline, sql database]
 
 import Header from '../_source-info-header.md';
 
-# Usage
+# 使用法
 
 <Header/>
 
-## Applying column-wise filtering on the data being ingested
+## 取り込まれるデータに列方向のフィルタリングを適用する
 
-By default, the existing source and resource functions, `sql_database` and `sql_table`, ingest all of the records from the source table. However, by using `query_adapter_callback`, it is possible to pass a `WHERE` clause inside the underlying `SELECT` statement using the [SQLAlchemy syntax](https://docs.sqlalchemy.org/en/14/core/selectable.html#). This enables filtering the data based on specific columns before extraction.
+デフォルトでは、既存のソース関数とリソース関数である `sql_database` と `sql_table` は、ソース テーブルからすべてのレコードを取り込みます。ただし、`query_adapter_callback` を使用すると、[SQLAlchemy 構文](https://docs.sqlalchemy.org/en/14/core/selectable.html#) を使用して、基になる `SELECT` ステートメント内に `WHERE` 句を渡すことができます。これにより、抽出前に特定の列に基づいてデータをフィルタリングできます。
 
-The example below uses `query_adapter_callback` to filter on the column `customer_id` for the table `orders`:
+以下の例では、`query_adapter_callback` を使用して、テーブル `orders` の列 `customer_id` でフィルタリングします:
 
 ```py
 from dlt.sources.sql_database import sql_database
@@ -31,11 +31,11 @@ source = sql_database(
 ).with_resources("orders")
 ```
 
-## Write custom SQL custom queries
-We recommend that you create a SQL VIEW in your source database and extract data from it. In that case `dlt` will infer all column types and read data in
-shape you define in a view without any further customization.
+## カスタム SQL カスタムクエリを書く
 
-If creating a view is not feasible, you can fully rewrite the automatically generated query with extended version of `query_adapter_callback`:
+ソース データベースに SQL VIEW を作成し、そこからデータを抽出することをお勧めします。その場合、`dlt` はすべての列タイプを推測し、それ以上のカスタマイズを行わずに、ビューで定義した形式でデータを読み取ります。
+
+ビューの作成が不可能な場合は、`query_adapter_callback` の拡張バージョンを使用して、自動生成されたクエリを完全に書き換えることができます:
 
 ```py
 import sqlalchemy as sa
@@ -54,12 +54,14 @@ def query_adapter_callback(
 
       return t_query
 ```
-In the snippet above we do a few interesting things:
-1. We create a text query with `sa.text`
-2. We change the condition on selecting incremental column from the default `ge` to `greater` (f" {incremental.cursor_path} > :start_value")
-3. We add additional computed columns: `1 as add_int, 'const' as add_text`. You can also join other table here.
 
-We recommend that you explicitly type additional columns that you added with `table_adapter_callback`:
+上記のスニペットでは、いくつか興味深いことを行っています:
+
+1.`sa.text`でテキストクエリを作成します
+2. 増分列を選択する条件をデフォルトの`ge`から`greater`に変更します。(f" {incremental.cursor_path} > :start_value")
+3. 追加の計算列を追加します: `1 as add_int, 'const' as add_text`。ここで他のテーブルを結合することもできます。
+
+`table_adapter_callback` で追加した列を明示的に入力することをお勧めします:
 
 ```py
 from sqlalchemy.sql import sqltypes
@@ -88,9 +90,10 @@ table = sql_table(
 )
 ```
 
-## Add computed columns and custom incremental clauses
+## 計算列とカスタム増分句を追加する
 
-You can add computed columns to the table definition by converting it into a subquery:
+計算列をサブクエリに変換することで、テーブル定義に追加できます:
+
 ```py
 def add_max_timestamp(table):
     computed_max_timestamp = sa.sql.type_coerce(
@@ -100,8 +103,8 @@ def add_max_timestamp(table):
     subquery = sa.select(*table.c, computed_max_timestamp).subquery()
     return subquery
 ```
-We add new `max_timestamp` column that is a MAX of `created_at` and `updated_at` columns and then we convert it into a subquery
-because we intend to use it for incremental loading which will attach a `WHERE` clause to it.
+
+`created_at` 列と `updated_at` 列の最大値である新しい `max_timestamp` 列を追加し、それをサブクエリに変換します。これは、これに `WHERE` 句を付加する増分ロードに使用するためです。
 
 ```py
 import dlt
@@ -113,19 +116,20 @@ read_table = sql_table(
     incremental=dlt.sources.incremental("max_timestamp"),
 )
 ```
-`dlt` will use your subquery instead of original `chat_message` table to generate incremental query. Note that you can further
-customize subquery with query adapter as in the example above.
 
-## Transforming the data before load
-You have direct access to the extracted data through the resource objects (`sql_table()` or `sql_database().with_resource())`), each of which represents a single SQL table. These objects are generators that yield individual rows of the table, which can be modified by using custom Python functions. These functions can be applied to the resource using `add_map`.
+`dlt` は、増分クエリを生成するために、元の `chat_message` テーブルの代わりにサブクエリを使用します。上記の例のように、クエリ アダプタを使用してサブクエリをさらにカスタマイズできることに注意してください。
+
+## ロード前にデータを変換する
+
+抽出されたデータには、リソース オブジェクト (`sql_table()` または `sql_database().with_resource())`) を通じて直接アクセスできます。各オブジェクトは単一の SQL テーブルを表します。これらのオブジェクトは、テーブルの個々の行を生成するジェネレーターであり、カスタム Python 関数を使用して変更できます。これらの関数は、`add_map` を使用してリソースに適用できます。
 
 :::note
-The PyArrow backend does not yield individual rows but loads chunks of data as `ndarray`. In this case, the transformation function that goes into `add_map` should be configured to expect an `ndarray` input.
+PyArrow バックエンドは個々の行を生成するのではなく、データのチャンクを `ndarray` として読み込みます。この場合、`add_map` に入る変換関数は `ndarray` 入力を期待するように構成する必要があります。
 :::
 
+例:
 
-Examples:
-1. Pseudonymizing data to hide personally identifiable information (PII) before loading it to the destination. (See [here](../../../general-usage/customising-pipelines/pseudonymizing_columns) for more information on pseudonymizing data with `dlt`)
+1. データを宛先にロードする前に、個人を特定できる情報 (PII) を隠すためにデータを仮名化します。(`dlt` を使用したデータの仮名化の詳細については、[こちら](../../../general-usage/customising-pipelines/pseudonymizing_columns)を参照してください。)
 
     ```py
     import dlt
@@ -159,7 +163,7 @@ Examples:
     print(info)
     ```
 
-2. Excluding unnecessary columns before load
+2. ロード前に不要な列を除外する
 
     ```py
     import dlt
@@ -181,13 +185,14 @@ Examples:
     print(info)
     ```
 
-## Deploying the sql_database pipeline
+## sql_database パイプラインのデプロイ
 
-You can deploy the `sql_database` pipeline with any of the `dlt` deployment methods, such as [GitHub Actions](../../../walkthroughs/deploy-a-pipeline/deploy-with-github-actions), [Airflow](../../../walkthroughs/deploy-a-pipeline/deploy-with-airflow-composer), [Dagster](../../../walkthroughs/deploy-a-pipeline/deploy-with-dagster), etc. See [here](../../../walkthroughs/deploy-a-pipeline) for a full list of deployment methods.
+`sql_database` パイプラインは、[GitHub Actions](../../../walkthroughs/deploy-a-pipeline/deploy-with-github-actions)、[Airflow](../../../walkthroughs/deploy-a-pipeline/deploy-with-airflow-composer)、[Dagster](../../../walkthroughs/deploy-a-pipeline/deploy-with-dagster) などの `dlt` デプロイメント方法のいずれかを使用してデプロイできます。デプロイメント方法の完全なリストについては、[こちら](../../../walkthroughs/deploy-a-pipeline) を参照してください。
 
-### Running on Airflow
-When running on Airflow:
-1. Use the `dlt` [Airflow Helper](../../../walkthroughs/deploy-a-pipeline/deploy-with-airflow-composer.md#2-modify-dag-file) to create tasks from the `sql_database` source. (If you want to run table extraction in parallel, you can do this by setting `decompose = "parallel-isolated"` when doing the source->DAG conversion. See [here](../../../walkthroughs/deploy-a-pipeline/deploy-with-airflow-composer#2-modify-dag-file) for a code example.)
-2. Reflect tables at runtime with the `defer_table_reflect` argument.
-3. Set `allow_external_schedulers` to load data using [Airflow intervals](../../../general-usage/incremental-loading.md#using-airflow-schedule-for-backfill-and-incremental-loading).
+### Airflow で実行する
 
+Airflowで実行する場合:
+
+1. `dlt` [Airflow Helper](../../../walkthroughs/deploy-a-pipeline/deploy-with-airflow-composer.md#2-modify-dag-file) を使用して、`sql_database` ソースからタスクを作成します。(テーブル抽出を並列で実行する場合は、ソースから DAG への変換時に `decompose = "parallel-isolated"` を設定することで実行できます。コード例については、[こちら](../../../walkthroughs/deploy-a-pipeline/deploy-with-airflow-composer#2-modify-dag-file) を参照してください。)
+2. `defer_table_reflect` 引数を使用して実行時にテーブルを反映します。
+3. [Airflow intervals](../../../general-usage/incremental-loading.md#using-airflow-schedule-for-backfill-and-incremental-loading) を使用してデータをロードするには、`allow_external_schedulers` を設定します。

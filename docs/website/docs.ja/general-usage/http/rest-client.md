@@ -4,14 +4,14 @@ description: Learn how to use the RESTClient class to interact with RESTful APIs
 keywords: [api, http, rest, request, extract, restclient, client, pagination, json, response, data_selector, session, auth, paginator, JSONLinkPaginator, headerlinkpaginator, offsetpaginator, jsonresponsecursorpaginator, queryparampaginator, bearer, token, authentication, headercursorpaginator]
 ---
 
-The `RESTClient` class offers an interface for interacting with RESTful APIs, including features like:
-- automatic pagination,
-- various authentication mechanisms,
-- customizable request/response handling.
+`RESTClient`クラスは、RESTful APIと対話するためのインターフェースを提供し、次のような機能が含まれています:
+- 自動ページネーション、
+- さまざまな認証メカニズム、
+- カスタマイズ可能なリクエスト/レスポンス処理。
 
-This guide shows how to use the `RESTClient` class to read data from APIs, focusing on the `paginate()` method for fetching data from paginated API responses.
+このガイドでは、ページ分割された API 応答からデータを取得するための `paginate()` メソッドに焦点を当て、`RESTClient` クラスを使用して API からデータを読み取る方法を説明します。
 
-## Creating a RESTClient instance
+## RESTClient インスタンスの作成
 
 ```py
 from dlt.sources.helpers.rest_client import RESTClient
@@ -28,27 +28,27 @@ client = RESTClient(
 )
 ```
 
-The `RESTClient` class is initialized with the following parameters:
+`RESTClient`クラスは次のパラメータで初期化されます:
 
-- `base_url`: The root URL of the API. All requests will be made relative to this URL.
-- `headers`: Default headers to include in every request. This can be used to set common headers like `User-Agent` or other custom headers.
-- `auth`: The authentication configuration. See the [Authentication](#authentication) section for more details.
-- `paginator`: A paginator instance for handling paginated responses. See the [Paginators](#paginators) section below.
-- `data_selector`: A [JSONPath selector](https://github.com/h2non/jsonpath-ng?tab=readme-ov-file#jsonpath-syntax) for extracting data from the responses. This defines a way to extract the data from the response JSON. Only used when paginating.
-- `session`: An optional session for making requests. This should be a [Requests session](https://requests.readthedocs.io/en/latest/api/#requests.Session) instance that can be used to set up custom request behavior for the client.
+- `base_url`: API のルート URL。すべてのリクエストはこの URL を基準にして行われます。
+- `headers`: すべてのリクエストに含めるデフォルトのヘッダー。これを使用して、`User-Agent` などの共通ヘッダーやその他のカスタム ヘッダーを設定できます。
+- `auth`: 認証構成。詳細については、[認証](#authentication)セクションを参照してください。
+- `paginator`: ページ分割されたレスポンスを処理するためのページネーター インスタンス。以下の [ページネーター](#paginators) セクションを参照してください。
+- `data_selector`: 応答からデータを抽出するための [JSONPath セレクター](https://github.com/h2non/jsonpath-ng?tab=readme-ov-file#jsonpath-syntax)。これは、応答 JSON からデータを抽出する方法を定義します。ページ分割時にのみ使用されます。
+- `session`: リクエストを行うためのオプションのセッション。これは、クライアントのカスタム リクエスト動作を設定するために使用できる [リクエスト セッション](https://requests.readthedocs.io/en/latest/api/#requests.Session) インスタンスである必要があります。
 
-## Making basic requests
+## 基本的なリクエストを行う
 
-To perform basic GET and POST requests, use the `get()` and `post()` methods respectively. This is similar to how the `requests` library works:
+基本的なGETおよびPOSTリクエストを実行するには、それぞれ`get()`および`post()`メソッドを使用します。これは、`requests`ライブラリの動作に似ています:
 
 ```py
 client = RESTClient(base_url="https://api.example.com")
 response = client.get("/posts/1")
 ```
 
-## Paginating API responses
+## API レスポンスのページ分割
 
-The `RESTClient.paginate()` method is specifically designed to handle paginated responses, yielding `PageData` instances for each page:
+`RESTClient.paginate()`メソッドは、ページ区切りのレスポンスを処理するために特別に設計されており、各ページの`PageData`インスタンスを生成します。:
 
 ```py
 for page in client.paginate("/posts"):
@@ -56,17 +56,17 @@ for page in client.paginate("/posts"):
 ```
 
 :::tip
-If a `paginator` is not specified, the `paginate()` method will attempt to automatically detect the pagination mechanism used by the API. If the API uses a standard pagination mechanism like having a `next` link in the response's headers or JSON body, the `paginate()` method will handle this automatically. Otherwise, you can specify a paginator object explicitly or implement a custom paginator.
+`paginator` が指定されていない場合、`paginate()` メソッドは API が使用するページ区切りメカニズムを自動的に検出しようとします。API がレスポンスのヘッダーまたは JSON 本文に `next` リンクを持つなどの標準のページ区切りメカニズムを使用する場合、`paginate()` メソッドはこれを自動的に処理します。それ以外の場合は、ページ区切りオブジェクトを明示的に指定するか、カスタム ページ区切りを実装できます。
 :::
 
-### Selecting data from the response
+### 応答からデータを選択する
 
-When paginating through API responses, the `RESTClient` tries to automatically extract the data from the response. Sometimes, however, you may need to explicitly specify how to extract the data from the response JSON.
+API レスポンスをページ分割する場合、`RESTClient` はレスポンスからデータを自動的に抽出しようとします。ただし、レスポンス JSON からデータを抽出する方法を明示的に指定する必要がある場合もあります。
 
-Use the `data_selector` parameter of the `RESTClient` class or the `paginate()` method to tell the client how to extract the data.
-`data_selector` is a [JSONPath](https://github.com/h2non/jsonpath-ng?tab=readme-ov-file#jsonpath-syntax) expression that points to the key in the JSON that contains the data to be extracted.
+`RESTClient` クラスの `data_selector` パラメータまたは `paginate()` メソッドを使用して、クライアントにデータの抽出方法を指示します。
+`data_selector` は、抽出するデータを含む JSON 内のキーを指す [JSONPath](https://github.com/h2non/jsonpath-ng?tab=readme-ov-file#jsonpath-syntax) 式です。
 
-For example, if the API response looks like this:
+たとえば、APIレスポンスが次のようになる場合:
 
 ```json
 {
@@ -78,9 +78,9 @@ For example, if the API response looks like this:
 }
 ```
 
-The `data_selector` should be set to `"posts"` to extract the list of posts from the response.
+応答から投稿のリストを抽出するには、`data_selector` を `"posts"` に設定する必要があります。
 
-For a nested structure like this:
+このようなネストされた構造の場合:
 
 ```json
 {
@@ -94,41 +94,41 @@ For a nested structure like this:
 }
 ```
 
-The `data_selector` needs to be set to `"results.posts"`. Read more about [JSONPath syntax](https://github.com/h2non/jsonpath-ng?tab=readme-ov-file#jsonpath-syntax) to learn how to write selectors.
+`data_selector` は `"results.posts"` に設定する必要があります。セレクターの記述方法については、[JSONPath 構文](https://github.com/h2non/jsonpath-ng?tab=readme-ov-file#jsonpath-syntax) の詳細をご覧ください。
 
 ### PageData
 
-Each `PageData` instance contains the data for a single page, along with context such as the original request and response objects, allowing for detailed inspection. The `PageData` is a list-like object that contains the following attributes:
+各 `PageData` インスタンスには、1 つのページのデータと、元のリクエストやレスポンス オブジェクトなどのコンテキストが含まれており、詳細な検査が可能です。`PageData` は、次の属性を含むリストのようなオブジェクトです:
 
-- `request`: The original request object.
-- `response`: The response object.
-- `paginator`: The paginator object used to paginate the response.
-- `auth`: The authentication object used for the request.
+- `request`: 元のリクエストオブジェクト。
+- `response`: 応答オブジェクト。
+- `paginator`: 応答をページ分割するために使用されるページネーター オブジェクト。
+- `auth`: リクエストに使用される認証オブジェクト。
 
 ### Paginators
 
-Paginators are used to handle paginated responses. The `RESTClient` class comes with built-in paginators for common pagination mechanisms:
+ページネーターはページ区切りのレスポンスを処理するために使用されます。`RESTClient`クラスには、一般的なページ区切りメカニズム用の組み込みの Paginator が付属しています。:
 
-- [JSONLinkPaginator](#JSONLinkPaginator) - link to the next page is included in the JSON response.
-- [HeaderLinkPaginator](#headerlinkpaginator) - link to the next page is included in the response headers.
-- [OffsetPaginator](#offsetpaginator) - pagination based on offset and limit query parameters.
-- [PageNumberPaginator](#pagenumberpaginator) - pagination based on page numbers.
-- [JSONResponseCursorPaginator](#jsonresponsecursorpaginator) - pagination based on a cursor in the JSON response.
-- [HeaderCursorPaginator](#headercursorpaginator) - pagination based on a cursor in the response headers.
+- [JSONLinkPaginator](#JSONLinkPaginator) - 次のページへのリンクが JSON 応答に含まれる。
+- [HeaderLinkPaginator](#headerlinkpaginator) - 次のページへのリンクがレスポンスヘッダーに含まれる。
+- [OffsetPaginator](#offsetpaginator) - オフセットと制限クエリパラメータに基づくページング。
+- [PageNumberPaginator](#pagenumberpaginator) - ページ番号に基づいたページング。
+- [JSONResponseCursorPaginator](#jsonresponsecursorpaginator) - JSON 応答内のカーソルに基づいたページング。
+- [HeaderCursorPaginator](#headercursorpaginator) - 応答ヘッダー内のカーソルに基づいたページング。
 
-If the API uses a non-standard pagination, you can [implement a custom paginator](#implementing-a-custom-paginator) by subclassing the `BasePaginator` class.
+API が非標準のページネーションを使用する場合は、`BasePaginator` クラスをサブクラス化することで [カスタム ページネーターを実装](#implementing-a-custom-paginator) できます。
 
 #### JSONLinkPaginator
 
-`JSONLinkPaginator` is designed for APIs where the next page URL is included in the response's JSON body. This paginator uses a JSONPath to locate the next page URL within the JSON response.
+`JSONLinkPaginator` は、レスポンスの JSON 本文に次のページの URL が含まれている API 用に設計されています。このページネーターは JSONPath を使用して、JSON レスポンス内で次のページの URL を見つけます。
 
-**Parameters:**
+**パラメータ:**
 
-- `next_url_path`: A JSONPath string pointing to the key in the JSON response that contains the next page URL.
+- `next_url_path`: 次のページの URL を含む JSON 応答内のキーを指す JSONPath 文字列。
 
-**Example:**
+**例:**
 
-Suppose the API response for `https://api.example.com/posts` looks like this:
+`https://api.example.com/posts`のAPIレスポンスが次のようになるとします:
 
 ```json
 {
@@ -143,7 +143,7 @@ Suppose the API response for `https://api.example.com/posts` looks like this:
 }
 ```
 
-To paginate this response, you can use the `JSONLinkPaginator` with the `next_url_path` set to `"pagination.next"`:
+このレスポンスをページ分割するには、`next_url_path` を `"pagination.next"` に設定した `JSONLinkPaginator` を使用します:
 
 ```py
 from dlt.sources.helpers.rest_client import RESTClient
@@ -162,32 +162,32 @@ def get_data():
 
 #### HeaderLinkPaginator
 
-This paginator handles pagination based on a link to the next page in the response headers (e.g., the `Link` header, as used by the GitHub API).
+このページネーターは、レスポンス ヘッダー内の次のページへのリンク (GitHub API で使用される `Link` ヘッダーなど) に基づいてページ区切りを処理します。
 
-**Parameters:**
+**パラメータ:**
 
-- `links_next_key`: The relation type (rel) to identify the next page link within the Link header. Defaults to "next".
+- `links_next_key`: リンクヘッダーで次のページのリンクを識別する関係タイプ (rel)。デフォルトは「next」です。
 
-Note: Normally, you don't need to specify this paginator explicitly, as it is used automatically when the API returns a `Link` header. On rare occasions, you may need to specify the paginator when the API uses a different relation type.
+注: 通常、このページネーターは API が `Link` ヘッダーを返すときに自動的に使用されるため、明示的に指定する必要はありません。まれに、API が異なるリレーション タイプを使用する場合にページネーターを指定する必要がある場合があります。
 
 #### OffsetPaginator
 
-`OffsetPaginator` handles pagination based on an offset and limit in the query parameters.
+`OffsetPaginator` は、クエリ パラメータ内のオフセットと制限に基づいてページ区切りを処理します。
 
-**Parameters:**
+**パラメータ:**
 
-- `limit`: The maximum number of items to retrieve in each request.
-- `offset`: The initial offset for the first request. Defaults to `0`.
-- `offset_param`: The name of the query parameter used to specify the offset. Defaults to `"offset"`.
-- `limit_param`: The name of the query parameter used to specify the limit. Defaults to `"limit"`.
-- `total_path`: A JSONPath expression for the total number of items. If not provided, pagination is controlled by `maximum_offset` and `stop_after_empty_page`.
-- `maximum_offset`: Optional maximum offset value. Limits pagination even without a total count.
-- `stop_after_empty_page`: Whether pagination should stop when a page contains no result items. Defaults to `True`.
+- `limit`: 各リクエストで取得するアイテムの最大数。
+- `offset`: 最初のリクエストの初期オフセット。デフォルトは `0` です。
+- `offset_param`: オフセットを指定するために使用されるクエリ パラメータの名前。デフォルトは `"offset"` です。
+- `limit_param`: 制限を指定するために使用されるクエリ パラメータの名前。デフォルトは `"limit"` です。
+- `total_path`: アイテムの合計数を表す JSONPath 式。指定しない場合、ページ区切りは `maximum_offset` と `stop_after_empty_page` によって制御されます。
+- `maximum_offset`: オプションの最大オフセット値。合計数がなくてもページ区切りを制限します。
+- `stop_after_empty_page`: ページに結果項目が含まれていない場合にページ区切りを停止するかどうか。デフォルトは `True` です。
 
-**Example:**
+**例:**
 
-Assuming an API endpoint `https://api.example.com/items` supports pagination with `offset` and `limit` parameters.
-E.g., `https://api.example.com/items?offset=0&limit=100`, `https://api.example.com/items?offset=100&limit=100`, etc., and includes the total count in its responses, e.g.:
+API エンドポイント `https://api.example.com/items` が `offset` および `limit` パラメータによるページ区切りをサポートしていると仮定します。
+たとえば、`https://api.example.com/items?offset=0&limit=100`、`https://api.example.com/items?offset=100&limit=100` などであり、応答に合計数が含まれます。例:
 
 ```json
 {
@@ -196,7 +196,7 @@ E.g., `https://api.example.com/items?offset=0&limit=100`, `https://api.example.c
 }
 ```
 
-You can paginate through responses from this API using the `OffsetPaginator`:
+`OffsetPaginator` を使用して、この API からの応答をページ分割できます。
 
 ```py
 client = RESTClient(
@@ -208,8 +208,8 @@ client = RESTClient(
 )
 ```
 
-Pagination stops by default when a page contains no records. This is especially useful when the API does not provide the total item count.
-Here, the `total_path` parameter is set to `None` because the API does not provide the total count.
+ページにレコードが含まれていない場合、ページ区切りはデフォルトで停止します。これは、API が合計アイテム数を提供しない場合に特に便利です。
+ここでは、API が合計数を提供しないため、`total_path` パラメータは `None` に設定されています。
 
 ```py
 client = RESTClient(
@@ -221,7 +221,7 @@ client = RESTClient(
 )
 ```
 
-Additionally, you can limit pagination with `maximum_offset`, for example during development. If `maximum_offset` is reached before the first empty page, then pagination stops:
+さらに、開発中などに`maximum_offset`でページ区切りを制限することもできます。最初の空のページが表示される前に`maximum_offset`に達すると、ページ区切りが停止します。:
 
 ```py
 client = RESTClient(
@@ -234,24 +234,24 @@ client = RESTClient(
 )
 ```
 
-You can disable automatic stoppage of pagination by setting `stop_after_empty_page = False`. In this case, you must provide either `total_path` or `maximum_offset` to guarantee that the paginator terminates.
+`stop_after_empty_page = False` を設定することで、ページネーションの自動停止を無効にすることができます。この場合、ページネーターが終了することを保証するために、`total_path` または `maximum_offset` のいずれかを指定する必要があります。
 
 #### PageNumberPaginator
 
-`PageNumberPaginator` works by incrementing the page number for each request.
+`PageNumberPaginator` は、リクエストごとにページ番号を増やすことで機能します。
 
-**Parameters:**
+**パラメータ:**
 
-- `base_page`: The index of the initial page from the API perspective. Normally, it's 0-based or 1-based (e.g., 1, 2, 3, ...) indexing for the pages. Defaults to 0.
-- `page`: The page number for the first request. If not provided, the initial value will be set to `base_page`.
-- `page_param`: The query parameter name for the page number. Defaults to `"page"`.
-- `total_path`: A JSONPath expression for the total number of pages. If not provided, pagination is controlled by `maximum_page` and `stop_after_empty_page`.
-- `maximum_page`: Optional maximum page number. Stops pagination once this page is reached.
-- `stop_after_empty_page`: Whether pagination should stop when a page contains no result items. Defaults to `True`.
+- `base_page`: API の観点から見た初期ページのインデックス。通常、ページのインデックスは 0 ベースまたは 1 ベース (例: 1、2、3、...) です。デフォルトは 0 です。
+- `page`: 最初のリクエストのページ番号。指定しない場合は、初期値は `base_page` に設定されます。
+- `page_param`: ページ番号のクエリ パラメータ名。デフォルトは `"page"` です。
+- `total_path`: 合計ページ数の JSONPath 式。指定しない場合、ページ区切りは `maximum_page` と `stop_after_empty_page` によって制御されます。
+- `maximum_page`: オプションの最大ページ番号。このページに到達するとページ区切りが停止します。
+- `stop_after_empty_page`: ページに結果項目が含まれていない場合にページ区切りを停止するかどうか。デフォルトは `True` です。
 
-**Example:**
+**例:**
 
-Assuming an API endpoint `https://api.example.com/items` paginates by page numbers and provides a total page count in its responses, e.g.:
+API エンドポイント `https://api.example.com/items` がページ番号でページ分割し、応答で合計ページ数を提供すると仮定します。例:
 
 ```json
 {
@@ -260,7 +260,7 @@ Assuming an API endpoint `https://api.example.com/items` paginates by page numbe
 }
 ```
 
-You can paginate through responses from this API using the `PageNumberPaginator`:
+`PageNumberPaginator` を使用して、この API からの応答をページ分割できます:
 
 ```py
 client = RESTClient(
@@ -271,8 +271,8 @@ client = RESTClient(
 )
 ```
 
-Pagination stops by default when a page contains no records. This is especially useful when the API does not provide the total item count.
-Here, the `total_path` parameter is set to `None` because the API does not provide the total count.
+ページにレコードが含まれていない場合、ページ区切りはデフォルトで停止します。これは、API が合計アイテム数を提供しない場合に特に便利です。
+ここでは、API が合計数を提供しないため、`total_path` パラメータは `None` に設定されています。
 
 ```py
 client = RESTClient(
@@ -283,7 +283,7 @@ client = RESTClient(
 )
 ```
 
-Additionally, you can limit pagination with `maximum_page`, for example during development. If `maximum_page` is reached before the first empty page, then pagination stops:
+さらに、開発中などに `maximum_page` を使用してページ区切りを制限することもできます。最初の空のページが表示される前に `maximum_page` に達すると、ページ区切りが停止します:
 
 ```py
 client = RESTClient(
@@ -295,20 +295,20 @@ client = RESTClient(
 )
 ```
 
-You can disable automatic stoppage of pagination by setting `stop_after_empty_page = False`. In this case, you must provide either `total_path` or `maximum_page` to guarantee that the paginator terminates.
+`stop_after_empty_page = False` を設定することで、ページネーションの自動停止を無効にすることができます。この場合、ページネーターが終了することを保証するために、`total_path` または `maximum_page` のいずれかを指定する必要があります。
 
 #### JSONResponseCursorPaginator
 
-`JSONResponseCursorPaginator` handles pagination based on a cursor in the JSON response.
+`JSONResponseCursorPaginator` は、JSON レスポンス内のカーソルに基づいてページ区切りを処理します。
 
-**Parameters:**
+**パラメータ:**
 
-- `cursor_path`: A JSONPath expression pointing to the cursor in the JSON response. This cursor is used to fetch subsequent pages. Defaults to `"cursors.next"`.
-- `cursor_param`: The query parameter used to send the cursor value in the next request. Defaults to `"after"`.
+- `cursor_path`: JSON 応答内のカーソルを指す JSONPath 式。このカーソルは後続のページを取得するために使用されます。デフォルトは `"cursors.next"` です。
+- `cursor_param`: 次のリクエストでカーソル値を送信するために使用されるクエリ パラメータ。デフォルトは `"after"` です。
 
-**Example:**
+**例:**
 
-Consider an API endpoint `https://api.example.com/data` returning a structure where a cursor to the next page is included in the response:
+次のページへのカーソルがレスポンスに含まれる構造を返す API エンドポイント `https://api.example.com/data` について考えてみましょう:
 
 ```json
 {
@@ -319,7 +319,7 @@ Consider an API endpoint `https://api.example.com/data` returning a structure wh
 }
 ```
 
-To paginate through responses from this API, use `JSONResponseCursorPaginator` with `cursor_path` set to "cursors.next":
+この API からの応答をページ分割するには、`cursor_path` を "cursors.next" に設定した `JSONResponseCursorPaginator` を使用します:
 
 ```py
 client = RESTClient(
@@ -330,16 +330,16 @@ client = RESTClient(
 
 #### HeaderCursorPaginator
 
-`HeaderCursorPaginator` handles pagination based on a cursor in the response headers.
+`HeaderCursorPaginator` は、応答ヘッダー内のカーソルに基づいてページ区切りを処理します。
 
-**Parameters:**
+**パラメータ:**
 
-- `cursor_key`: The key in the response headers that contains the cursor value. Defaults to `"next"`.
-- `cursor_param`: The query parameter used to send the cursor value in the next request. Defaults to `"cursor"`.
+- `cursor_key`: カーソル値を含む応答ヘッダー内のキー。デフォルトは `"next"` です。
+- `cursor_param`: 次のリクエストでカーソル値を送信するために使用されるクエリ パラメータ。デフォルトは `"cursor"` です。
 
-**Example:**
+**例:**
 
-Consider an API endpoint `https://api.example.com/items` returning a response with a `NextPageToken` header containing the cursor for the next page:
+次のページのカーソルを含む `NextPageToken` ヘッダーを含むレスポンスを返す API エンドポイント `https://api.example.com/items` を考えてみましょう:
 
 ```text
 Content-Type: application/json
@@ -352,7 +352,7 @@ NextPageToken: n3xtp4g3
 ]
 ```
 
-To paginate through responses from this API, use `HeaderCursorPaginator` with `cursor_key` set to `"NextPageToken"`:
+この API からの応答をページ分割するには、`cursor_key` を `"NextPageToken"` に設定した `HeaderCursorPaginator` を使用します:
 
 ```py
 client = RESTClient(
@@ -361,19 +361,19 @@ client = RESTClient(
 )
 ```
 
-### Implementing a custom paginator
+### カスタムページネーターの実装
 
-When working with APIs that use non-standard pagination schemes, or when you need more control over the pagination process, you can implement a custom paginator by subclassing the `BasePaginator` class and implementing the methods `init_request`, `update_state`, and `update_request`.
+非標準のページネーション スキームを使用する API を使用する場合、またはページネーション プロセスをより細かく制御する必要がある場合は、`BasePaginator` クラスをサブクラス化し、`init_request`、`update_state`、および `update_request` メソッドを実装することで、カスタム ページネーターを実装できます。
 
-- `init_request(request: Request) -> None`: This method is called before making the first API call in the `RESTClient.paginate` method. You can use this method to set up the initial request query parameters, headers, etc. For example, you can set the initial page number or cursor value.
+- `init_request(request: Request) -> None`: このメソッドは、`RESTClient.paginate` メソッドで最初の API 呼び出しを行う前に呼び出されます。このメソッドを使用して、初期リクエスト クエリ パラメータ、ヘッダーなどを設定できます。たとえば、初期ページ番号やカーソル値を設定できます。
 
-- `update_state(response: Response, data: Optional[List[Any]]) -> None`: This method updates the paginator's state based on the response of the API call. Typically, you extract pagination details (like the next page reference) from the response and store them in the paginator instance.
+- `update_state(response: Response, data: Optional[List[Any]]) -> None`: このメソッドは、API 呼び出しの応答に基づいてページネーターの状態を更新します。通常、応答からページネーションの詳細 (次のページ参照など) を抽出し、ページネーター インスタンスに保存します。
 
-- `update_request(request: Request) -> None`: Before making the next API call in the `RESTClient.paginate` method, `update_request` is used to modify the request with the necessary parameters to fetch the next page (based on the current state of the paginator). For example, you can add query parameters to the request or modify the URL.
+- `update_request(request: Request) -> None`: `RESTClient.paginate` メソッドで次の API 呼び出しを行う前に、`update_request` を使用して、次のページを取得するために必要なパラメータでリクエストを変更します (ページネーターの現在の状態に基づきます)。たとえば、リクエストにクエリ パラメータを追加したり、URL を変更したりできます。
 
-#### Example 1: Creating a query parameter paginator
+#### 例 1: クエリパラメータページネーターの作成
 
-Suppose an API uses query parameters for pagination, incrementing a page parameter for each subsequent page, without providing direct links to the next pages in its responses. E.g., `https://api.example.com/posts?page=1`, `https://api.example.com/posts?page=2`, etc. Here's how you could implement a paginator for this scheme:
+API がページネーションにクエリ パラメータを使用し、レスポンスで次のページへの直接リンクを提供せずに、後続の各ページのページ パラメータを増分するとします。例えば、 `https://api.example.com/posts?page=1`、`https://api.example.com/posts?page=2` など。このスキームのページネーターを実装する方法は次のとおりです:
 
 ```py
 from typing import Any, List, Optional
@@ -403,7 +403,7 @@ class QueryParamPaginator(BasePaginator):
         request.params[self.page_param] = self.page
 ```
 
-After defining your custom paginator, you can use it with the `RESTClient` by passing an instance of your paginator to the paginator parameter during the client's initialization. Here's how to use the `QueryParamPaginator`:
+カスタム ページネーターを定義したら、クライアントの初期化中にページネーターのインスタンスをページネーター パラメーターに渡すことで、`RESTClient` で使用できます。`QueryParamPaginator` の使用方法は次のとおりです:
 
 ```py
 from dlt.sources.helpers.rest_client import RESTClient
@@ -420,12 +420,12 @@ def get_data():
 ```
 
 :::tip
-[`PageNumberPaginator`](#pagenumberpaginator) that ships with dlt does the same thing, but with more flexibility and error handling. This example is meant to demonstrate how to implement a custom paginator. For most use cases, you should use the [built-in paginators](#paginators).
+dlt に同梱されている [`PageNumberPaginator`](#pagenumberpaginator) は同じことを行いますが、柔軟性とエラー処理が向上しています。この例は、カスタム ページネーターを実装する方法を示すことを目的としています。ほとんどのユースケースでは、[組み込みのページネーター](#paginators) を使用する必要があります。
 :::
 
-#### Example 2: Creating a paginator for POST requests
+#### 例 2: POSTリクエストのページネーターを作成する
 
-Some APIs use POST requests for pagination, where the next page is fetched by sending a POST request with a cursor or other parameters in the request body. This is frequently used in "search" API endpoints or other endpoints with large payloads. Here's how you could implement a paginator for a case like this:
+一部の API では、ページネーションに POST リクエストを使用します。この場合、リクエスト本文にカーソルやその他のパラメータを含む POST リクエストを送信することで、次のページが取得されます。これは、「検索」API エンドポイントや、ペイロードが大きいその他のエンドポイントでよく使用されます。このような場合にページネーターを実装する方法は次のとおりです:
 
 ```py
 from typing import Any, List, Optional
@@ -463,29 +463,29 @@ def get_data():
         yield page
 ```
 
-## Authentication
+## 認証
 
-The RESTClient supports various authentication strategies, such as bearer tokens, API keys, and HTTP basic auth, configured through the `auth` parameter of both the `RESTClient` and the `paginate()` method.
+RESTClient は、`RESTClient` と `paginate()` メソッドの両方の `auth` パラメータを通じて構成される、bearer トークン、API キー、HTTP 基本認証などのさまざまな認証戦略をサポートします。
 
-The available authentication methods are defined in the `dlt.sources.helpers.rest_client.auth` module:
+利用可能な認証方法は、`dlt.sources.helpers.rest_client.auth`モジュールで定義されています:
 
 - [BearerTokenAuth](#bearer-token-authentication)
 - [APIKeyAuth](#api-key-authentication)
 - [HttpBasicAuth](#http-basic-authentication)
 - [OAuth2ClientCredentials](#oauth-20-authorization)
 
-For specific use cases, you can [implement custom authentication](#implementing-custom-authentication) by subclassing the `AuthConfigBase` class from the `dlt.sources.helpers.rest_client.auth` module.
-For specific flavors of OAuth 2.0, you can [implement custom OAuth 2.0](#oauth-20-authorization) by subclassing `OAuth2ClientCredentials`.
+特定のユースケースでは、`dlt.sources.helpers.rest_client.auth` モジュールから `AuthConfigBase` クラスをサブクラス化することで、[カスタム認証を実装](#implementing-custom-authentication)できます。
+OAuth 2.0 の特定のフレーバーについては、`OAuth2ClientCredentials` をサブクラス化することで [カスタム OAuth 2.0 を実装](#oauth-20-authorization) できます。
 
-### Bearer token authentication
+### Bearer トークン認証
 
-Bearer Token Authentication (`BearerTokenAuth`) is an auth method where the client sends a token in the request's Authorization header (e.g., `Authorization: Bearer <token>`). The server validates this token and grants access if the token is valid.
+Bearer トークン認証 (`BearerTokenAuth`) は、クライアントがリクエストの Authorization ヘッダーでトークンを送信する認証方法です (例: `Authorization: Bearer <token>`)。サーバーはこのトークンを検証し、トークンが有効な場合はアクセスを許可します。
 
-**Parameters:**
+**パラメータ:**
 
-- `token`: The bearer token to use for authentication.
+- `token`: 認証で使用する bearer トークン
 
-**Example:**
+**例:**
 
 ```py
 from dlt.sources.helpers.rest_client import RESTClient
@@ -500,17 +500,17 @@ for page in client.paginate("/protected/resource"):
     print(page)
 ```
 
-### API key authentication
+### API キー認証
 
-API Key Authentication (`ApiKeyAuth`) is an auth method where the client sends an API key in a custom header (e.g., `X-API-Key: <key>`, or as a query parameter).
+API キー認証 (`ApiKeyAuth`) は、クライアントがカスタム ヘッダー (例: `X-API-Key: <key>`、またはクエリ パラメータとして) で API キーを送信する認証方法です。
 
-**Parameters:**
+**パラメータ:**
 
-- `name`: The name of the header or query parameter to use for the API key.
-- `api_key`: The API key to use for authentication.
-- `location`: The location of the API key (`header` or `query`). Defaults to "header".
+- `name`: API キーに使用するヘッダーまたはクエリ パラメータの名前。
+- `api_key`: 認証に使用する API キー。
+- `location`: API キーの場所 (`header` または `query`)。デフォルトは "header" です。
 
-**Example:**
+**例:**
 
 ```py
 from dlt.sources.helpers.rest_client import RESTClient
@@ -524,16 +524,16 @@ client = RESTClient(base_url="https://api.example.com", auth=auth)
 response = client.get("/protected/resource")
 ```
 
-### HTTP basic authentication
+### HTTP 基本認証
 
-HTTP Basic Authentication is a simple authentication scheme built into the HTTP protocol. It sends a username and password encoded in the Authorization header.
+HTTP 基本認証は、HTTP プロトコルに組み込まれたシンプルな認証スキームです。Authorization ヘッダーにエンコードされたユーザー名とパスワードを送信します。
 
-**Parameters:**
+**パラメータ:**
 
-- `username`: The username for basic authentication.
-- `password`: The password for basic authentication.
+- `username`: 基本認証のユーザー名。
+- `password`: 基本認証のパスワード。
 
-**Example:**
+**例:**
 
 ```py
 from dlt.sources.helpers.rest_client import RESTClient
@@ -545,21 +545,21 @@ client = RESTClient(base_url="https://api.example.com", auth=auth)
 response = client.get("/protected/resource")
 ```
 
-### OAuth 2.0 authorization
+### OAuth 2.0 認証
 
-OAuth 2.0 is a common protocol for authorization. We have implemented two-legged authorization employed for server-to-server authorization because the end user (resource owner) does not need to grant approval.
-The REST client acts as the OAuth client, which obtains a temporary access token from the authorization server. This access token is then sent to the resource server to access protected content. If the access token is expired, the OAuth client automatically refreshes it.
+OAuth 2.0 は、認可のための一般的なプロトコルです。エンド ユーザー (リソース所有者) が承認を与える必要がないため、サーバー間認可に使用される 2 レッグ認可を実装しました。
+REST クライアントは OAuth クライアントとして機能し、認可サーバーから一時的なアクセス トークンを取得します。このアクセス トークンは、保護されたコンテンツにアクセスするためにリソース サーバーに送信されます。アクセス トークンの有効期限が切れると、OAuth クライアントは自動的に更新します。
 
-Unfortunately, most OAuth 2.0 implementations vary, and thus you might need to subclass `OAuth2ClientCredentials` and implement `build_access_token_request()` to suit the requirements of the specific authorization server you want to interact with.
+残念ながら、ほとんどの OAuth 2.0 実装は異なるため、対話する特定の認可サーバーの要件に合わせて `OAuth2ClientCredentials` をサブクラス化し、`build_access_token_request()` を実装する必要がある場合があります。
 
-**Parameters:**
-- `access_token_url`: The URL to obtain the temporary access token.
-- `client_id`: Client identifier to obtain authorization. Usually issued via a developer portal.
-- `client_secret`: Client credential to obtain authorization. Usually issued via a developer portal.
-- `access_token_request_data`: A dictionary with data required by the authorization server apart from the `client_id`, `client_secret`, and `"grant_type": "client_credentials"`. Defaults to `None`.
-- `default_token_expiration`: The time in seconds after which the temporary access token expires. Defaults to 3600.
+**パラメータ:**
+- `access_token_url`: 一時アクセストークンを取得するための URL。
+- `client_id`: 承認を取得するためのクライアント識別子。通常は開発者ポータル経由で発行されます。
+- `client_secret`: 承認を取得するためのクライアント資格情報。通常は開発者ポータル経由で発行されます。
+- `access_token_request_data`: `client_id`、`client_secret`、および `"grant_type": "client_credentials"` 以外に認可サーバーが必要とするデータを含む辞書。デフォルトは `None` です。
+- `default_token_expiration`: 一時アクセス トークンの有効期限が切れるまでの時間 (秒数)。デフォルトは 3600 です。
 
-**Example:**
+**例:**
 
 ```py
 from base64 import b64encode
@@ -594,11 +594,9 @@ client = RESTClient(base_url="https://api.zoom.us/v2", auth=oauth)
 response = client.get("/users")
 ```
 
+### カスタム認証の実装
 
-
-### Implementing custom authentication
-
-You can implement custom authentication by subclassing the `AuthConfigBase` class and implementing the `__call__` method:
+`AuthConfigBase` クラスをサブクラス化し、`__call__` メソッドを実装することで、カスタム認証を実装できます:
 
 ```py
 from dlt.sources.helpers.rest_client.auth import AuthConfigBase
@@ -613,7 +611,7 @@ class CustomAuth(AuthConfigBase):
         return request
 ```
 
-Then, you can use your custom authentication class with the `RESTClient`:
+次に、`RESTClient` でカスタム認証クラスを使用できます:
 
 ```py
 client = RESTClient(
@@ -622,9 +620,9 @@ client = RESTClient(
 )
 ```
 
-## Advanced usage
+## 高度な使い方
 
-`RESTClient.paginate()` allows you to specify a [custom hook function](https://requests.readthedocs.io/en/latest/user/advanced/#event-hooks) that can be used to modify the response objects. For example, to handle specific HTTP status codes gracefully:
+`RESTClient.paginate()` を使用すると、レスポンス オブジェクトを変更するために使用できる [カスタム フック関数](https://requests.readthedocs.io/en/latest/user/advanced/#event-hooks) を指定できます。たとえば、特定の HTTP ステータス コードを適切に処理するには、次のようにします:
 
 ```py
 def custom_response_handler(response, *args):
@@ -635,11 +633,11 @@ def custom_response_handler(response, *args):
 client.paginate("/posts", hooks={"response": [custom_response_handler]})
 ```
 
-The handler function may raise `IgnoreResponseException` to exit the pagination loop early. This is useful for endpoints that return a 404 status code when there are no items to paginate.
+ハンドラ関数は、ページネーション ループを早期に終了するために `IgnoreResponseException` を発生させる場合があります。これは、ページネーションする項目がない場合に 404 ステータス コードを返すエンドポイントに役立ちます。
 
-## Shortcut for paginating API responses
+## API レスポンスをページ分割するためのショートカット
 
-The `paginate()` function provides a shorthand for paginating API responses. It takes the same parameters as the `RESTClient.paginate()` method but automatically creates a RESTClient instance with the specified base URL:
+`paginate()` 関数は、API レスポンスをページ分割するためのショートカットを提供します。`RESTClient.paginate()` メソッドと同じパラメータを取りますが、指定されたベース URL を使用して RESTClient インスタンスを自動的に作成します:
 
 ```py
 from dlt.sources.helpers.rest_client import paginate
@@ -648,12 +646,12 @@ for page in paginate("https://api.example.com/posts"):
     print(page)
 ```
 
-## Retry
+## 再試行
 
-You can customize how the RESTClient retries failed requests by editing your `config.toml`.
-See more examples and explanations in our [documentation on retry rules](requests#retry-rules).
+`config.toml` を編集することで、RESTClient が失敗したリクエストを再試行する方法をカスタマイズできます。
+[再試行ルールに関するドキュメント](requests#retry-rules)で、その他の例と説明を参照してください。
 
-Example:
+例:
 
 ```toml
 [runtime]
@@ -663,12 +661,12 @@ request_timeout = 120  # Timeout in seconds
 request_max_retry_delay = 30  # Cap exponential delay to 30 seconds
 ```
 
-## Troubleshooting
+## トラブルシューティング
 
-### `RESTClient.get()` and `RESTClient.post()` methods
+### `RESTClient.get()` と `RESTClient.post()` メソッド
 
-These methods work similarly to the [get()](https://docs.python-requests.org/en/latest/api/#requests.get) and [post()](https://docs.python-requests.org/en/latest/api/#requests.post) functions from the Requests library. They return a [Response](https://docs.python-requests.org/en/latest/api/#requests.Response) object that contains the response data.
-You can inspect the `Response` object to get the `response.status_code`, `response.headers`, and `response.content`. For example:
+これらのメソッドは、Requests ライブラリの [get()](https://docs.python-requests.org/en/latest/api/#requests.get) 関数や [post()](https://docs.python-requests.org/en/latest/api/#requests.post) 関数と同様に動作します。これらは、応答データを含む [Response](https://docs.python-requests.org/en/latest/api/#requests.Response) オブジェクトを返します。
+`Response` オブジェクトを調べると、`response.status_code`、`response.headers`、`response.content` を取得できます。例えば:
 
 ```py
 from dlt.sources.helpers.rest_client import RESTClient
@@ -684,16 +682,16 @@ print(response.content)
 
 ### `RESTClient.paginate()`
 
-Debugging `paginate()` is trickier because it's a generator function that yields [`PageData`](#pagedata) objects. Here are several ways to debug the `paginate()` method:
+`paginate()` は [`PageData`](#pagedata) オブジェクトを生成するジェネレーター関数であるため、デバッグはより複雑です。`paginate()` メソッドをデバッグする方法はいくつかあります:
 
-1. Enable [logging](../../running-in-production/running.md#set-the-log-level-and-format) to see detailed information about the HTTP requests:
+1. HTTP リクエストに関する詳細情報を表示するには、[ログ記録](../../running-in-production/running.md#set-the-log-level-and-format) を有効にします:
 
 ```sh
 RUNTIME__LOG_LEVEL=INFO python my_script.py
 ```
 
-2. Use the [`PageData`](#pagedata) instance to inspect the [request](https://docs.python-requests.org/en/latest/api/#requests.Request)
-and [response](https://docs.python-requests.org/en/latest/api/#requests.Response) objects:
+2. [`PageData`](#pagedata) インスタンスを使用して、[request](https://docs.python-requests.org/en/latest/api/#requests.Request)
+および [response](https://docs.python-requests.org/en/latest/api/#requests.Response) オブジェクトを検査します:
 
 ```py
 from dlt.sources.helpers.rest_client import RESTClient
@@ -709,7 +707,7 @@ for page in client.paginate("/posts"):
     print(page.response)
 ```
 
-3. Use the `hooks` parameter to add custom response handlers to the `paginate()` method:
+3. `hooks` パラメータを使用して、`paginate()` メソッドにカスタム レスポンス ハンドラーを追加します:
 
 ```py
 from dlt.sources.helpers.rest_client.auth import BearerTokenAuth

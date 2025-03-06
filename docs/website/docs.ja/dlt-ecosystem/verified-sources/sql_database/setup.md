@@ -10,24 +10,24 @@ import Header from '../_source-info-header.md';
 
 <Header/>
 
-To connect to your SQL database using `dlt`, follow these steps:
+`dlt` を使用してSQLデータベースに接続するには、次の手順に従います:
 
-1. Initialize a `dlt` project in the current working directory by running the following command:
+1. 次のコマンドを実行して、現在の作業ディレクトリで `dlt` プロジェクトを初期化します:
 
     ```sh 
     dlt init sql_database duckdb
     ```
 
-    This will add necessary files and configurations for a `dlt` pipeline with SQL database as the source and
-   [DuckDB](../../destinations/duckdb.md) as the destination.
+    これにより、SQL データベースをソースとし、[DuckDB](../../destinations/duckdb.md) を宛先とする `dlt` パイプラインに必要なファイルと構成が追加されます。
 
 :::tip
-If you'd like to use a different destination, simply replace `duckdb` with the name of your preferred [destination](../../destinations).
+別の保存先を使用する場合は、`duckdb` を希望する [宛先](../../destinations) の名前に置き換えてください。
 :::
 
-2. Add credentials for your SQL database
+2. SQL データベースの資格情報を追加する
 
-    To connect to your SQL database, `dlt` would need to authenticate using necessary credentials. To enable this, paste your credentials in the `secrets.toml` file created inside the `.dlt/` folder in the following format:
+    SQL データベースに接続するには、`dlt` は必要な資格情報を使用して認証する必要があります。これを有効にするには、`.dlt/` フォルダ内に作成された `secrets.toml` ファイルに次の形式で資格情報を貼り付けます:
+
     ```toml
     [sources.sql_database.credentials]
     drivername = "mysql+pymysql" # driver name for the database
@@ -37,41 +37,41 @@ If you'd like to use a different destination, simply replace `duckdb` with the n
     port = "4497" # port required for connection
     ```
 
-    Alternatively, you can also authenticate using connection strings:
+    あるいは、接続文字列を使用して認証することもできます:
+
     ```toml
     [sources.sql_database.credentials]
     credentials="mysql+pymysql://rfamro@mysql-rfam-public.ebi.ac.uk:4497/Rfam"
     ```
 
-    To learn more about how to add credentials into your `sql_database` pipeline, see [here](./configuration#configuring-the-connection).  
+    `sql_database` パイプラインに資格情報を追加する方法の詳細については、[こちら](./configuration#configuring-the-connection)を参照してください。
 
-3. Add credentials for your destination (if necessary)  
+3. 宛先の資格情報を追加する（必要な場合）
 
-    Depending on which [destination](../../destinations) you're loading into, you might also need to add your destination credentials. For more information, read the [General Usage: Credentials.](../../../general-usage/credentials)
+    ロード先の [宛先](../../destinations) によっては、宛先の資格情報も追加する必要がある可能性があります。詳細については、[一般的な使用方法: 資格情報](../../../general-usage/credentials)を参照してください。
 
-4. Install any necessary dependencies  
+4. 必要な依存関係をインストールする
 
     ```sh
     pip install -r requirements.txt
     ```
 
-5. Run the pipeline  
+5. パイプラインを実行する
 
     ```sh
     python sql_database_pipeline.py
     ```
 
-    Executing this command will run the example script `sql_database_pipeline.py` created in step 1. In order for this to run successfully, you will need to pass the names of the databases and/or tables you wish to load. 
-    See the [section on configuring the sql_database source](./configuration#configuring-the-sql-database-source) for more details.
+    このコマンドを実行すると、手順 1 で作成したサンプル スクリプト `sql_database_pipeline.py` が実行されます。これを正常に実行するには、ロードするデータベースやテーブルの名前を渡す必要があります。詳細については、[sql_database ソースの構成に関するセクション](./configuration#configuring-the-sql-database-source)を参照してください。
 
 
-6. Make sure everything is loaded as expected with  
+6. すべてが期待通りにロードされていることを確認してください
+
     ```sh
     dlt pipeline <pipeline_name> show
     ```
 
    :::note
-   The pipeline_name for the above example is `rfam`, you may also use any
-   custom name instead. 
+   上記の例の pipeline_name は `rfam` ですが、代わりに任意のカスタム名を使用することもできます。 
    :::  
 
