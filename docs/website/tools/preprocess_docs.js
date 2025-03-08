@@ -6,7 +6,8 @@ const { get } = require('http');
 const dedent = require('dedent');
 
 // constants
-const MD_SOURCE_DIR = "docs/";
+// const MD_SOURCE_DIR = "docs/";
+const MD_SOURCE_DIR = "docs.ja/";
 const MD_TARGET_DIR = "docs_processed/";
 
 const MOVE_FILES_EXTENSION = [".md", ".mdx", ".py", ".png", ".jpg", ".jpeg"];
