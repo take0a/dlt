@@ -6,32 +6,33 @@ keywords: [sql connector, sql database pipeline, sql database]
 
 import Header from '../_source-info-header.md';
 
-# Advanced usage
+# 高度な使い方
 
 <Header/>
 
-## Incremental loading
+## インクリメンタルローディング
 
-Efficient data management often requires loading only new or updated data from your SQL databases, rather than reprocessing the entire dataset. This is where incremental loading comes into play.
+効率的なデータ管理には、データセット全体を再処理するのではなく、SQL データベースから新しいデータまたは更新されたデータのみをロードすることが必要なことがよくあります。ここで、インクリメンタルロードが役立ちます。
 
-Incremental loading uses a cursor column (e.g., timestamp or auto-incrementing ID) to load only data newer than a specified initial value, enhancing efficiency by reducing processing time and resource use. Read [here](../../../walkthroughs/sql-incremental-configuration) for more details on incremental loading with `dlt`.
+インクリメンタルロードでは、カーソル列 (タイムスタンプや自動増分 ID など) を使用して、指定された初期値よりも新しいデータのみをロードし、処理時間とリソースの使用を削減することで効率を高めます。`dlt` を使用したインクリメンタルロードの詳細については、[こちら](../../../walkthroughs/sql-incremental-configuration) を参照してください。
 
-### How to configure
-1. **Choose a cursor column**: Identify a column in your SQL table that can serve as a reliable indicator of new or updated rows. Common choices include timestamp columns or auto-incrementing IDs.
-1. **Set an initial value**: Choose a starting value for the cursor to begin loading data. This could be a specific timestamp or ID from which you wish to start loading data.
-1. **Deduplication**: When using incremental loading, the system automatically handles the deduplication of rows based on the primary key (if available) or row hash for tables without a primary key.
-1. **Set end_value for backfill**: Set `end_value` if you want to backfill data from a certain range.
-1. **Order returned rows**: Set `row_order` to `asc` or `desc` to order returned rows.
+### 設定方法
 
-:::info Special characters in the cursor column name
-If your cursor column name contains special characters (e.g., `$`) you need to escape it when passing it to the `incremental` function. For example, if your cursor column is `example_$column`, you should pass it as `"'example_$column'"` or `'"example_$column"'` to the `incremental` function: `incremental("'example_$column'", initial_value=...)`.
+1. **カーソル列の選択**: 新しい行または更新された行の信頼できるインジケーターとして機能する SQL テーブル内の列を識別します。一般的な選択肢には、タイムスタンプ列または自動増分 ID が含まれます。
+1. **初期値の設定**: カーソルがデータの読み込みを開始する開始値を選択します。これは、データの読み込みを開始する特定のタイムスタンプまたは ID にすることができます。
+1. **重複排除**: インクリメンタルローディングを使用する場合、システムは主キー (使用可能な場合) または主キーのないテーブルでは行ハッシュに基づいて行の重複排除を自動的に処理します。
+1. **バックフィルの end_value を設定する**: 特定の範囲からデータをバックフィルする場合に `end_value` を設定します。
+1. **返される行の順序**: `row_order` を `asc` か `desc` に設定して、返される行を順序付けます。
+
+:::info カーソル列名内の特殊文字
+カーソル列名に特殊文字 (例: `$`) が含まれている場合は、`incremental` 関数に渡す際にエスケープする必要があります。たとえば、カーソル列が `example_$column` の場合、これを`"'example_$column'"` または `'"example_$column"'` として `incremental` 関数に渡します: `incremental("'example_$column'", initial_value=...)`。
 :::
 
-### Examples
+### 例
 
-1. **Incremental loading with the resource `sql_table`**.
+1. **`sql_table` リソースを使用したインクリメンタルローディング**.
 
-  Consider a table "family" with a timestamp column `last_modified` that indicates when a row was last modified. To ensure that only rows modified after midnight (00:00:00) on January 1, 2024, are loaded, you would set the `last_modified` timestamp as the cursor as follows:
+  行が最後に変更された日時を示すタイムスタンプ列 `last_modified` を持つテーブル「family」について考えてみましょう。2024 年 1 月 1 日の深夜 (00:00:00) 以降に変更された行のみがロードされるようにするには、次のように `last_modified` タイムスタンプをカーソルとして設定します:
 
   ```py
   import dlt
@@ -52,12 +53,11 @@ If your cursor column name contains special characters (e.g., `$`) you need to e
   print(extract_info)
   ```
 
-  Behind the scene, the loader generates a SQL query filtering rows with `last_modified` values greater or equal to the incremental value. In the first run, this is the initial value (midnight (00:00:00) January 1, 2024).
-  In subsequent runs, it is the latest value of `last_modified` that `dlt` stores in [state](../../../general-usage/state).
+  バックグラウンドでは、ローダーは `last_modified` 増分値以上の値を持つ行をフィルタリングする SQL クエリを生成します。最初の実行では、これは初期値 (2024 年 1 月 1 日の深夜 (00:00:00)) です。後続の実行では、これは `dlt` によって [state](../../../general-usage/state) に格納されている `last_modified` の最新の値です。
 
-2. **Incremental loading with the source `sql_database`**.
+2. **`sql_database` ソースを使用したインクリメンタルローディング**.
 
-  To achieve the same using the `sql_database` source, you would specify your cursor as follows:
+  `sql_database` ソースを使用して同じことを実現するには、カーソルを次のように指定します:
 
   ```py
   import dlt
@@ -74,16 +74,15 @@ If your cursor column name contains special characters (e.g., `$`) you need to e
   ```
 
   :::info
-    * When using "merge" write disposition, the source table needs a primary key, which `dlt` automatically sets up.
-    * `apply_hints` is a powerful method that enables schema modifications after resource creation, like adjusting write disposition and primary keys. You can choose from various tables and use `apply_hints` multiple times to create pipelines with merged, appended, or replaced resources.
+    * 「マージ」書き込み処理を使用する場合、ソーステーブルには `dlt` が自動的に設定する主キーが必要です。
+    * `apply_hints` は、書き込み処理や主キーの調整など、リソース作成後のスキーマ変更を可能にする強力な方法です。さまざまなテーブルから選択し、`apply_hints` 複数回使用して、マージ、追加、または置換されるリソースを含むパイプラインを作成できます。
   :::
 
-### Inclusive and exclusive filtering
+### 包括的、排他的フィルタリング
 
-By default the incremental filtering is inclusive on the start value side so that
-rows with cursor equal to the last run's cursor are fetched again from the database.
+デフォルトでは、増分フィルタリングは開始値側も含まれるため、カーソルが前回の実行のカーソルと等しい行がデータベースから再度取得されます。
 
-The SQL query generated looks something like this (assuming `last_value_func` is `max`):
+生成される SQL クエリは次のようになります (`last_value_func` が `max` であると仮定):
 
 ```sql
 SELECT * FROM family
@@ -91,18 +90,15 @@ WHERE last_modified >= :start_value
 ORDER BY last_modified ASC
 ```
 
-That means some rows overlapping with the previous load are fetched from the database.
-Duplicates are then filtered out by dlt using either the primary key or a hash of the row's contents.
+つまり、前回のロードと重複する一部の行がデータベースから取得されます。その後、重複は主キーまたは行の内容のハッシュを使用して dlt によってフィルタリングされます。
 
-This ensures there are no gaps in the extracted sequence. But it does come with some performance overhead,
-both due to the deduplication processing and the cost of fetching redundant records from the database.
+これにより、抽出されたシーケンスにギャップがなくなることが保証されます。ただし、重複排除処理とデータベースから冗長レコードを取得するコストの両方により、パフォーマンスのオーバーヘッドが発生します。
 
-This is not always needed. If you know that your data does not contain overlapping cursor values then you
-can optimize extraction by passing `range_start="open"` to incremental.
+これは必ずしも必要ではありません。データに重複するカーソル値が含まれていないことがわかっている場合は、`range_start="open"` を incremental に渡すことで抽出を最適化できます。
 
-This both disables the deduplication process and changes the operator used in the SQL `WHERE` clause from `>=` (greater-or-equal) to `>` (greater than), so that no overlapping rows are fetched.
+これにより、重複排除プロセスが無効になり、SQL `WHERE` 句で使用される演算子が `>=` (以上)から `>` (より大きい)に変更されるため、重複する行は取得されません。
 
-E.g.
+例えば
 
 ```py
 table = sql_table(
@@ -115,15 +111,16 @@ table = sql_table(
 )
 ```
 
-It's a good option if:
+次の場合に適したオプションです:
 
-* The cursor is an auto incrementing ID
-* The cursor is a high precision timestamp and two records are never created at exactly the same time
-* Your pipeline runs are timed in such a way that new data is not generated during the load
+* カーソルが自動的に増加するIDである
+* カーソルが高精度のタイムスタンプであり、2つのレコードがまったく同時に作成されることがない。
+* パイプラインの実行が、ロード中に新しいデータが生成されないようにタイミングが調整されている
 
-## Parallelized extraction
+## 並列化された抽出
 
-You can extract each table in a separate thread (no multiprocessing at this point). This will decrease loading time if your queries take time to execute or your network latency/speed is low. To enable this, declare your sources/resources as follows:
+各テーブルを個別のスレッドで抽出できます (この時点ではマルチプロセスではありません)。これにより、クエリの実行に時間がかかったり、ネットワークの待ち時間や速度が遅い場合に、読み込み時間が短縮されます。これを有効にするには、ソース/リソースを次のように宣言します:
+
 ```py
 from dlt.sources.sql_database import sql_database, sql_table
 
@@ -131,36 +128,37 @@ database = sql_database().parallelize()
 table = sql_table().parallelize()
 ```
 
-## Column reflection
-Column reflection is the automatic detection and retrieval of column metadata like column names, constraints, data types, etc. Columns and their data types are reflected with SQLAlchemy. The SQL types are then mapped to `dlt` types.
-Depending on the selected backend, some of the types might require additional processing.
+## 列のリフレクション
 
-The `reflection_level` argument controls how much information is reflected:
+列のリフレクションは、列名、制約、データ型などの列メタデータを自動的に検出して取得することです。列とそのデータ型は SQLAlchemy で反映されます。その後、SQL 型が `dlt` 型にマップされます。選択したバックエンドによっては、一部の型で追加の処理が必要になる場合があります。
 
-- `reflection_level = "minimal"`: Only column names and nullability are detected. Data types are inferred from the data. **This is the default.**
-- `reflection_level = "full"`: Column names, nullability, and data types are detected. For decimal types, we always add precision and scale.
-- `reflection_level = "full_with_precision"`: Column names, nullability, data types, and precision/scale are detected, also for types like text and binary. Integer sizes are set to bigint and to int for all other types.
+`reflection_level` 引数は、どの程度の情報が反映されるかを制御します:
 
-If the SQL type is unknown or not supported by `dlt`, then, in the pyarrow backend, the column will be skipped, whereas in the other backends the type will be inferred directly from the data irrespective of the `reflection_level` specified. In the latter case, this often means that some types are coerced to strings and `dataclass` based values from sqlalchemy are inferred as `json` (JSON in most destinations).
+- `reflection_level = "minimal"`: 列名と NULL 値可能性のみが検出されます。データ型はデータから推測されます。**これがデフォルトです。**
+- `reflection_level = "full"`: 列名、NULL 値可能性、およびデータ型が検出されます。小数点型の場合、常に精度とスケールが追加されます。
+- `reflection_level = "full_with_precision"`: 列名、NULL 値可能性、データ型、精度/スケールが検出されます。また、テキストやバイナリなどの型についても検出されます。整数サイズは、他のすべての型では bigint と int に設定されます。
+
+SQL 型が不明であるか、`dlt` でサポートされていない場合、pyarrow バックエンドでは列がスキップされますが、他のバックエンドでは、`reflection_level` 指定に関係なく、データから直接型が推測されます。後者の場合、これは多くの場合、一部の型が文字列に強制変換され、sqlalchemyからの `dataclass` ベースの値が `json` (ほとんどの宛先では JSON)として推論されることを意味します。
+
 :::tip
-If you use reflection level **full** / **full_with_precision**, you may encounter a situation where the data returned by sqlalchemy or pyarrow backend does not match the reflected data types. The most common symptoms are:
-1. The destination complains that it cannot cast one type to another for a certain column. For example, `connector-x` returns TIME in nanoseconds
-and BigQuery sees it as bigint and fails to load.
-2. You get `SchemaCorruptedException` or another coercion error during the `normalize` step.
-In that case, you may try **minimal** reflection level where all data types are inferred from the returned data. From our experience, this prevents
-most of the coercion problems.
+リフレクションレベル **full** / **full_with_precision** を使用すると、sqlalchemy または pyarrow バックエンドによって返されるデータがリフレクションされたデータ型と一致しない状況が発生する可能性があります。最も一般的な症状は次のとおりです:
+
+1. 宛先は、特定の列に対して 1 つの型を別の型にキャストできないというエラーを出力します。たとえば、`connector-x` ナノ秒単位で TIME を返しますが、BigQuery はそれを bigint として認識し、読み込みに失敗します。
+2. `normalize` ステップで、`SchemaCorruptedException` や他の強制エラーが発生します。
+この場合、返されたデータからすべてのデータ型が推測される **最小限の** リフレクションレベルを試せます。経験上、これにより強制エラーの問題のほとんどを回避できます。
 :::
 
-### Adapt reflected types to your needs
+### 必要に応じてリフレクションタイプを調整します
 
-You can also override the SQL type by passing a `type_adapter_callback` function. This function takes a `SQLAlchemy` data type as input and returns a new type (or `None` to force the column to be inferred from the data) as output.
+`type_adapter_callback` 関数を渡すことで SQL 型をオーバーライドすることもできます。この関数は、入力として `SQLAlchemy` データ型を受け取り、出力として新しい型 (または、データから推測される列を強制する `None` ) を返します。
 
-This is useful, for example, when:
-- You're loading a data type that is not supported by the destination (e.g., you need JSON type columns to be coerced to string).
-- You're using a sqlalchemy dialect that uses custom types that don't inherit from standard sqlalchemy types.
-- For certain types, you prefer `dlt` to infer the data type from the data and you return `None`.
+これは、たとえば次のような場合に役立ちます:
 
-In the following example, when loading timestamps from Snowflake, you ensure that they get translated into standard sqlalchemy `timestamp` columns in the resultant schema:
+- 宛先でサポートされていないデータ型をロードする (たとえば、JSON 型の列を文字列に強制変換する必要があります)。
+- 標準の sqlalchemy タイプを継承しないカスタムタイプを使用する sqlalchemy 方言を使用している。
+- 特定の型については、データからデータ型を推測する `dlt` を使用するように、`None` を返すことをお勧めします。
+
+次の例では、Snowflake からタイムスタンプをロードするときに、結果のスキーマで標準のsqlalchemy `timestamp`列に変換されるようにします:
 
 ```py
 import dlt
@@ -183,13 +181,14 @@ source = sql_database(
 dlt.pipeline("demo").run(source)
 ```
 
-### Remove nullability information
-`dlt` adds `NULL`/`NOT NULL` information to reflected schemas in **all reflection levels**. There are cases where you do not want this information to be present
-ie.
-* if you plan to use replication source that will (soft) delete rows.
-* if you expect that columns will be dropped from the source table.
+### NULL可能情報の除去
 
-In such cases you can use a table adapter that removes nullability (`dlt` will create nullable tables as a default):
+`dlt` は、**すべてのリフレクションレベル**で、リフレクションされたスキーマ情報に `NULL`/`NOT NULL` 情報を追加します。この情報が不要である場合もあります。たとえば:
+
+* 行を（ソフト）削除するレプリケーション ソースを使用する予定の場合
+* ソース テーブルから列が削除されることが予想される場合
+
+このような場合、null 可能情報を削除するテーブルアダプターを使用できます (`dlt` デフォルトでは null 値許容テーブルが作成されます):
 
 ```py
 from dlt.sources.sql_database import sql_table, remove_nullability_adapter
@@ -202,21 +201,24 @@ read_table = sql_table(
 print(read_table.compute_table_schema())
 ```
 
-You can call `remove_nullability_adapter` from your custom table adapter if you need to combine both.
+両方を組み合わせる必要がある場合は、カスタムテーブルアダプターから `remove_nullability_adapter` を呼び出すことができます。
 
+## TOML または環境変数で構成する
 
-## Configuring with TOML or environment variables
-You can set most of the arguments of `sql_database()` and `sql_table()` directly in the TOML files or as environment variables. `dlt` automatically injects these values into the pipeline script.
+`sql_database()` と `sql_table()` の引数のほとんどは、TOML ファイル内で直接設定することも、環境変数として設定することもできます。
+`dlt` は、これらの値をパイプラインスクリプトに自動的に挿入します。
 
-This is particularly useful with `sql_table()` because you can maintain a separate configuration for each table (below we show **secrets.toml** and **config.toml**; you are free to combine them into one):
+これは、`sql_table()` で、各テーブルごとに個別の構成を維持できるため、特に便利です(以下では **secrets.toml** と **config.toml** を示していますが、これらを 1 つに自由に組み合わせることができます)。
 
-The examples below show how you can set arguments in any of the TOML files (`secrets.toml` or `config.toml`):
-1. Specifying connection string:
+以下の例は、TOML ファイル (`secrets.toml` または `config.toml`) のいずれかで引数を設定する方法を示しています:
+
+1. 接続文字列の指定:
     ```toml
     [sources.sql_database]
     credentials="mssql+pyodbc://loader.database.windows.net/dlt_data?trusted_connection=yes&driver=ODBC+Driver+17+for+SQL+Server"
     ```
-2. Setting parameters like backend, `chunk_size`, and incremental column for the table `chat_message`:
+
+2. `chat_message` テーブルの `backend`、`chunk_size`、増分列などのパラメータを設定:
     ```toml
     [sources.sql_database.chat_message]
     backend="pandas"
@@ -225,10 +227,11 @@ The examples below show how you can set arguments in any of the TOML files (`sec
     [sources.sql_database.chat_message.incremental]
     cursor_path="updated_at"
     ```
-    This is especially useful with `sql_table()` in a situation where you may want to run this resource for multiple tables. Setting parameters like this would then give you a clean way of maintaining separate configurations for each table.
 
-3. Handling separate configurations for database and individual tables
-    When using the `sql_database()` source, you can separately configure the parameters for the database and for the individual tables.
+    これは、`sql_table()` で、このリソースを複数のテーブルに対して実行する必要がある場合に特に便利です。このようにパラメータを設定すると、テーブルごとに個別の構成をクリーンな方法で維持できるようになります。
+
+3. データベースと個々のテーブルの個別の構成の処理で `sql_database()` ソースを使用する場合でも、データベースと個々のテーブルのパラメータを個別に構成できます。
+    
     ```toml
     [sources.sql_database]
     credentials="mssql+pyodbc://loader.database.windows.net/dlt_data?trusted_connection=yes&driver=ODBC+Driver+17+for+SQL+Server"
@@ -240,15 +243,16 @@ The examples below show how you can set arguments in any of the TOML files (`sec
     cursor_path="updated_at"
     ```
 
-    The resulting source created below will extract data using the **pandas** backend with **chunk_size** 1000. The table **chat_message** will load data incrementally using the **updated_at** column. All the other tables will not use incremental loading and will instead load the full data.
+    以下に作成される結果のソースは、**chunk_size** が 1000 の **pandas** バックエンドを使用してデータを抽出します。テーブル **chat_message** は、**updated_at** 列を使用してデータをインクリメンタルロードします。他のすべてのテーブルではインクリメンタルロードは使用されず、代わりに全データがロードされます。
 
     ```py
     database = sql_database()
     ```
 
-You'll be able to configure all the arguments this way (except the adapter callback function). [Standard dlt rules apply](../../../general-usage/credentials/setup).
+この方法で(アダプター コールバック関数を除く)すべての引数を構成できます。[標準の dlt ルールが適用されます](../../../general-usage/credentials/setup)。
 
-It is also possible to set these arguments as environment variables [using the proper naming convention](../../../general-usage/credentials/setup#naming-convention):
+[適切な命名規則を使用して](../../../general-usage/credentials/setup#naming-convention)、これらの引数を環境変数として設定することもできます:
+
 ```sh
 SOURCES__SQL_DATABASE__CREDENTIALS="mssql+pyodbc://loader.database.windows.net/dlt_data?trusted_connection=yes&driver=ODBC+Driver+17+for+SQL+Server"
 SOURCES__SQL_DATABASE__BACKEND=pandas
@@ -256,17 +260,19 @@ SOURCES__SQL_DATABASE__CHUNK_SIZE=1000
 SOURCES__SQL_DATABASE__CHAT_MESSAGE__INCREMENTAL__CURSOR_PATH=updated_at
 ```
 
-### Configure many sources side by side with custom sections
-`dlt` allows you to rename any source to place the source configuration into custom section or to have many instances
-of the source created side by side. For example:
+### カスタムセクションで複数のソースを並べて設定する
+
+`dlt` では、ソースの名前を変更して、ソース構成をカスタムセクションに配置したり、ソースのインスタンスを多数並べて作成したりできます。例:
+
 ```py
 from dlt.sources.sql_database import sql_database
 
 my_db = sql_database.clone(name="my_db", section="my_db")(table_names=["chat_message"])
 print(my_db.name)
 ```
-Here we create a renamed version of the `sql_database` and then instantiate it. Such source will read
-credentials from:
+
+ここでは、`sql_database` の名前を変更したバージョンを作成し、それをインスタンス化します。このようなソースは、次のように資格情報を読み取ります:
+
 ```toml
 [sources.my_db]
 credentials="mssql+pyodbc://loader.database.windows.net/dlt_data?trusted_connection=yes&driver=ODBC+Driver+17+for+SQL+Server"
