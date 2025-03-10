@@ -1,50 +1,56 @@
-# Cloud storage and filesystem
-The filesystem destination stores data in remote file systems and cloud storage services like **AWS S3**, **Google Cloud Storage**, or **Azure Blob Storage**. Underneath, it uses [fsspec](https://github.com/fsspec/filesystem_spec) to abstract file operations. Its primary role is to be used as a staging area for other destinations, but you can also quickly build a data lake with it.
+# クラウドストレージとファイルシステム
+
+ファイルシステムの宛先は、**AWS S3**、**Google Cloud Storage**、**Azure Blob Storage** などのリモート ファイルシステムやクラウド ストレージ サービスにデータを格納します。その下層では、[fsspec](https://github.com/fsspec/filesystem_spec) を使用してファイル操作を抽象化します。その主な役割は、他の宛先のステージング領域として使用することですが、これを使用してデータ レイクをすばやく構築することもできます。
 
 :::tip
-Please read the notes on the layout of the data files. Currently, we are receiving feedback on it. Please join our Slack (icon at the top of the page) and help us find the optimal layout.
+データファイルのレイアウトに関する注意事項をお読みください。現在、フィードバックを受け付けています。Slack (ページ上部のアイコン) に参加して、最適なレイアウトを見つけるお手伝いをお願いします。
 :::
 
-## Install dlt with filesystem
+## ファイルシステムと dlt をインストールする
 
-Install the dlt library with filesystem dependencies:
+ファイルシステムと依存関係を持つ dlt ライブラリをインストールする:
 
 ```sh
 pip install "dlt[filesystem]"
 ```
 
-This installs the `s3fs` and `botocore` packages.
+これにより、`s3fs` パッケージと `botocore` パッケージがインストールされます。
 
 :::caution
 
-You may also install the dependencies independently. Try:
+依存関係を個別にインストールすることもできます:
+
 ```sh
 pip install dlt
 pip install s3fs
 ```
-so pip does not fail on backtracking.
+
+そうすれば、pip はバックトラックで失敗しません。
 :::
 
-## Initialize the dlt project
+## dlt プロジェクトを初期化する
 
-Let's start by initializing a new dlt project as follows:
+まず、新しい dlt プロジェクトを次のように初期化します:
+
 ```sh
 dlt init chess filesystem
 ```
 
 :::note
-This command will initialize your pipeline with chess as the source and AWS S3 as the destination.
+このコマンドは、チェスをソース、AWS S3 を宛先としてパイプラインを初期化します。
 :::
 
-## Set up the destination and credentials
+## 宛先と資格情報を設定する
 
 ### AWS S3
-The command above creates a sample `secrets.toml` and requirements file for an AWS S3 bucket. You can install those dependencies by running:
+
+上記のコマンドは、AWS S3バケットのサンプルの`secrets.toml`と要件ファイルを作成します。これらの依存関係は、次のコマンドを実行してインストールできます。:
+
 ```sh
 pip install -r requirements.txt
 ```
 
-To edit the dlt credentials file with your secret info, open `.dlt/secrets.toml`, which looks like this:
+秘密情報を含む dlt 認証情報ファイルを編集するには、次のようになっている`.dlt/secrets.toml`を開きます:
 
 ```toml
 [destination.filesystem]
@@ -55,31 +61,31 @@ aws_access_key_id = "please set me up!" # copy the access key here
 aws_secret_access_key = "please set me up!" # copy the secret access key here
 ```
 
-If you have your credentials stored in `~/.aws/credentials`, just remove the **[destination.filesystem.credentials]** section above, and dlt will fall back to your **default** profile in local credentials. If you want to switch the profile, pass the profile name as follows (here: `dlt-ci-user`):
+認証情報が `~/.aws/credentials` に保存されている場合は、上記の **[destination.filesystem.credentials]** セクションを削除するだけで、dlt はローカル認証情報の **default** プロファイルに戻ります。プロファイルを切り替える場合は、次のようにプロファイル名を渡します (ここでは `dlt-ci-user`):
 
 ```toml
 [destination.filesystem.credentials]
 profile_name="dlt-ci-user"
 ```
 
-You can also specify an AWS region:
+AWSリージョンを指定することもできます:
 
 ```toml
 [destination.filesystem.credentials]
 region_name="eu-central-1"
 ```
 
-You need to create an S3 bucket and a user who can access that bucket. dlt does not create buckets automatically.
+S3 バケットと、そのバケットにアクセスできるユーザーを作成する必要があります。dlt はバケットを自動的に作成しません。
 
-1. You can create the S3 bucket in the AWS console by clicking on "Create Bucket" in S3 and assigning the appropriate name and permissions to the bucket.
-2. Once the bucket is created, you'll have the bucket URL. For example, if the bucket name is `dlt-ci-test-bucket`, then the bucket URL will be:
+1. S3 で「バケットの作成」をクリックし、バケットに適切な名前と権限を割り当てることで、AWS コンソールで S3 バケットを作成できます。
+2. バケットが作成されると、バケットURLが取得されます。たとえば、バケット名が`dlt-ci-test-bucket`の場合、バケットURLは次のようになります:
 
    ```text
    s3://dlt-ci-test-bucket
    ```
 
-3. To grant permissions to the user being used to access the S3 bucket, go to IAM > Users, and click on “Add Permissions”.
-4. Below you can find a sample policy that gives the minimum permission required by dlt to a bucket we created above. The policy contains permissions to list files in a bucket, get, put, and delete objects. **Remember to place your bucket name in the Resource section of the policy!**
+3. S3 バケットへのアクセスに使用するユーザーに権限を付与するには、「IAM」>「ユーザー」に移動し、「権限の追加」をクリックします。
+4. 以下に、上記で作成したバケットに dlt に必要な最小限の権限を付与するサンプル ポリシーを示します。このポリシーには、バケット内のファイルのリスト、オブジェクトの取得、配置、削除を行う権限が含まれています。**ポリシーのリソース セクションにバケット名を忘れずに入力してください。**
 
 ```json
 {
@@ -103,13 +109,13 @@ You need to create an S3 bucket and a user who can access that bucket. dlt does 
     ]
 }
 ```
-5. To obtain the access and secret key for the user, go to IAM > Users and in the “Security Credentials”, click on “Create Access Key”, and preferably select “Command Line Interface” and create the access key.
-6. Obtain the “Access Key” and “Secret Access Key” created that are to be used in "secrets.toml".
 
-#### Using S3 compatible storage
+5. ユーザーのアクセス キーとシークレット キーを取得するには、[IAM] > [ユーザー] に移動し、[セキュリティ認証情報] で [アクセス キーの作成] をクリックし、できれば [コマンド ライン インターフェイス] を選択してアクセス キーを作成します。
+6. 「secrets.toml」で使用するために作成された「アクセスキー」と「シークレットアクセスキー」を取得します。
 
-To use an S3 compatible storage other than AWS S3, such as [MinIO](https://min.io/), [Cloudflare R2](https://www.cloudflare.com/en-ca/developer-platform/r2/) or [Google 
-Cloud Storage](https://cloud.google.com/storage/docs/interoperability), you may supply an `endpoint_url` in the config. This should be set along with AWS credentials:
+#### S3互換ストレージの使用
+
+[MinIO](https://min.io/)、[Cloudflare R2](https://www.cloudflare.com/en-ca/developer-platform/r2/)、[Google Cloud Storage](https://cloud.google.com/storage/docs/interoperability) など、AWS S3 以外の S3 互換ストレージを使用する場合は、構成で `endpoint_url` を指定できます。これは、AWS 認証情報とともに設定する必要があります:
 
 ```toml
 [destination.filesystem]
@@ -121,9 +127,9 @@ aws_secret_access_key = "please set me up!" # copy the secret access key here
 endpoint_url = "https://<account_id>.r2.cloudflarestorage.com" # copy your endpoint URL here
 ```
 
-#### Adding additional configuration
+#### 構成を追加する
 
-To pass any additional arguments to `fsspec`, you may supply `kwargs` and `client_kwargs` in toml config.
+`fsspec` に追加の引数を渡すには、toml 設定で `kwargs` と `client_kwargs` を指定します。
 
 ```toml
 [destination.filesystem.kwargs]
@@ -134,16 +140,17 @@ auto_mkdir=true
 verify="public.crt"
 ```
 
-To pass additional arguments via env variables, use **stringified dictionary**:
+追加の引数を環境変数経由で渡すには、**文字列化された辞書** を使用します:
 `DESTINATION__FILESYSTEM__KWARGS='{"use_ssl": true, "auto_mkdir": true}`
 
 
 ### Google storage
-Run `pip install "dlt[gs]"` which will install the `gcfs` package.
 
-To edit the `dlt` credentials file with your secret info, open `.dlt/secrets.toml`.
-You'll see AWS credentials by default.
-Use Google cloud credentials that you may know from [BigQuery destination](bigquery.md)
+`pip install "dlt[gs]"` を実行すると、`gcfs` パッケージがインストールされます。
+シークレット情報を含む `dlt` 認証情報ファイルを編集するには、`.dlt/secrets.toml` を開きます。
+デフォルトでは AWS 認証情報が表示されます。
+[BigQuery の宛先](bigquery.md) からわかる Google クラウド認証情報を使用します。
+
 ```toml
 [destination.filesystem]
 bucket_url = "gs://[your_bucket_name]" # replace with your bucket name,
@@ -154,51 +161,53 @@ private_key = "private_key" # please set me up!
 client_email = "client_email" # please set me up!
 ```
 :::note
-Note that you can share the same credentials with BigQuery, replace the `[destination.filesystem.credentials]` section with a less specific one: `[destination.credentials]` which applies to both destinations.
+BigQuery と同じ認証情報を共有できることに注意してください。`[destination.filesystem.credentials]` セクションを、両方の宛先に適用されるより具体的なものではない `[destination.credentials]` に置き換えます。
 :::
 
-If you have default Google Cloud credentials in your environment (i.e., on cloud function), remove the credentials sections above and `dlt` will fall back to the available default.
+環境内（つまり、クラウド関数上）にデフォルトの Google Cloud 認証情報がある場合は、上記の認証情報セクションを削除すると、`dlt` は利用可能なデフォルトにフォールバックします。
 
-Use **Cloud Storage** admin to create a new bucket. Then assign the **Storage Object Admin** role to your service account.
+**Cloud Storage** 管理者を使用して新しいバケットを作成します。次に、**Storage Object Admin** ロールをサービス アカウントに割り当てます。
 
 ### Azure Blob Storage
 
-Run `pip install "dlt[az]"` which will install the `adlfs` package to interface with Azure Blob Storage.
+`pip install "dlt[az]"` を実行すると、Azure Blob Storage とインターフェイスするための `adlfs` パッケージがインストールされます。
 
-Edit the credentials in `.dlt/secrets.toml`, you'll see AWS credentials by default; replace them with your Azure credentials.
+`.dlt/secrets.toml` の資格情報を編集すると、デフォルトで AWS 資格情報が表示されるので、それを Azure 資格情報に置き換えます。
 
-#### Supported schemes
+#### サポートされているスキーム
 
-`dlt` supports both forms of the blob storage urls:
+`dlt` は両方の形式の BLOB ストレージ URL をサポートします:
+
 ```toml
 [destination.filesystem]
 bucket_url = "az://<container_name>/path" # replace with your container name and path
 ```
 
-and
+と
 
 ```toml
 [destination.filesystem]
 bucket_url = "abfss://<container_name>@<storage_account_name>.dfs.core.windows.net/path"
 ```
 
-You can use `az`, `abfss`, `azure` and `abfs` url schemes.
+`az`、`abfss`、`azure`、`abfs` URL スキームを使用できます。
 
-If you need to use a custom host for your storage account, you can set it up like below:
+ストレージアカウントにカスタムホストを使用する必要がある場合は、以下のように設定できます:
+
 ```toml
 [destination.filesystem.credentials]
 # The storage account name is always required
 azure_account_host = "<storage_account_name>.<host_base>"
 ```
-Remember to include `storage_account_name` with your base host ie. `dlt_ci.blob.core.usgovcloudapi.net`.
-`dlt` will use this host to connect to azure blob storage without any modifications:
 
+ベースホストに `storage_account_name` を含めることを忘れないでください。つまり、`dlt_ci.blob.core.usgovcloudapi.net` です。
+`dlt` は、変更なしでこのホストを使用して Azure BLOB ストレージに接続します:
 
-Two forms of Azure credentials are supported:
+2つの形式のAzure資格情報がサポートされています:
 
-#### SAS token credentials
+#### SAS トークン資格情報
 
-Supply storage account name and either SAS token or storage account key
+ストレージアカウント名と SAS トークンまたはストレージアカウントキーを入力します。
 
 ```toml
 [destination.filesystem.credentials]
@@ -209,13 +218,13 @@ azure_storage_account_key = "account_key" # please set me up!
 azure_storage_sas_token = "sas_token" # please set me up!
 ```
 
-If you have the correct Azure credentials set up on your machine (e.g., via Azure CLI),
-you can omit both `azure_storage_account_key` and `azure_storage_sas_token` and `dlt` will fall back to the available default.
-Note that `azure_storage_account_name` is still required as it can't be inferred from the environment.
+マシンに正しい Azure 資格情報が設定されていれば (Azure CLI 経由など)、
+`azure_storage_account_key` と `azure_storage_sas_token` の両方を省略でき、`dlt` は利用可能なデフォルトに戻ります。
+`azure_storage_account_name` は環境から推測できないため、引き続き必要であることに注意してください。
 
-#### Service principal credentials
+#### サービスプリンシパルの資格情報
 
-Supply a client ID, client secret, and a tenant ID for a service principal authorized to access your container.
+コンテナへのアクセスを許可されたサービス プリンシパルのクライアント ID、クライアントシークレット、テナント ID を指定します。
 
 ```toml
 [destination.filesystem.credentials]
@@ -226,17 +235,18 @@ azure_tenant_id = "tenant_id" # please set me up!
 ```
 
 :::caution
-**Concurrent blob uploads**
-`dlt` limits the number of concurrent connections for a single uploaded blob to 1. By default, `adlfs` that we use splits blobs into 4 MB chunks and uploads them concurrently, which leads to gigabytes of used memory and thousands of connections for larger load packages. You can increase the maximum concurrency as follows:
+**同時 BLOB アップロード**
+`dlt` は、アップロードされた単一の BLOB の同時接続数を 1 に制限します。デフォルトでは、使用する `adlfs` は BLOB を 4 MB のチャンクに分割して同時にアップロードするため、大量のロード パッケージではメモリがギガバイト単位で使用され、接続が数千に上ります。最大同時接続数は次のように増やすことができます:
+
 ```toml
 [destination.filesystem.kwargs]
 max_concurrency=3
 ```
 :::
 
-### Local file system
+### ローカルファイルシステム
 
-If for any reason you want to have those files in a local folder, set up the `bucket_url` as follows (you are free to use `config.toml` for that as there are no secrets required):
+何らかの理由でこれらのファイルをローカル フォルダーに保存したい場合は、次のように `bucket_url` を設定します (シークレットは必要ないため、`config.toml` を自由に使用できます):
 
 ```toml
 [destination.filesystem]
@@ -244,27 +254,28 @@ bucket_url = "file:///absolute/path"  # three / for an absolute path
 ```
 
 :::tip
-For handling deeply nested layouts, consider enabling automatic directory creation for the local filesystem destination. This can be done by setting `kwargs` in `secrets.toml`:
+深くネストされたレイアウトを処理するには、ローカルファイルシステムの宛先の自動ディレクトリ作成を有効にすることを検討してください。これは、`secrets.toml` で `kwargs` を設定することで実行できます:
 
 ```toml
 [destination.filesystem]
 kwargs = '{"auto_mkdir": true}'
 ```
 
-Or by setting an environment variable:
+または環境変数を設定することで:
+
 ```sh
 export DESTINATION__FILESYSTEM__KWARGS = '{"auto_mkdir": true/false}'
 ```
 :::
 
-`dlt` correctly handles the native local file paths. Indeed, using the `file://` schema may not be intuitive, especially for Windows users.
+`dlt` はネイティブのローカルファイルパスを正しく処理します。実際、`file://` スキーマの使用は、特に Windows ユーザーにとっては直感的ではない可能性があります。
 
 ```toml
 [destination.unc_destination]
 bucket_url = 'C:\a\b\c'
 ```
 
-In the example above, we specify `bucket_url` using **TOML's literal strings** that do not require [escaping of backslashes](https://github.com/toml-lang/toml/blob/main/toml.md#string).
+上記の例では、[バックスラッシュのエスケープ](https://github.com/toml-lang/toml/blob/main/toml.md#string)を必要としない**TOMLのリテラル文字列**を使用して `bucket_url` を指定しています。
 
 ```toml
 [destination.unc_destination]
@@ -277,12 +288,12 @@ bucket_url = '/var/local/data'  # absolute POSIX style path
 bucket_url = '_storage/data'  # relative POSIX style path
 ```
 
-In the examples above, we define a few named filesystem destinations:
-* **unc_destination** demonstrates a Windows UNC path in native form.
-* **posix_destination** demonstrates a native POSIX (Linux/Mac) absolute path.
-* **relative_destination** demonstrates a native POSIX (Linux/Mac) relative path. In this case, the `filesystem` destination will store files in the `$cwd/_storage/data` path, where **$cwd** is your current working directory.
+上記の例では、いくつかの名前付きファイルシステムの宛先を定義しています。:
+* **unc_destination**  は、ネイティブ形式の Windows UNC パスを示します。
+* **posix_destination** は、ネイティブ POSIX (Linux/Mac) 絶対パスを示します。
+* **relative_destination** は、ネイティブ POSIX (Linux/Mac) 相対パスを示します。この場合、ファイルシステムの保存先は $cwd/_storage/data パスにファイルを保存します。ここで、$cwd は現在の作業ディレクトリです。
 
-`dlt` supports Windows [UNC paths with the file:// scheme](https://en.wikipedia.org/wiki/File_URI_scheme). They can be specified using **host** or purely as a **path** component.
+`dlt` は Windows [file:// スキームを使用した UNC パス](https://en.wikipedia.org/wiki/File_URI_scheme) をサポートしています。これらは **host** を使用して指定することも、純粋に **path** コンポーネントとして指定することもできます。
 
 ```toml
 [destination.unc_with_host]
@@ -293,9 +304,9 @@ bucket_url="file:////localhost/c$/a/b/c"
 ```
 
 :::caution
-Windows supports paths up to 255 characters. When you access a path longer than 255 characters, you'll see a `FileNotFound` exception.
+Windows は最大 255 文字のパスをサポートします。255 文字を超えるパスにアクセスすると、`FileNotFound` 例外が表示されます。
 
-To overcome this limit, you can use [extended paths](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry). `dlt` recognizes both regular and UNC extended paths.
+この制限を克服するには、[拡張パス](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry) を使用できます。`dlt` は通常のパスと UNC 拡張パスの両方を認識します。
 
 ```toml
 [destination.regular_extended]
@@ -307,11 +318,12 @@ bucket_url='\\?\UNC\localhost\c$\a\b\c'
 :::
 
 ### SFTP
-Run `pip install "dlt[sftp]"` which will install the `paramiko` package alongside `dlt`, enabling secure SFTP transfers.
 
-Configure your SFTP credentials by editing the `.dlt/secrets.toml` file. By default, the file contains placeholders for AWS credentials. You should replace these with your SFTP credentials.
+`pip install "dlt[sftp]"` を実行すると、`dlt` とともに `paramiko` パッケージがインストールされ、安全な SFTP 転送が可能になります。
 
-Below are the possible fields for SFTP credentials configuration:
+`.dlt/secrets.toml` ファイルを編集して、SFTP 認証情報を設定します。デフォルトでは、ファイルには AWS 認証情報のプレースホルダーが含まれています。これらを SFTP 認証情報に置き換える必要があります。
+
+以下はSFTP認証情報設定の可能なフィールドです:
 
 ```text
 sftp_port             # The port for SFTP, defaults to 22 (standard for SSH/SFTP)
@@ -334,25 +346,25 @@ sftp_gss_trust_dns    # Trust DNS for GSS-API, defaults to True
 ```
 
 :::info
-For more information about credentials parameters: https://docs.paramiko.org/en/3.3/api/client.html#paramiko.client.SSHClient.connect
+資格情報パラメータの詳細については: https://docs.paramiko.org/en/3.3/api/client.html#paramiko.client.SSHClient.connect
 :::
 
-### Authentication methods
+### 認証方法
 
-SFTP authentication is attempted in the following order of priority:
+SFTP 認証は次の優先順位で試行されます:
 
-1. **Key-based authentication**: If you provide a `key_filename` containing the path to a private key or a corresponding OpenSSH public certificate (e.g., `id_rsa` and `id_rsa-cert.pub`), these will be used for authentication. If the private key requires a passphrase, you can specify it via `sftp_key_passphrase`. If your private key requires a passphrase to unlock, and you’ve provided one, it will be used to attempt to unlock the key.
+1. **キーベースの認証**: 秘密鍵または対応する OpenSSH 公開証明書 (例: `id_rsa` および `id_rsa-cert.pub`) へのパスを含む `key_filename` を指定すると、これらが認証に使用されます。秘密鍵にパスフレーズが必要な場合は、`sftp_key_passphrase` で指定できます。秘密鍵のロック解除にパスフレーズが必要な場合、パスフレーズを指定してあると、そのパスフレーズを使用して鍵のロック解除が試行されます。
 
-2. **SSH Agent-based authentication**: If `allow_agent=True` (default), Paramiko will look for any SSH keys stored in your local SSH agent (such as `id_rsa`, `id_dsa`, or `id_ecdsa` keys stored in `~/.ssh/`).
+2. **SSHエージェントベースの認証**: `allow_agent=True` (デフォルト) の場合、Paramiko はローカル SSH エージェントに保存されている SSH キー (`~/.ssh/` に保存されている `id_rsa`、`id_dsa`、または `id_ecdsa` キーなど) を検索します。
 
-3. **Username/Password authentication**: If a password is provided (`sftp_password`), plain username/password authentication will be attempted.
+3. **ユーザー名/パスワード認証**: パスワードが指定されている場合 (`sftp_password`)、単純なユーザー名/パスワード認証が試行されます。
 
-4. **GSS-API authentication**: If GSS-API (Kerberos) is enabled (`sftp_gss_auth=True`), authentication will use the Kerberos protocol. GSS-API may also be used for key exchange (`sftp_gss_kex=True`) and credential delegation (`sftp_gss_deleg_creds=True`). This method is useful in environments where Kerberos is set up, often in enterprise networks.
+4. **GSS-API認証**: GSS-API (Kerberos) が有効になっている場合 (`sftp_gss_auth=True`)、認証には Kerberos プロトコルが使用されます。GSS-API は、キー交換 (`sftp_gss_kex=True`) および資格情報の委任 (`sftp_gss_deleg_creds=True`) にも使用できます。この方法は、Kerberos が設定されている環境 (多くの場合、エンタープライズ ネットワーク) で役立ちます。
 
 
-#### 1. Key-based authentication
+#### 1. キーベースの認証
 
-If you use an SSH key instead of a password, you can specify the path to your private key in the configuration.
+パスワードの代わりに SSH キーを使用する場合は、設定で秘密キーへのパスを指定できます。
 
 ```toml
 [destination.filesystem]
@@ -365,9 +377,9 @@ sftp_key_filename = "/path/to/id_rsa"     # Replace with the path to your privat
 sftp_key_passphrase = "your_passphrase"   # Optional: passphrase for your private key
 ```
 
-#### 2. SSH agent-based authentication
+#### 2. SSHエージェントベースの認証
 
-If you have an SSH agent running with loaded keys, you can allow Paramiko to use these keys automatically. You can omit the password and key fields if you're relying on the SSH agent.
+読み込まれたキーを使用して SSH エージェントを実行している場合は、Paramiko がこれらのキーを自動的に使用できるようにします。SSH エージェントに依存している場合は、パスワードとキーのフィールドを省略できます。
 
 ```toml
 [destination.filesystem]
@@ -378,11 +390,12 @@ file_glob = "*"
 sftp_username = "foo"
 sftp_key_passphrase = "your_passphrase"   # Optional: passphrase for your private key
 ```
-The loaded key must be one of the following types stored in ~/.ssh/: id_rsa, id_dsa, or id_ecdsa.
 
-#### 3. Username and password authentication
+ロードされたキーは、~/.ssh/ に保存されている id_rsa、id_dsa、または id_ecdsa のいずれかのタイプである必要があります。
 
-This is the simplest form of authentication, where you supply a username and password directly.
+#### 3. ユーザー名/パスワード認証
+
+これは最も単純な認証形式で、ユーザー名とパスワードを直接入力します。
 
 ```toml
 [destination.filesystem]
@@ -396,73 +409,75 @@ sftp_password = "pass"                   # Replace "pass" with your SFTP passwor
 
 
 ### Notes:
-- **Key-based authentication**: Make sure your private key has the correct permissions (`chmod 600`), or SSH will refuse to use it.
-- **Timeouts**: It's important to adjust timeout values based on your network conditions to avoid connection issues.
+- **キーベースの認証**: 秘密鍵に正しい権限 (`chmod 600`) があることを確認してください。そうでないと、SSH は秘密鍵の使用を拒否します。
+- **タイムアウト**: 接続の問題を回避するには、ネットワークの状態に基づいてタイムアウト値を調整することが重要です。
 
-This configuration allows flexible SFTP authentication, whether you're using passwords, keys, or agents, and ensures secure communication between your local environment and the SFTP server.
+この構成により、パスワード、キー、エージェントのいずれを使用していても柔軟な SFTP 認証が可能になり、ローカル環境と SFTP サーバー間の安全な通信が保証されます。
 
-## Write disposition
-The filesystem destination handles the write dispositions as follows:
-- `append` - files belonging to such tables are added to the dataset folder
-- `replace` - all files that belong to such tables are deleted from the dataset folder, and then the current set of files is added.
-- `merge` - falls back to `append`
+## 書き込み処理
+ファイルシステムの宛先は書き込み処理を次のように処理します。:
+- `append` - このようなテーブルに属するファイルはデータセットフォルダに追加されます
+- `replace` - そのようなテーブルに属するすべてのファイルはデータセット フォルダーから削除され、現在のファイル セットが追加されます。
+- `merge` - `append` にフォールバックする
 
-## File compression
+## ファイル圧縮
 
-The filesystem destination in the dlt library uses `gzip` compression by default for efficiency, which may result in the files being stored in a compressed format. This format may not be easily readable as plain text or JSON Lines (`jsonl`) files. If you encounter files that seem unreadable, they may be compressed.
+dlt ライブラリのファイルシステムの保存先では、効率性を高めるためにデフォルトで `gzip` 圧縮が使用されるため、ファイルが圧縮形式で保存される可能性があります。この形式は、プレーンテキストや JSON ライン (`jsonl`) ファイルとして簡単に読み取れない可能性があります。読み取れないように見えるファイルが見つかった場合は、圧縮されている可能性があります。
 
-To handle compressed files:
+圧縮ファイルを扱うには:
 
-- To disable compression, you can modify the `data_writer.disable_compression` setting in your "config.toml" file. This can be useful if you want to access the files directly without needing to decompress them. For example:
+- 圧縮を無効にするには、「config.toml」ファイルの `data_writer.disable_compression` 設定を変更します。これは、ファイルを解凍せずに直接ファイルにアクセスしたい場合に便利です。たとえば、:
 
 ```toml
 [normalize.data_writer]
 disable_compression=true
 ```
 
-- To decompress a `gzip` file, you can use tools like `gunzip`. This will convert the compressed file back to its original format, making it readable.
+- `gzip` ファイルを解凍するには、`gunzip` などのツールを使用できます。これにより、圧縮されたファイルが元の形式に戻され、読み取り可能になります。
 
-For more details on managing file compression, please visit our documentation on performance optimization: [Disabling and enabling file compression](../../reference/performance#disabling-and-enabling-file-compression).
+ファイル圧縮の管理の詳細については、パフォーマンスの最適化に関するドキュメントをご覧ください: [ファイル圧縮の無効化と有効化](../../reference/performance#disabling-and-enabling-file-compression)。
 
-## Files layout
-All the files are stored in a single folder with the name of the dataset that you passed to the `run` or `load` methods of the `pipeline`. In our example chess pipeline, it is **chess_players_games_data**.
+## ファイルのレイアウト
 
-:::note
-Object storages are, in fact, key-blob storage, so the folder structure is emulated by splitting file names into components by a separator (`/`).
-:::
-
-You can control the files layout by specifying the desired configuration. There are several ways to do this.
-
-### Default layout
-
-Current default layout: `{table_name}/{load_id}.{file_id}.{ext}`
+すべてのファイルは、`pipeline` の `run` または `load` メソッドに渡したデータセットの名前を持つ単一のフォルダーに保存されます。この例のチェス パイプラインでは、**chess_players_games_data** です。
 
 :::note
-The default layout format has changed from `{schema_name}.{table_name}.{load_id}.{file_id}.{ext}` to `{table_name}/{load_id}.{file_id}.{ext}` in dlt 0.3.12. You can revert to the old layout by setting it manually.
+オブジェクト ストレージは、実際にはキー BLOB ストレージであるため、ファイル名を区切り文字 (`/`) でコンポーネントに分割することでフォルダー構造をエミュレートします。
 :::
 
-### Available layout placeholders
+必要な構成を指定して、ファイルのレイアウトを制御できます。これを行うにはいくつかの方法があります。
 
-#### Standard placeholders
+### デフォルトのレイアウト
 
-* `schema_name` - the name of the [schema](../../general-usage/schema.md)
-* `table_name` - the table name
-* `load_id` - the ID of the [load package](../../general-usage/destination-tables.md#load-packages-and-load-ids) from which the file comes
-* `file_id` - the ID of the file; if there are many files with data for a single table, they are copied with different file IDs
-* `ext` - the format of the file, i.e., `jsonl` or `parquet`
+現在のデフォルトレイアウト: `{table_name}/{load_id}.{file_id}.{ext}`
 
-#### Date and time placeholders
+:::note
+dlt 0.3.12 では、デフォルトのレイアウト形式が `{schema_name}.{table_name}.{load_id}.{file_id}.{ext}` から `{table_name}/{load_id}.{file_id}.{ext}` に変更されました。手動で設定することで、古いレイアウトに戻すことができます。
+:::
+
+### 利用可能なレイアウトプレースホルダー
+
+#### 標準プレースホルダー
+
+* `schema_name` - [スキーマ](../../general-usage/schema.md) の名前
+* `table_name` - テーブル名
+* `load_id` - ファイルの取得元の[ロードパッケージ](../../general-usage/destination-tables.md#load-packages-and-load-ids)のID
+* `file_id` - ファイルのID。1つのテーブルにデータを含むファイルが多数ある場合、それらは異なるファイルIDでコピーされます。
+* `ext` - ファイルの形式、つまり `jsonl` または `parquet`
+
+#### 日付と時刻のプレースホルダー
+
 :::tip
-Keep in mind all values are lowercased.
+すべての値は小文字であることに注意してください。
 :::
 
-* `timestamp` - the current timestamp in Unix Timestamp format rounded to seconds
-* `timestamp_ms` - the current timestamp in Unix Timestamp format in milliseconds
-* `load_package_timestamp` - timestamp from [load package](../../general-usage/destination-tables.md#load-packages-and-load-ids) in Unix Timestamp format rounded to seconds
-* `load_package_timestamp_ms` - timestamp from [load package](../../general-usage/destination-tables.md#load-packages-and-load-ids) in Unix Timestamp format in milliseconds
+* `timestamp` - Unix タイムスタンプ形式の現在のタイムスタンプ（秒単位）
+* `timestamp_ms` - Unix タイムスタンプ形式の現在のタイムスタンプ（ミリ秒単位）
+* `load_package_timestamp` - [ロードパッケージ](../../general-usage/destination-tables.md#load-packages-and-load-ids) からのタイムスタンプ (秒単位に丸められた Unix タイムスタンプ形式)
+* `load_package_timestamp_ms` - [ロードパッケージ](../../general-usage/destination-tables.md#load-packages-and-load-ids) からのタイムスタンプ (ミリ秒単位の Unix タイムスタンプ形式)
 
 :::note
-Both `timestamp_ms` and `load_package_timestamp_ms` are in milliseconds (e.g., 12334455233), not fractional seconds to ensure millisecond precision without decimals.
+`timestamp_ms` と `load_package_timestamp_ms` はどちらもミリ秒単位（例: 12334455233）であり、小数点なしのミリ秒精度を保証するために小数秒ではありません。
 :::
 
 * Years
@@ -497,7 +512,8 @@ Both `timestamp_ms` and `load_package_timestamp_ms` are in milliseconds (e.g., 1
   * `d` - 0-6
 * `Q` - quarters 1, 2, 3, 4
 
-You can change the file name format by providing the layout setting for the filesystem destination like so:
+次のようにファイルシステムの宛先のレイアウト設定を指定することで、ファイル名の形式を変更できます。:
+
 ```toml
 [destination.filesystem]
 layout="{table_name}/{load_id}.{file_id}.{ext}" # current preconfigured naming scheme
@@ -517,25 +533,26 @@ layout="{table_name}/{load_id}.{file_id}.{ext}" # current preconfigured naming s
 # layout = "{table_name}/{owner}/{department}/{load_id}.{file_id}.{ext}"
 ```
 
-A few things to know when specifying your filename layout:
-- If you want a different base path that is common to all filenames, you can suffix your `bucket_url` rather than prefix your `layout` setting.
-- If you do not provide the `{ext}` placeholder, it will automatically be added to your layout at the end with a dot as a separator.
-- It is best practice to have a separator between each placeholder. Separators can be any character allowed as a filename character, but dots, dashes, and forward slashes are most common.
-- When you are using the `replace` disposition, `dlt` will have to be able to figure out the correct files to delete before loading the new data. For this to work, you have to:
-  - include the `{table_name}` placeholder in your layout
-  - not have any other placeholders except for the `{schema_name}` placeholder before the table_name placeholder and
-  - have a separator after the table_name placeholder
+ファイル名のレイアウトを指定する際に知っておくべきいくつかのこと:
 
-Please note:
-- `dlt` will mark complete loads by creating a json file in the `./_dlt_loads` folders that corresponds to the `_dlt_loads` table. For example, if the `chess__1685299832.jsonl` file is present in the loads folder, you can be sure that all files for the load package `1685299832` are completely loaded.
+- すべてのファイル名に共通する別のベースパスが必要な場合は、`layout` 設定のプレフィックスではなく、`bucket_url` のサフィックスを付けることができます。
+- `{ext}` プレースホルダーを指定しない場合は、区切り文字としてドットが付いたプレースホルダーがレイアウトの最後に自動的に追加されます。
+- 各プレースホルダーの間に区切り文字を入れるのがベストプラクティスです。区切り文字にはファイル名の文字として許可されている任意の文字を使用できますが、ドット、ダッシュ、スラッシュが最も一般的です。
+- `replace` 処理を使用する場合、`dlt` は新しいデータをロードする前に削除する正しいファイルを判断できなければなりません。これを機能させるには、:
+  - レイアウトに `{table_name}` プレースホルダーを含める
+  - table_name プレースホルダの前に `{schema_name}` プレースホルダ以外のプレースホルダがないこと
+  - table_nameプレースホルダーの後に区切り文字を入れる
 
-### Advanced layout configuration
+ご注意ください:
+- `dlt` は、`_dlt_loads` テーブルに対応する `./_dlt_loads` フォルダーに json ファイルを作成して、ロードが完了したことをマークします。たとえば、loads フォルダーに `chess__1685299832.jsonl` ファイルが存在する場合、ロード パッケージ `1685299832` のすべてのファイルが完全にロードされていることを確認できます。
 
-The filesystem destination configuration supports advanced layout customization and the inclusion of additional placeholders. This can be done through `config.toml` or programmatically when initializing via a factory method.
+### 高度なレイアウト構成
 
-#### Configuration via `config.toml`
+ファイルシステムの宛先構成は、高度なレイアウトのカスタマイズと追加のプレースホルダーの組み込みをサポートしています。これは、`config.toml` を通じて、またはファクトリ メソッドを介して初期化するときにプログラムによって実行できます。
 
-To configure the layout and placeholders using `config.toml`, use the following format:
+#### `config.toml` による構成
+
+`config.toml`を使用してレイアウトとプレースホルダーを設定するには、次の形式を使用します。:
 
 ```toml
 [destination.filesystem]
@@ -547,12 +564,12 @@ kwargs = '{"auto_mkdir": true}'
 ```
 
 :::note
-Ensure that the placeholder names match the intended usage. For example, `{test_placeholer}` should be corrected to `{test_placeholder}` for consistency.
+プレースホルダー名が意図された使用法と一致していることを確認します。たとえば、一貫性を保つために、`{test_placeholer}` は `{test_placeholder}` に修正する必要があります。
 :::
 
-#### Dynamic configuration in the code
+#### コード内の動的構成
 
-Configuration options, including layout and placeholders, can be overridden dynamically when initializing and passing the filesystem destination directly to the pipeline.
+レイアウトやプレースホルダーなどの構成オプションは、ファイルシステムの宛先を初期化してパイプラインに直接渡すときに動的にオーバーライドできます。
 
 ```py
 import pendulum
@@ -572,10 +589,10 @@ pipeline = dlt.pipeline(
 )
 ```
 
-Furthermore, it is possible to:
+さらに:
 
-1. Customize the behavior with callbacks for extra placeholder functionality. Each callback must accept the following positional arguments and return a string.
-2. Customize the `current_datetime`, which can also be a callback function and is expected to return a `pendulum.DateTime` instance.
+1. 追加のプレースホルダー機能のためにコールバックを使用して動作をカスタマイズします。各コールバックは次の位置引数を受け入れ、文字列を返す必要があります。
+2. `current_datetime` をカスタマイズします。これはコールバック関数でもあり、`pendulum.DateTime` インスタンスを返すことが期待されます。
 
 ```py
 import pendulum
@@ -602,48 +619,54 @@ pipeline = dlt.pipeline(
 )
 ```
 
-### Recommended layout
+### 推奨レイアウト
 
-The currently recommended layout structure is straightforward:
+現在推奨されているレイアウト構造は単純な:
 
 ```toml
 layout="{table_name}/{load_id}.{file_id}.{ext}"
 ```
 
-Adopting this layout offers several advantages:
-1. **Efficiency:** It's fast and simple to process.
-2. **Compatibility:** Supports `replace` as the write disposition method.
-3. **Flexibility:** Compatible with various destinations, including Athena.
-4. **Performance:** A deeply nested structure can slow down file navigation, whereas a simpler layout mitigates this issue.
+このレイアウトを採用するといくつかの利点がある:
 
-## Supported file formats
+1. **Efficiency:** 処理は高速かつ簡単です。
+2. **Compatibility:** 書き込み処理方法として `replace` をサポートします。
+3. **Flexibility:** Athena を含むさまざまな宛先と互換性があります。
+4. **Performance:** 深くネストされた構造はファイルナビゲーションを遅くする可能性がありますが、よりシンプルなレイアウトはこの問題を軽減します。
 
-You can choose the following file formats:
+## サポートされているファイル形式
+
+以下のファイル形式を選択できます:
+
 * [JSONL](../file-formats/jsonl.md) is used by default
 * [Parquet](../file-formats/parquet.md) is supported
 * [CSV](../file-formats/csv.md) is supported
 
-## Supported table formats
+## サポートされている表形式
 
-You can choose the following [table formats](./delta-iceberg.md):
+以下の[表形式](./delta-iceberg.md)を選択できます:
+
 * Delta table
 * Iceberg
 
-## Syncing of dlt state
-This destination fully supports [dlt state sync](../../general-usage/state#syncing-state-with-destination). To this end, special folders and files will be created at your destination which hold information about your pipeline state, schemas, and completed loads. These folders DO NOT respect your settings in the layout section. When using filesystem as a staging destination, not all of these folders are created, as the state and schemas are managed in the regular way by the final destination you have configured.
+## dlt の状態の同期
 
-You will also notice `init` files being present in the root folder and the special `dlt` folders. In the absence of the concepts of schemas and tables in blob storages and directories, `dlt` uses these special files to harmonize the behavior of the `filesystem` destination with the other implemented destinations.
+この宛先は、[dlt の状態の同期](../../general-usage/state#syncing-state-with-destination) を完全にサポートします。このため、パイプラインの状態、スキーマ、完了したロードに関する情報を保持する特別なフォルダーとファイルが宛先に作成されます。これらのフォルダーは、レイアウト セクションの設定を尊重しません。ファイルシステムをステージングの宛先として使用する場合、状態とスキーマは構成した最終宛先によって通常の方法で管理されるため、これらのフォルダーがすべて作成されるわけではありません。
+
+また、ルート フォルダーと特別な `dlt` フォルダーに `init` ファイルがあることにも気づくでしょう。BLOB ストレージとディレクトリにはスキーマとテーブルの概念がないため、`dlt` はこれらの特別なファイルを使用して、`filesystem` 宛先の動作を他の実装された宛先と調和させます。
 
 :::note
-When a load generates a new state, for example when using incremental loads, a new state file appears in the `_dlt_pipeline_state` folder at the destination. To prevent data accumulation, state cleanup mechanisms automatically remove old state files, retaining only the latest 100 by default. This cleanup process can be customized or disabled using the filesystem configuration `max_state_files`, which determines the maximum number of pipeline state files to retain (default is 100). Setting this value to 0 or a negative number disables the cleanup of old states.
+インクリメンタルロードを使用する場合など、ロードによって新しい状態が生成されると、宛先の `_dlt_pipeline_state` フォルダーに新しい状態ファイルが作成されます。データの蓄積を防ぐために、状態クリーンアップ メカニズムによって古い状態ファイルが自動的に削除され、デフォルトでは最新の 100 個のみが保持されます。このクリーンアップ プロセスは、保持するパイプライン状態ファイルの最大数 (デフォルトは 100) を決定するファイル システム構成 `max_state_files` を使用してカスタマイズまたは無効にできます。この値を 0 または負の数に設定すると、古い状態のクリーンアップが無効になります。
 :::
 
-## Troubleshooting
-### File Name Too Long Error
-When running your pipeline, you might encounter an error like `[Errno 36] File name too long Error`. This error occurs because the generated file name exceeds the maximum allowed length on your filesystem.
+## トラブルシューティング
 
-To prevent the file name length error, set the `max_identifier_length` parameter for your destination. This truncates all identifiers (including filenames) to a specified maximum length.
-For example:
+### ファイル名が長すぎるエラー
+
+パイプラインを実行すると、`[Errno 36] ファイル名が長すぎますエラー` のようなエラーが発生する場合があります。このエラーは、生成されたファイル名がファイルシステムで許可されている最大長を超えているために発生します。
+
+ファイル名の長さエラーを防ぐには、宛先に `max_identifier_length` パラメータを設定します。これにより、すべての識別子 (ファイル名を含む) が指定された最大長に切り捨てられます。
+たとえば:
 
 ```py
 from dlt.destinations import duckdb as duckdb_destination
@@ -657,8 +680,8 @@ pipeline = dlt.pipeline(
 ```
 
 :::note
-- `max_identifier_length` truncates all identifiers (tables, columns). Ensure the length maintains uniqueness to avoid collisions.
-- Adjust `max_identifier_length` based on your data structure and filesystem limits.
+- `max_identifier_length` はすべての識別子 (テーブル、列) を切り捨てます。衝突を避けるために、長さが一意性を維持するようにしてください。
+- データ構造とファイルシステムの制限に基づいて `max_identifier_length` を調整します。
 :::
 
 <!--@@@DLT_TUBA filesystem-->

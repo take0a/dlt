@@ -1,17 +1,17 @@
 ---
-title: Destinations
+title: 宛先
 description: List of destinations
 keywords: ['destinations']
 ---
 import DocCardList from '@theme/DocCardList';
 import Link from '../../_book-onboarding-call.md';
 
-Pick one of our high-quality destinations and load your data into a local database, warehouse, or data lake. Append, replace, or merge your data. Apply performance hints like partitions, clusters, or indexes. Load directly or via staging. Each of our destinations undergoes several hundred automated tests every day.
+我々の高品質な宛先から 1 つを選択し、ローカルデータベース、ウェアハウス、またはデータレイクにデータをロードします。データを追加、置換、またはマージします。パーティション、クラスター、インデックスなどのパフォーマンスヒントを適用します。直接またはステージング経由でロードします。我々の宛先はそれぞれ、毎日数百の自動テストを受けています。
 
-* Is a destination or feature missing? [Join our Slack community](https://dlthub.com/community) and ask for it.
-* Need more info? [Join our Slack community](https://dlthub.com/community) and ask in the tech help channel or <Link/>.
+* 宛先や機能が不足していますか? [Slack コミュニティに参加](https://dlthub.com/community)して質問してください。
+* さらに詳しい情報が必要ですか? [Slack コミュニティに参加](https://dlthub.com/community)して、技術ヘルプ チャネルまたは <Link/> で質問してください。
 
-Otherwise, pick a destination below:
+それ以外の場合は、以下の宛先を選択してください:
 
 <DocCardList />
 

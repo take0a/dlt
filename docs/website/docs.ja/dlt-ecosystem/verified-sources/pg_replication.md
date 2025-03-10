@@ -9,90 +9,91 @@ import Header from './_source-info-header.md';
 
 <Header/>
 
-[Postgres](https://www.postgresql.org/) is one of the most popular relational database management systems. This verified source uses Postgres replication functionality to efficiently process tables (a process often referred to as *Change Data Capture* or CDC). It uses [logical decoding](https://www.postgresql.org/docs/current/logicaldecoding.html) and the standard built-in `pgoutput` [output plugin](https://www.postgresql.org/docs/current/logicaldecoding-output-plugin.html).
+[Postgres](https://www.postgresql.org/) は、最も人気のあるリレーショナル データベース管理システムの 1 つです。この検証済みソースは、Postgres レプリケーション機能を使用してテーブルを効率的に処理します (このプロセスは、多くの場合、*Change Data Capture* または CDC と呼ばれます)。[論理デコード](https://www.postgresql.org/docs/current/logicaldecoding.html)と標準の組み込み`pgoutput` [出力プラグイン](https://www.postgresql.org/docs/current/logicaldecoding-output-plugin.html)を使用します。
 
-Resources that can be loaded using this verified source are:
+この検証済みソースを使用してロードできるリソースは:
 
-| Name                 | Description                                     |
+| 名前                 | 説明                                     |
 | -------------------- | ----------------------------------------------- |
-| replication_resource | Load published messages from a replication slot |
+| replication_resource | レプリケーションスロットから公開されたメッセージをロードする |
 
 :::info
-The Postgres replication source currently **does not** support the [scd2 merge strategy](../../general-usage/incremental-loading#scd2-strategy). 
+Postgres レプリケーションソースは現在、[scd2 マージ戦略](../../general-usage/incremental-loading#scd2-strategy) を**サポートしていません。**
 :::
 
-## Setup guide
+## セットアップガイド
 
-### Setup user
-To set up a Postgres user, follow these steps:
+### ユーザーの設定
 
-1. The Postgres user needs to have the `LOGIN` and `REPLICATION` attributes assigned:
+Postgresユーザーを設定するには、次の手順に従います:
+
+1. Postgresユーザーには `LOGIN` 属性と `REPLICATION` 属性が割り当てられている必要があります:
     
     ```sql
     CREATE ROLE replication_user WITH LOGIN REPLICATION;
     ```
     
-2. It also needs `GRANT` privilege on the database:
+2. また、データベースに対する `GRANT` 権限も必要です:
     
     ```sql
     GRANT CREATE ON DATABASE dlt_data TO replication_user;
     ```
-    
 
-### Set up RDS
-To set up a Postgres user on RDS, follow these steps:
+### RDS を設定する
 
-1. You must enable replication for the RDS Postgres instance via [Parameter Group](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PostgreSQL.Replication.ReadReplicas.html).
+RDS で Postgres ユーザーを設定するには、次の手順に従います:
 
-2. `WITH LOGIN REPLICATION;` does not work on RDS; instead, do:
+1. [パラメータグループ](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PostgreSQL.Replication.ReadReplicas.html)を介して RDS Postgres インスタンスのレプリケーションを有効にする必要があります。
+
+2. `WITH LOGIN REPLICATION;` は RDS では機能しません。代わりに、:
     
     ```sql
     GRANT rds_replication TO replication_user;
     ```
     
-3. Do not fallback to a non-SSL connection by setting connection parameters:
+3. 接続パラメータを設定して非SSL接続にフォールバックしないでください:
     
    ```toml
    sources.pg_replication.credentials="postgresql://loader:password@host.rds.amazonaws.com:5432/dlt_data?sslmode=require&connect_timeout=300"
    ```
-### Initialize the verified source
 
-To get started with your data pipeline, follow these steps:
+### 検証済みソースを初期化する
 
-1. Enter the following command:
+データパイプラインを開始するには、次の手順に従ってください:
+
+1. 次のコマンドを入力してください:
     
    ```sh
    dlt init pg_replication duckdb
    ```
     
-   It will initialize [the pipeline example](https://github.com/dlt-hub/verified-sources/blob/master/sources/pg_replication_pipeline.py) with a Postgres replication as the [source](../../general-usage/source) and [DuckDB](../../dlt-ecosystem/destinations/duckdb) as the [destination](../../dlt-ecosystem/destinations).
+   [パイプラインの例](https://github.com/dlt-hub/verified-sources/blob/master/sources/pg_replication_pipeline.py)を、Postgres レプリケーションを[ソース](../../general-usage/source)、[DuckDB](../../dlt-ecosystem/destinations/duckdb) を[宛先](../../dlt-ecosystem/destinations)として初期化します。
     
     
-2. If you'd like to use a different destination, simply replace `duckdb` with the name of your preferred [destination](../../dlt-ecosystem/destinations).
+2. 別の宛先を使用する場合は、`duckdb` を希望する [宛先](../../dlt-ecosystem/destinations) の名前に置き換えるだけです。
     
-3. This source uses the `sql_database` source; you can initialize it as follows:
+3. このソースは`sql_database`ソースを使用します。次のように初期化できます:
     
    ```sh
    dlt init sql_database duckdb
    ```
    :::note
-   It is important to note that it is now only required if a user performs an initial load, specifically when `persist_snapshots` is set to `True`.
+   重要なのは、ユーザーが初期ロードを実行する場合、具体的には `persist_snapshots` が `True` に設定されている場合にのみ必要になることです。
    :::
     
-4. After running these two commands, a new directory will be created with the necessary files and configuration settings to get started.
+4. これら 2 つのコマンドを実行すると、開始するために必要なファイルと構成設定を含む新しいディレクトリが作成されます。
    
-   For more information, read the guide on [how to add a verified source](../../walkthroughs/add-a-verified-source).
+   詳細については、[検証済みソースを追加する方法](../../walkthroughs/add-a-verified-source) のガイドをお読みください。
 
    :::note
-   You can omit the `[sql.sources.credentials]` section in `secrets.toml` as it is not required.
+   `secrets.toml` の `[sql.sources.credentials]` セクションは必須ではないため省略できます。
    :::
 
+### 資格情報を追加する
 
-### Add credentials
-
-1. In the `.dlt` folder, there's a file called `secrets.toml`. It's where you store sensitive information securely, like access tokens. Keep this file safe.
+1. `.dlt` フォルダには、`secrets.toml` というファイルがあります。アクセス トークンなどの機密情報を安全に保存する場所です。このファイルを安全に保管してください。
     
-   Here's what the `secrets.toml` looks like:
+   `secrets.toml`は次のようになります:
     
    ```toml
    [sources.pg_replication.credentials]
@@ -104,43 +105,47 @@ To get started with your data pipeline, follow these steps:
    port = 0 # please set me up! 
    ```
     
-2. Credentials can be set as shown above. Alternatively, you can provide credentials in the `secrets.toml` file as follows:
+2. 資格情報は上記のように設定できます。または、次のように `secrets.toml` ファイルで資格情報を提供することもできます:
     
    ```toml
    sources.pg_replication.credentials="postgresql://username@password.host:port/database"
    ```
 
-3. Finally, follow the instructions in [Destinations](../../dlt-ecosystem/destinations/) to add credentials for your chosen destination. This will ensure that your data is properly routed.
+3. 最後に、[宛先](../../dlt-ecosystem/destinations/)の指示に従って、選択した宛先の資格情報を追加します。これにより、データが適切にルーティングされるようになります。
 
-For more information, read the [Configuration section.](../../general-usage/credentials)
+詳細については、[構成セクション](../../general-usage/credentials) を参照してください。
 
-## Run the pipeline
+## パイプラインを実行する
 
-1. Before running the pipeline, ensure that you have installed all the necessary dependencies by running the command:
+1. パイプラインを実行する前に、次のコマンドを実行して必要な依存関係がすべてインストールされていることを確認してください:
+
    ```sh
    pip install -r requirements.txt
    ```
-2. You're now ready to run the pipeline! To get started, run the following command:
+
+2. これでパイプラインを実行する準備ができました。開始するには、次のコマンドを実行します。:
+
    ```sh
    python pg_replication_pipeline.py
    ```
-3. Once the pipeline has finished running, you can verify that everything loaded correctly by using the following command:
+
+3. パイプラインの実行が終了したら、次のコマンドを使用してすべてが正しくロードされたことを確認できます:
+
    ```sh
    dlt pipeline <pipeline_name> show
    ```
-   For example, the `pipeline_name` for the above pipeline example is `pg_replication_pipeline`, you may also use any custom name instead.
 
+   たとえば、上記のパイプライン例の `pipeline_name` は `pg_replication_pipeline` ですが、代わりに任意のカスタム名を使用することもできます。
 
-   For more information, read the guide on [how to run a pipeline](../../walkthroughs/run-a-pipeline).
-    
+   詳細については、[パイプラインの実行方法](../../walkthroughs/run-a-pipeline) のガイドをお読みください。
 
-## Sources and resources
+## ソースとリソース
 
-`dlt` works on the principle of [sources](../../general-usage/source) and [resources](../../general-usage/resource).
+`dlt` は、[ソース](../../general-usage/source) と [リソース](../../general-usage/resource) の原則に基づいて動作します。
 
-### Resource `replication_resource`
+### `replication_resource` リソース
 
-This resource yields data items for changes in one or more Postgres tables.
+このリソースは、1 つ以上の Postgres テーブルの変更に関するデータ項目を生成します。
 
 ```py
 @dlt.resource(
@@ -159,23 +164,23 @@ def replication_resource(
     ...
 ```
 
-`slot_name`: Replication slot name to consume messages.
+`slot_name`: メッセージを消費するレプリケーションスロット名。
 
-`pub_name`: Publication slot name to publish messages.
+`pub_name`: メッセージを生成するスロット名。
 
-`include_columns`: Maps table name(s) to a sequence of names of columns to include in the generated data items. Any column not in the sequence is excluded. If not provided, all columns are included.
+`include_columns`: 生成されたデータ項目に含める列名のシーケンスにテーブル名をマップします。シーケンスに含まれない列は除外されます。指定しない場合は、すべての列が含まれます。
 
-`columns`:  Maps table name(s) to column hints to apply on the replicated table(s).
+`columns`: テーブル名を列ヒントにマップし、複製されたテーブルに適用します。
 
-`target_batch_size`: Desired number of data items yielded in a batch. Can be used to limit the data items in memory.
+`target_batch_size`: バッチで生成されるデータ項目の希望数。メモリ内のデータ項目を制限するために使用できます。
 
-`flush_slot`:  Whether processed messages are discarded from the replication slot. The recommended value is "True".
+`flush_slot`:  処理されたメッセージがレプリケーション スロットから破棄されるかどうか。推奨値は「True」です。
 
-## Customization
+## カスタマイズ
 
-If you wish to create your own pipelines, you can leverage source and resource methods from this verified source.
+独自のパイプラインを作成する場合は、この検証済みソースのソースおよびリソース メソッドを活用できます。
 
-1. Define the source pipeline as:
+1. ソースパイプラインを次のように定義します:
     
    ```py
    # Defining source pipeline
@@ -187,14 +192,13 @@ If you wish to create your own pipelines, you can leverage source and resource m
    )
    ```
 
-   You can configure and use the `get_postgres_pipeline()` function available in the `pg_replication_pipeline.py` file to achieve the same functionality. 
+   `pg_replication_pipeline.py` ファイルで利用可能な `get_postgres_pipeline()` 関数を設定して使用することで、同じ機能を実現できます。
 
    :::note IMPORTANT
-    When working with large datasets from a Postgres database, it's important to consider the relevance of the source pipeline. For testing purposes, using the source pipeline can be beneficial to try out the data flow. However, in production use cases, there will likely be another process that mutates the Postgres database. In such cases, the user generally only needs to define a destination pipeline.
+    Postgres データベースからの大規模なデータセットを扱う場合、ソース パイプラインの関連性を考慮することが重要です。テスト目的では、ソース パイプラインを使用してデータ フローを試してみると便利です。ただし、実稼働環境では、Postgres データベースを変更する別のプロセスが存在する可能性があります。このような場合、ユーザーは通常、宛先パイプラインを定義するだけで済みます。
    :::
-
     
-2. Similarly, define the destination pipeline.
+2. 同様に、宛先パイプラインを定義します。
     
    ```py
    dest_pl = dlt.pipeline(
@@ -205,14 +209,14 @@ If you wish to create your own pipelines, you can leverage source and resource m
    )
    ```
     
-3. Define the slot and publication names as:
+3. スロット名とパブリケーション名を次のように定義します:
     
    ```py
    slot_name = "example_slot"
    pub_name = "example_pub"
    ```
     
-4. To initialize replication, you can use the `init_replication` function. A user can use this function to let `dlt` configure Postgres and make it ready for replication.
+4. レプリケーションを初期化するには、`init_replication` 関数を使用できます。ユーザーはこの関数を使用して、`dlt` に Postgres を設定させ、レプリケーションの準備を整えることができます。
     
    ```py
    # requires the Postgres user to have the REPLICATION attribute assigned
@@ -226,10 +230,11 @@ If you wish to create your own pipelines, you can leverage source and resource m
    ```
     
    :::note
-   To replicate the entire schema, you can omit the `table_names` argument from the `init_replication` function.
+   スキーマ全体を複製する場合は、`init_replication` 関数の `table_names` 引数を省略できます。
    :::
 
-5. To snapshot the data to the destination during the initial load, you can use the `persist_snapshots=True` argument as follows:
+5. 初期ロード中にデータを宛先にスナップショットするには、次のように `persist_snapshots=True` 引数を使用します:
+
    ```py
    snapshot = init_replication(  # requires the Postgres user to have the REPLICATION attribute assigned
         slot_name=slot_name,
@@ -241,13 +246,13 @@ If you wish to create your own pipelines, you can leverage source and resource m
     )
    ```
 
-6. To load this snapshot to the destination, run the destination pipeline as:
+6. このスナップショットを宛先にロードするには、宛先パイプラインを次のように実行します:
     
    ```py
    dest_pl.run(snapshot)
    ```
     
-7. After changes are made to the source, you can replicate the changes to the destination using the `replication_resource`, and run the pipeline as:
+7. ソースに変更を加えた後、`replication_resource`を使用して変更を宛先に複製し、パイプラインを次のように実行できます:
     
    ```py
    # Create a resource that generates items for each change in the source table
@@ -257,7 +262,7 @@ If you wish to create your own pipelines, you can leverage source and resource m
    dest_pl.run(changes)
    ```
     
-8. To replicate tables with selected columns, you can use the `include_columns` argument as follows:
+8. 選択した列を含むテーブルを複製するには、次のように `include_columns` 引数を使用します:
     
    ```py
    # requires the Postgres user to have the REPLICATION attribute assigned
@@ -273,5 +278,4 @@ If you wish to create your own pipelines, you can leverage source and resource m
    )
    ```
     
-   Similarly, to replicate changes from selected columns, you can use the `table_names` and `include_columns` arguments in the `replication_resource` function.
-
+   同様に、選択した列の変更を複製するには、`replication_resource` 関数で `table_names` および `include_columns` 引数を使用できます。

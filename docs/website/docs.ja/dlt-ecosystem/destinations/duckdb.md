@@ -6,44 +6,52 @@ keywords: [duckdb, destination, data warehouse]
 
 # DuckDB
 
-## Install dlt with DuckDB
-**To install the dlt library with DuckDB dependencies, run:**
+## DuckDB で dlt をインストールする
+
+**DuckDB との依存関係を持つ dlt ライブラリをインストールするには、以下を実行します:**
+
 ```sh
 pip install "dlt[duckdb]"
 ```
 
-## Setup guide
+## セットアップガイド
 
-**1. Initialize a project with a pipeline that loads to DuckDB by running:**
+**1. DuckDB にロードするパイプラインでプロジェクトを初期化するには、以下を実行します:**
+
 ```sh
 dlt init chess duckdb
 ```
 
-**2. Install the necessary dependencies for DuckDB by running:**
+**2. DuckDB に必要な依存関係をインストールするには、次のコマンドを実行します。:**
+
 ```sh
 pip install -r requirements.txt
 ```
 
-**3. Run the pipeline:**
+**3. パイプラインを実行する:**
+
 ```sh
 python3 chess_pipeline.py
 ```
 
-## Write disposition
-All write dispositions are supported.
+## 書き込み処理
 
-## Data loading
-`dlt` will load data using large INSERT VALUES statements by default. Loading is multithreaded (20 threads by default). If you are okay with installing `pyarrow`, we suggest switching to Parquet as the file format. Loading is faster (and also multithreaded).
+すべての書き込み処理がサポートされています。
 
-### Data types
-`duckdb` supports various [timestamp types](https://duckdb.org/docs/sql/data_types/timestamp.html). These can be configured using the column flags `timezone` and `precision` in the `dlt.resource` decorator or the `pipeline.run` method.
+## データのロード
 
-- **Precision**: Supported precision values are 0, 3, 6, and 9 for fractional seconds. Note that `timezone` and `precision` cannot be used together; attempting to combine them will result in an error.
+`dlt` は、デフォルトで大きな INSERT VALUES ステートメントを使用してデータをロードします。ロードはマルチスレッド化されます (デフォルトでは 20 スレッド)。`pyarrow` をインストールしても問題ない場合は、ファイル形式として Parquet に切り替えることをお勧めします。ロードが高速化されます (マルチスレッド化もされます)。
+
+### データ型
+
+`duckdb` はさまざまな [タイムスタンプ型](https://duckdb.org/docs/sql/data_types/timestamp.html) をサポートしています。これらは、`dlt.resource` デコレータまたは `pipeline.run` メソッドの列フラグ `timezone` および `precision` を使用して設定できます。
+
+- **Precision**: サポートされている精度の値は、小数秒の場合は 0、3、6、9 です。`timezone` と `precision` は一緒に使用できないことに注意してください。これらを組み合わせようとするとエラーが発生します。
 - **Timezone**:
-  - Setting `timezone=False` maps to `TIMESTAMP`.
-  - Setting `timezone=True` (or omitting the flag, which defaults to `True`) maps to `TIMESTAMP WITH TIME ZONE` (`TIMESTAMPTZ`).
+  - `timezone=False` を設定すると `TIMESTAMP` にマップされます。
+  - `timezone=True` を設定すると (またはフラグを省略すると、デフォルトで `True` になります)、`TIMESTAMP WITH TIME ZONE` (`TIMESTAMPTZ`) にマップされます。
 
-#### Example precision: TIMESTAMP_MS
+#### 精度の例: TIMESTAMP_MS
 
 ```py
 @dlt.resource(
@@ -57,7 +65,7 @@ pipeline = dlt.pipeline(destination="duckdb")
 pipeline.run(events())
 ```
 
-#### Example timezone: TIMESTAMP
+#### タイムゾーンの例: TIMESTAMP
 
 ```py
 @dlt.resource(
@@ -71,56 +79,62 @@ pipeline = dlt.pipeline(destination="duckdb")
 pipeline.run(events())
 ```
 
-### Names normalization
-`dlt` uses the standard **snake_case** naming convention to keep identical table and column identifiers across all destinations. If you want to use the **duckdb** wide range of characters (i.e., emojis) for table and column names, you can switch to the **duck_case** naming convention, which accepts almost any string as an identifier:
-* New line (`\n`), carriage return (`\r`), and double quotes (`"`) are translated to an underscore (`_`).
-* Consecutive underscores (`_`) are translated to a single `_`
+### 名前の正規化
 
-Switch the naming convention using `config.toml`:
+`dlt` は、すべての宛先で同一のテーブルと列の識別子を維持するために、標準の **snake_case** 命名規則を使用します。テーブル名と列名に **duckdb** の幅広い文字 (つまり、絵文字) を使用したい場合は、ほぼすべての文字列を識別子として受け入れる **duck_case** 命名規則に切り替えることができます。:
+* 改行 (`\n`)、復帰 (`\r`)、二重引用符 (`"`) はアンダースコア (`_`) に変換されます。
+* 連続したアンダースコア (`_`) は 1 つの `_` に変換されます。
+
+`config.toml` を使用して命名規則を切り替える:
+
 ```toml
 [schema]
 naming="duck_case"
 ```
 
-or via the env variable `SCHEMA__NAMING` or directly in the code:
+または環境変数`SCHEMA__NAMING`経由、またはコード内で直接:
+
 ```py
 dlt.config["schema.naming"] = "duck_case"
 ```
+
 :::caution
-**duckdb** identifiers are **case insensitive** but display names preserve case. This may create name collisions if, for example, you load JSON with
-`{"Column": 1, "column": 2}` as it will map data to a single column.
+**duckdb** 識別子は **大文字と小文字を区別しません** が、表示名では大文字と小文字が保持されます。たとえば、JSON を `{"Column": 1, "column": 2}` でロードすると、データが 1 つの列にマップされるため、名前の衝突が発生する可能性があります。
 :::
 
+## サポートされているファイル形式
 
-## Supported file formats
-You can configure the following file formats to load data into duckdb:
-* [insert-values](../file-formats/insert-format.md) is used by default.
-* [Parquet](../file-formats/parquet.md) is supported.
+duckdbにデータをロードするには、次のファイル形式を設定できます:
+
+* [insert-values](../file-formats/insert-format.md) は、デフォルトです。
+* [Parquet](../file-formats/parquet.md) は、サポートされます。
+
 :::note
-`duckdb` cannot COPY many Parquet files to a single table from multiple threads. In this situation, dlt serializes the loads. Still, that may be faster than INSERT.
+`duckdb` は、複数のスレッドから単一のテーブルに多数の Parquet ファイルを COPY できません。この状況では、dlt はロードをシリアル化します。それでも、INSERT よりも高速になる可能性があります。
 :::
+
 * [JSONL](../file-formats/jsonl.md)
 
 :::tip
-`duckdb` has [timestamp types](https://duckdb.org/docs/sql/data_types/timestamp.html) with resolutions from milliseconds to nanoseconds. However,
-only the microseconds resolution (the most commonly used) is time zone aware. `dlt` generates timestamps with timezones by default, so loading parquet files
-with default settings will fail (`duckdb` does not coerce tz-aware timestamps to naive timestamps).
-Disable the timezones by changing the `dlt` [Parquet writer settings](../file-formats/parquet.md#writer-settings) as follows:
+`duckdb` には、ミリ秒からナノ秒までの解像度を持つ [タイムスタンプ型](https://duckdb.org/docs/sql/data_types/timestamp.html) があります。ただし、タイムゾーンを認識するのはマイクロ秒解像度 (最も一般的に使用される) のみです。`dlt` はデフォルトでタイムゾーン付きのタイムスタンプを生成するため、デフォルト設定で parquet ファイルをロードすると失敗します (`duckdb` は tz 対応のタイムスタンプをナイーブなタイムスタンプに強制変換しません)。
+次のように `dlt` [Parquet ライター設定](../file-formats/parquet.md#writer-settings) を変更して、タイムゾーンを無効にします。:
+
 ```sh
 DATA_WRITER__TIMESTAMP_TIMEZONE=""
 ```
-to disable tz adjustments.
+tz 調整を無効にします。
 :::
 
-## Supported column hints
+## サポートされている列のヒント
 
-`duckdb` can create unique indexes for columns with `unique` hints. However, **this feature is disabled by default** as it can significantly slow down data loading.
+`duckdb` は、`unique` ヒントを使用して列に一意のインデックスを作成できます。ただし、データの読み込み速度が大幅に低下する可能性があるため、**この機能はデフォルトで無効になっています**。
 
-## Destination configuration
+## 宛先構成
 
-By default, a DuckDB database will be created in the current working directory with a name `<pipeline_name>.duckdb` (`chess.duckdb` in the example above). After loading, it is available in **read/write** mode via `with pipeline.sql_client() as con:`, which is a wrapper over `DuckDBPyConnection`. See [duckdb docs](https://duckdb.org/docs/api/python/overview#persistent-storage) for details. If you want to **read** data, use [pipeline.dataset()](../../general-usage/dataset-access/dataset) instead of `sql_client`.
+デフォルトでは、DuckDB データベースは現在の作業ディレクトリに `<pipeline_name>.duckdb` (上記の例では `chess.duckdb`) という名前で作成されます。ロード後は、`DuckDBPyConnection` のラッパーである `with pipeline.sql_client() as con:` を介して **読み取り/書き込み** モードで使用できます。詳細については、[duckdb ドキュメント](https://duckdb.org/docs/api/python/overview#persistent-storage) を参照してください。データを **読み取り** する場合は、`sql_client` ではなく [pipeline.dataset()](../../general-usage/dataset-access/dataset) を使用します。
 
-The `duckdb` credentials do not require any secret values. [You are free to pass the credentials and configuration explicitly](../../general-usage/destination.md#pass-explicit-credentials). For example:
+`duckdb` 認証情報には秘密の値は必要ありません。[認証情報と設定を明示的に渡すことができます](../../general-usage/destination.md#pass-explicit-credentials)。例えば:
+
 ```py
 # will load data to files/data.db (relative path) database file
 p = dlt.pipeline(
@@ -138,7 +152,9 @@ p = dlt.pipeline(
   dev_mode=False
 )
 ```
-Named `duckdb` destinations will create a database file in current working directory as `<destination_name>.duckdb`. For example:
+
+名前付き `duckdb` 宛先は、現在の作業ディレクトリに `<destination_name>.duckdb` というデータベースファイルを作成します。たとえば、:
+
 ```py
 # will load data to files/data.db (relative path) database file
 p = dlt.pipeline(
@@ -147,11 +163,12 @@ p = dlt.pipeline(
   dataset_name='chess_data',
 )
 ```
-creates database `chessdb.duckdb`.
+
+データベース `chessdb.duckdb' を作成します。
 
 :::caution
-Avoid naming dataset the same as database. That will confuse `duckdb` binder as both catalog and schema are the same. For
-example:
+データセットをデータベースと同じ名前にすることは避けてください。カタログとスキーマが同じであるため、`duckdb`バインダーが混乱します。例:
+
 ```py
 pipeline = dlt.pipeline(
         pipeline_name="dummy",
@@ -159,10 +176,11 @@ pipeline = dlt.pipeline(
         dataset_name="dummy",
     )
 ```
-will create database `dummy.duckdb` and schema (dataset) `dummy` which get confused resulting in Binder Error.
+
+データベース `dummy.duckdb` とスキーマ (データセット) `dummy` が作成されますが、これらが混乱してバインダー エラーが発生します。
 :::
 
-The destination accepts a `duckdb` connection instance via `credentials`, so you can also open a database connection yourself and pass it to `dlt` to use.
+宛先は `credentials` を介して `duckdb` 接続インスタンスを受け入れるため、自分でデータベース接続を開いて `dlt` に渡して使用することもできます。
 
 ```py
 import duckdb
@@ -198,31 +216,35 @@ print(db.sql("DESCRIBE;"))
 ```
 
 :::note
-Be careful! The in-memory instance of the database will be destroyed once your Python script exits.
+注意してください! Python スクリプトが終了すると、データベースのメモリ内インスタンスは破棄されます。
 :::
 
-This destination accepts database connection strings in the format used by [duckdb-engine](https://github.com/Mause/duckdb_engine#configuration).
+この宛先は、[duckdb-engine](https://github.com/Mause/duckdb_engine#configuration) で使用される形式のデータベース接続文字列を受け入れます。
 
-You can configure a DuckDB destination with [secret / config values](../../general-usage/credentials) (e.g., using a `secrets.toml` file)
+DuckDB の宛先は、[secret / config values](../../general-usage/credentials) を使用して設定できます (例: `secrets.toml` ファイルを使用)
+
 ```toml
 destination.duckdb.credentials="duckdb:///_storage/test_quack.duckdb"
 ```
-The **duckdb://** URL above creates a **relative** path to `_storage/test_quack.duckdb`. To define an **absolute** path, you need to specify four slashes, i.e., `duckdb:////_storage/test_quack.duckdb`.
 
-You can also skip the schema and just pass the path directly:
+上記の **duckdb://** URL は、`_storage/test_quack.duckdb` への **相対** パスを作成します。**絶対** パスを定義するには、4 つのスラッシュ、つまり `duckdb:////_storage/test_quack.duckdb` を指定する必要があります。
+
+スキーマをスキップしてパスを直接渡すこともできます:
+
 ```toml
 destination.duckdb.credentials="_storage/test_quack.duckdb"
 ```
 
-You can also place the database in the working directory of the pipeline by passing **:pipeline:** as path. The
-database will be name `<pipeline_name>.duckdb`.
+**:pipeline:** をパスとして渡すことで、パイプラインの作業ディレクトリにデータベースを配置することもできます。データベースの名前は `<pipeline_name>.duckdb` になります。
 
-1. Via `config.toml`
+1. `config.toml` で
+
 ```toml
 destination.duckdb.credentials=":pipeline:"
 ```
 
-2. In Python code
+2. Python コードで
+
 ```py
 p = pipeline_one = dlt.pipeline(
   pipeline_name="my_pipeline",
@@ -230,18 +252,22 @@ p = pipeline_one = dlt.pipeline(
 )
 ```
 
-### Additional configuration
-Unique indexes may be created during loading if the following config value is set:
+### 追加構成
+
+次の設定値が設定されている場合は、読み込み中に一意のインデックスが作成されることがあります:
+
 ```toml
 [destination.duckdb]
 create_indexes=true
 ```
 
-### dbt support
-This destination [integrates with dbt](../transformations/dbt/dbt.md) via [dbt-duckdb](https://github.com/jwills/dbt-duckdb), which is a community-supported package. The `duckdb` database is shared with `dbt`. In rare cases, you may see information that the binary database format does not match the database format expected by `dbt-duckdb`. You can avoid this by updating the `duckdb` package in your `dlt` project with `pip install -U`.
+### dbt サポート
 
-### Syncing of `dlt` state
-This destination fully supports [dlt state sync](../../general-usage/state#syncing-state-with-destination).
+この宛先は、コミュニティがサポートするパッケージである [dbt-duckdb](https://github.com/jwills/dbt-duckdb) を介して [dbt と統合](../transformations/dbt/dbt.md) します。`duckdb` データベースは `dbt` と共有されます。まれに、バイナリ データベース形式が `dbt-duckdb` で想定されるデータベース形式と一致しないという情報が表示される場合があります。`dlt` プロジェクトで `duckdb` パッケージを `pip install -U` で更新することで、これを回避できます。
+
+### `dlt` の状態の同期
+
+この宛先は、[dlt state sync](../../general-usage/state#syncing-state-with-destination) を完全にサポートします。
 
 <!--@@@DLT_TUBA duckdb-->
 

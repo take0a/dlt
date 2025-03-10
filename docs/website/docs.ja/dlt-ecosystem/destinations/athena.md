@@ -6,47 +6,55 @@ keywords: [aws, athena, glue catalog]
 
 # AWS Athena / Glue Catalog
 
-The Athena destination stores data as Parquet files in S3 buckets and creates [external tables in AWS Athena](https://docs.aws.amazon.com/athena/latest/ug/creating-tables.html). You can then query those tables with Athena SQL commands, which will scan the entire folder of Parquet files and return the results. This destination works very similarly to other SQL-based destinations, with the exception that the merge write disposition is not supported at this time. The `dlt` metadata will be stored in the same bucket as the Parquet files, but as iceberg tables. Athena also supports writing individual data tables as Iceberg tables, so they may be manipulated later. A common use case would be to strip GDPR data from them.
+Athena の宛先は、データを Parquet ファイルとして S3 バケットに保存し、[AWS Athena の外部テーブル](https://docs.aws.amazon.com/athena/latest/ug/creating-tables.html) を作成します。その後、Athena SQL コマンドを使用してこれらのテーブルをクエリできます。このコマンドは、Parquet ファイルのフォルダー全体をスキャンして結果を返します。この宛先は、マージ書き込み処理が現時点ではサポートされていないことを除いて、他の SQL ベースの宛先と非常によく似た動作をします。`dlt` メタデータは、Parquet ファイルと同じバケットに保存されますが、Iceberg テーブルとして保存されます。Athena は、個々のデータ テーブルを Iceberg テーブルとして書き込むこともサポートしているため、後で操作できます。一般的な使用例は、それらから GDPR データを削除することです。
 
-## Install dlt with Athena
-**To install the dlt library with Athena dependencies:**
+## Athena で dlt をインストールする
+
+**Athena 依存関係を持つ dlt ライブラリをインストールするには:**
+
 ```sh
 pip install "dlt[athena]"
 ```
 
-## Setup guide
-### 1. Initialize the dlt project
+## セットアップガイド
 
-Let's start by initializing a new `dlt` project as follows:
+### 1. dlt プロジェクトを初期化する
+
+まず、新しい `dlt` プロジェクトを次のように初期化します:
+
    ```sh
    dlt init chess athena
    ```
-   > 💡 This command will initialize your pipeline with chess as the source and AWS Athena as the destination using the filesystem staging destination.
+
+   > 💡 このコマンドは、ファイルシステムのステージング先を使用して、チェスをソースとして、AWS Athena を宛先としてパイプラインを初期化します。
 
 
-### 2. Setup bucket storage and Athena credentials
+### 2. バケットストレージと Athena 認証情報を設定する
 
-First, install dependencies by running:
+まず、依存関係をインストールします:
+
 ```sh
 pip install -r requirements.txt
 ```
-or with `pip install "dlt[athena]"`, which will install `s3fs`, `pyarrow`, `pyathena`, and `botocore` packages.
+
+または、`pip install "dlt[athena]"` を使用すると、`s3fs`、`pyarrow`、`pyathena`、および `botocore` パッケージがインストールされます。
 
 :::caution
 
-You may also install the dependencies independently. Try
+依存関係を個別にインストールすることもできます。
+
 ```sh
 pip install dlt
 pip install s3fs
 pip install pyarrow
 pip install pyathena
 ```
-so pip does not fail on backtracking.
+そうすると、pip はバックトラックで失敗しません。
 :::
 
-To edit the `dlt` credentials file with your secret info, open `.dlt/secrets.toml`. You will need to provide a `bucket_url`, which holds the uploaded parquet files, a `query_result_bucket`, which Athena uses to write query results to, and credentials that have write and read access to these two buckets as well as the full Athena access AWS role.
+シークレット情報を含む `dlt` 認証情報ファイルを編集するには、`.dlt/secrets.toml` を開きます。アップロードされた parquet ファイルを保持する `bucket_url`、Athena がクエリ結果を書き込むために使用する `query_result_bucket`、およびこれら 2 つのバケットへの書き込みおよび読み取りアクセス権と、完全な Athena アクセス AWS ロールを持つ認証情報を提供する必要があります。
 
-The TOML file looks like this:
+TOMLファイルは次のようになります:
 
 ```toml
 [destination.filesystem]
@@ -65,7 +73,8 @@ aws_secret_access_key="please set me up!" # same as credentials for filesystem
 region_name="please set me up!" # set your AWS region, for example "eu-central-1" for Frankfurt
 ```
 
-If you have your credentials stored in `~/.aws/credentials`, just remove the **[destination.filesystem.credentials]** and **[destination.athena.credentials]** sections above and `dlt` will fall back to your **default** profile in local credentials. If you want to switch the profile, pass the profile name as follows (here: `dlt-ci-user`):
+認証情報が `~/.aws/credentials` に保存されている場合は、上記の **[destination.filesystem.credentials]** および **[destination.athena.credentials]** セクションを削除するだけで、`dlt` はローカル認証情報の **default** プロファイルに戻ります。プロファイルを切り替える場合は、次のようにプロファイル名を渡します (ここでは `dlt-ci-user`):
+
 ```toml
 [destination.filesystem.credentials]
 profile_name="dlt-ci-user"
@@ -74,58 +83,63 @@ profile_name="dlt-ci-user"
 profile_name="dlt-ci-user"
 ```
 
-## Additional destination configuration
+## 追加の宛先設定
 
-You can provide an Athena workgroup like so:
+Athenaワークグループは次のように提供できます。:
+
 ```toml
 [destination.athena]
 athena_work_group="my_workgroup"
 ```
 
-## Write disposition
+## 書き込み処理
 
-The `athena` destination handles the write dispositions as follows:
-- `append` - files belonging to such tables are added to the dataset folder.
-- `replace` - all files that belong to such tables are deleted from the dataset folder, and then the current set of files is added.
-- `merge` - falls back to `append` (unless you're using [iceberg](#iceberg-data-tables) tables).
+`athena` 宛先は書き込み処理を次のように処理します。:
 
-## Data loading
+- `append` - このようなテーブルに属するファイルはデータセット フォルダーに追加されます。
+- `replace` - そのようなテーブルに属するすべてのファイルはデータセット フォルダーから削除され、現在のファイル セットが追加されます。
+- `merge` - `append` にフォールバックします ([iceberg](#iceberg-data-tables) テーブルを使用している場合を除きます)。
 
-Data loading occurs by storing parquet files in an S3 bucket and defining a schema on Athena. If you query data via SQL queries on Athena, the returned data is read by scanning your bucket and reading all relevant parquet files in there.
+## データのロード
 
-`dlt` internal tables are saved as Iceberg tables.
+データのロードは、S3 バケットに parquet ファイルを保存し、Athena でスキーマを定義することによって行われます。Athena で SQL クエリを使用してデータをクエリする場合、返されるデータはバケットをスキャンし、そこに含まれる関連するすべての parquet ファイルを読み取ることによって読み取られます。
 
-### Data types
-Athena tables store timestamps with millisecond precision, and with that precision, we generate parquet files. Keep in mind that Iceberg tables have microsecond precision.
+`dlt` 内部テーブルは Iceberg テーブルとして保存されます。
 
-Athena does not support JSON fields, so JSON is stored as a string.
+### データ型
+
+Athena テーブルはタイムスタンプをミリ秒の精度で保存し、その精度で parquet ファイルを生成します。Iceberg テーブルの精度はマイクロ秒であることに留意してください。
+
+Athena は JSON フィールドをサポートしていないため、JSON は文字列として保存されます。
 
 :::caution
-**Athena does not support TIME columns in parquet files**. `dlt` will fail such jobs permanently. Convert `datetime.time` objects to `str` or `datetime.datetime` to load them.
+**Athena は parquet ファイルの TIME 列をサポートしていません**. `dlt` では、このようなジョブは永久に失敗します。`datetime.time` オブジェクトを `str` または `datetime.datetime` に変換してロードしてください。
 :::
 
-### Table and column identifiers
+### テーブルと列の識別子
 
-Athena uses case-insensitive identifiers and **will lowercase all the identifiers** that are stored in the INFORMATION SCHEMA. Do not use [case-sensitive naming conventions](../../general-usage/naming-convention.md#case-sensitive-and-insensitive-destinations). Letter casing will be removed anyway, and you risk generating identifier collisions, which are detected by `dlt` and will fail the load process.
+Athena は大文字と小文字を区別しない識別子を使用し、INFORMATION SCHEMA に保存される **すべての識別子を小文字にします**。[大文字と小文字を区別する命名規則](../../general-usage/naming-convention.md#case-sensitive-and-insensitive-destinations) は使用しないでください。いずれにしても大文字と小文字は削除され、識別子の衝突が発生するリスクがあります。これは `dlt` によって検出され、ロード プロセスが失敗します。
 
-Under the hood, Athena uses different SQL engines for DDL (catalog) and DML/Queries:
-* DDL uses HIVE escaping with ``````
-* Other queries use PRESTO and regular SQL escaping.
+内部的には、Athena は DDL (カタログ) と DML/クエリに異なる SQL エンジンを使用します:
 
-## Staging support
+* DDL は HIVE エスケープを使用します ``````
+* その他のクエリでは、PRESTO と通常の SQL エスケープが使用されます。
 
-Using a staging destination is mandatory when using the Athena destination. If you do not set staging to `filesystem`, `dlt` will automatically do this for you.
+## ステージングサポート
 
-If you decide to change the [filename layout](./filesystem#data-loading) from the default value, keep the following in mind so that Athena can reliably build your tables:
- - You need to provide the `{table_name}` placeholder, and this placeholder needs to be followed by a forward slash.
- - You need to provide the `{file_id}` placeholder, and it needs to be somewhere after the `{table_name}` placeholder.
- - `{table_name}` must be the first placeholder in the layout.
+Athena 宛先を使用する場合は、ステージング宛先の使用が必須です。ステージングを `filesystem` に設定しない場合は、`dlt` が自動的にこれを実行します。
 
-## Additional destination options
+[ファイル名レイアウト](./filesystem#data-loading)をデフォルト値から変更する場合は、Athenaが確実にテーブルを構築できるように、次の点に注意してください:
 
-### Iceberg data tables
+ - `{table_name}` プレースホルダーを指定する必要があり、このプレースホルダーの後にはスラッシュを続ける必要があります。
+ - `{file_id}` プレースホルダーを指定する必要があり、これは `{table_name}` プレースホルダーの後のどこかに配置する必要があります。
+ - `{table_name}` はレイアウトの最初のプレースホルダーである必要があります。
 
-You can save your tables as Iceberg tables to Athena. This will enable you, for example, to delete data from them later if you need to. To switch a resource to the Iceberg table format, supply the table_format argument like this:
+## 追加の宛先オプション
+
+### Iceberg データテーブル
+
+テーブルをアイスバーグテーブルとして Athena に保存できます。これにより、たとえば、後で必要に応じてデータを削除できるようになります。リソースをアイスバーグテーブル形式に切り替えるには、次のように table_format 引数を指定します:
 
 ```py
 @dlt.resource(table_format="iceberg")
@@ -133,50 +147,51 @@ def data() -> Iterable[TDataItem]:
     ...
 ```
 
-For every table created as an Iceberg table, the Athena destination will create a regular Athena table in the staging dataset of both the filesystem and the Athena glue catalog, and then copy all data into the final Iceberg table that lives with the non-Iceberg tables in the same dataset on both the filesystem and the glue catalog. Switching from Iceberg to regular table or vice versa is not supported.
+Iceberg テーブルとして作成されたすべてのテーブルについて、Athena 宛先は、ファイルシステムと Athena グルー カタログの両方のステージング データセットに通常の Athena テーブルを作成し、ファイルシステムとグルー カタログの両方の同じデータセット内の非 Iceberg テーブルとともに存在する最終的な Iceberg テーブルにすべてのデータをコピーします。Iceberg テーブルから通常のテーブルへの切り替え、またはその逆の切り替えはサポートされていません。
 
-#### `merge` support
+#### `merge` サポート
 
-The `merge` write disposition is supported for Athena when using Iceberg tables.
+Iceberg テーブルを使用する場合、Athena では `merge` 書き込み処理がサポートされます。
 
 :::note
-1. There is a risk of tables ending up in an inconsistent state in case a pipeline run fails mid-flight because Athena doesn't support transactions, and `dlt` uses multiple DELETE/UPDATE/INSERT statements to implement `merge`.
-2. `dlt` creates additional helper tables called `insert_<table name>` and `delete_<table name>` in the staging schema to work around Athena's lack of temporary tables.
+1. Athena はトランザクションをサポートしておらず、`dlt` は複数の DELETE/UPDATE/INSERT ステートメントを使用して `merge` を実装するため、パイプラインの実行が途中で失敗した場合にテーブルが不整合な状態になるリスクがあります。
+2. `dlt` は、Athena の一時テーブル不足を回避するために、ステージング スキーマに `insert_<table name>` および `delete_<table name>` と呼ばれる追加のヘルパー テーブルを作成します。
 :::
 
-### dbt support
+### dbt サポート
 
-Athena is supported via `dbt-athena-community`. Credentials are passed into `aws_access_key_id` and `aws_secret_access_key` of the generated dbt profile. Iceberg tables are supported, but you need to make sure that you materialize your models as Iceberg tables if your source table is Iceberg. We encountered problems with materializing date-time columns due to different precision on Iceberg (nanosecond) and regular Athena tables (millisecond).
-The Athena adapter requires that you set up **region_name** in the Athena configuration below. You can also set up the table catalog name to change the default: **awsdatacatalog**
+Athena は `dbt-athena-community` を介してサポートされます。認証情報は、生成された dbt プロファイルの `aws_access_key_id` と `aws_secret_access_key` に渡されます。Iceberg テーブルはサポートされていますが、ソース テーブルが Iceberg の場合は、モデルを Iceberg テーブルとしてマテリアライズする必要があります。Iceberg (ナノ秒) と通常の Athena テーブル (ミリ秒) の精度が異なるため、日時列のマテリアライズで問題が発生しました。
+Athena アダプタでは、以下の Athena 設定で **region_name** を設定する必要があります。また、テーブル カタログ名を設定して、デフォルトを変更することもできます: **awsdatacatalog**
+
 ```toml
 [destination.athena]
 aws_data_catalog="awsdatacatalog"
 ```
 
-### Syncing of `dlt` state
+### `dlt` の状態の同期
 
-- This destination fully supports [dlt state sync.](../../general-usage/state#syncing-state-with-destination). The state is saved in Athena Iceberg tables in your S3 bucket.
+- この宛先は、[dlt state sync.](../../general-usage/state#syncing-state-with-destination) を完全にサポートしています。状態は S3 バケットの Athena Iceberg テーブルに保存されます。
 
-## Supported file formats
+## サポートされているファイル形式
 
-* [Parquet](../file-formats/parquet.md) is used by default.
+* [Parquet](../file-formats/parquet.md) が、デフォルトです。
 
-## Athena adapter
+## Athena アダプター
 
-You can use the `athena_adapter` to add partitioning to Athena tables. This is currently only supported for Iceberg tables.
+`athena_adapter` を使用して、Athena テーブルにパーティションを追加できます。これは現在、Iceberg テーブルでのみサポートされています。
 
-Iceberg tables support a few transformation functions for partitioning. Info on all supported functions in the [AWS documentation](https://docs.aws.amazon.com/athena/latest/ug/querying-iceberg-creating-tables.html#querying-iceberg-creating-tables-query-editor).
+Iceberg テーブルは、パーティション分割のためのいくつかの変換関数をサポートしています。サポートされているすべての関数の詳細については、[AWS ドキュメント](https://docs.aws.amazon.com/athena/latest/ug/querying-iceberg-creating-tables.html#querying-iceberg-creating-tables-query-editor)を参照してください。
 
-Use the `athena_partition` helper to generate the partitioning hints for these functions:
+これらの関数のパーティションヒントを生成するには、`athena_partition` ヘルパーを使用します:
 
-* `athena_partition.year(column_name: str)`: Partition by year of date/datetime column.
-* `athena_partition.month(column_name: str)`: Partition by month of date/datetime column.
-* `athena_partition.day(column_name: str)`: Partition by day of date/datetime column.
-* `athena_partition.hour(column_name: str)`: Partition by hour of date/datetime column.
-* `athena_partition.bucket(n: int, column_name: str)`: Partition by hashed value to `n` buckets
-* `athena_partition.truncate(length: int, column_name: str)`: Partition by truncated value to `length` (or width for numbers)
+* `athena_partition.year(column_name: str)`: 日付/日時列の年ごとにパーティション分割します。
+* `athena_partition.month(column_name: str)`: 日付/日時列の月ごとにパーティション分割します。
+* `athena_partition.day(column_name: str)`: 日付/日時列の日付でパーティション分割します。
+* `athena_partition.hour(column_name: str)`: 日付/日時列の時間でパーティション分割します。
+* `athena_partition.bucket(n: int, column_name: str)`: ハッシュ値で `n` 個のバケットに分割する
+* `athena_partition.truncate(length: int, column_name: str)`: 切り捨てられた値を `length` (数値の場合は幅) で分割します。
 
-Here is an example of how to use the adapter to partition a table:
+アダプタを使用してテーブルをパーティション分割する方法の例を次に示します:
 
 ```py
 from datetime import date

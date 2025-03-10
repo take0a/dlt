@@ -4,37 +4,34 @@ description: How to create a pipeline from a verified source
 keywords: [how to, add a verified source]
 ---
 
-# Add a verified source
+# 検証済みのソースを追加する
 
-Follow the steps below to create a [pipeline](../general-usage/glossary.md#pipeline) from a
-[verified source](../general-usage/glossary.md#verified-source) contributed by `dlt` users.
+以下の手順に従って、`dlt` ユーザーが提供した[検証済みソース](../general-usage/glossary.md#verified-source)から[パイプライン](../general-usage/glossary.md#pipeline)を作成します。
 
-Please make sure you have [installed `dlt`](../reference/installation.md) before following the
-steps below.
+以下の手順を実行する前に、[`dlt`](../reference/installation.md) がインストールされていることを確認してください。
 
-## 1. Initialize project
+## 1. プロジェクトの初期化
 
-Create a new empty directory for your `dlt` project by running:
+`dlt`プロジェクト用の新しい空のディレクトリを作成するには、次のコマンドを実行します:
 
 ```sh
 mkdir various_pipelines
 cd various_pipelines
 ```
 
-List available sources to see their names and descriptions:
+利用可能なソースを一覧表示して、名前と説明を表示します:
 
 ```sh
 dlt init --list-sources
 ```
 
-Now pick one of the source names, for example, `pipedrive` and a destination, i.e., `bigquery`:
+ここで、ソース名（例：`pipedrive`）と宛先（例：`bigquery`）のいずれかを選択します:
 
 ```sh
 dlt init pipedrive bigquery
 ```
 
-The command will create your pipeline project by copying over the `pipedrive` folder and creating a
-`.dlt` folder:
+このコマンドは、`pipedrive`フォルダをコピーして`.dlt`フォルダを作成し、パイプラインプロジェクトを作成します:
 
 ```text
 ├── .dlt
@@ -50,8 +47,7 @@ The command will create your pipeline project by copying over the `pipedrive` fo
 └── requirements.txt
 ```
 
-After running the command, read the command output for the instructions on how to install the
-dependencies:
+コマンドを実行した後、依存関係をインストールする方法についてはコマンド出力を読んでください:
 
 ```text
 Verified source pipedrive was added to your project!
@@ -66,77 +62,65 @@ Verified source pipedrive was added to your project!
 * Read https://dlthub.com/docs/walkthroughs/create-a-pipeline for more information
 ```
 
-So make sure you install the requirements with `pip install -r requirements.txt`. When deploying to
-an online orchestrator, you can install the requirements to it from requirements.txt in the ways
-supported by the orchestrator.
+したがって、`pip install -r requirements.txt` を使用して依存パッケージを必ずインストールしてください。オンラインオーケストレーターにデプロイする場合は、オーケストレーターでサポートされている方法で requirements.txt から依存パッケージをインストールできます。
 
-Finally, run the pipeline, fill the secrets.toml with your credentials or place your credentials in
-the supported locations.
+最後に、パイプラインを実行し、secrets.toml に資格情報を入力するか、サポートされている場所に資格情報を配置します。
 
-## 2. Adding credentials
+## 2. 資格情報の追加
 
-For adding them locally or on your orchestrator, please see the following guide
-[credentials](add_credentials).
+ローカルまたはオーケストレーターで追加するには、次のガイド [資格情報](add_credentials) を参照してください。
 
-## 3. Customize or write a pipeline script
+## 3. パイプラインスクリプトをカスタマイズまたは作成する
 
-Once you have initialized the pipeline, you will have a sample file `pipedrive_pipeline.py`.
+パイプラインを初期化すると、サンプル ファイル `pipedrive_pipeline.py` が作成されます。
 
-This is the developer's suggested way to use the pipeline, so you can use it as a starting point -
-in our case, we can choose to run a method that loads all data, or we can choose which endpoints
-should load.
+これは開発者が提案するパイプラインの使用方法なので、出発点として使用できます。この場合、すべてのデータをロードするメソッドを実行するか、どのエンドポイントをロードするかを選択できます。
 
-You can also use this file as a suggestion and write your own instead.
+このファイルを提案として使用し、代わりに独自のファイルを作成することもできます。
 
-## 4. Hack a verified source
+## 4. 検証済みのソースをハッキングする
 
-You can modify an existing verified source in place.
+既存の検証済みソースをその場で変更できます。
 
-- If that modification is generally useful for anyone using this source, consider contributing it
-  back via a PR. This way, we can ensure it is tested and maintained.
-- If that modification is not a generally shared case, then you are responsible for maintaining it.
-  We suggest making any of your own customizations modular if possible, so you can keep pulling the
-  updated source from the community repo in the event of source maintenance.
+- その変更がこのソースを使用するすべての人にとって一般的に役立つ場合は、PR を介して貢献することを検討してください。こうすることで、テストとメンテナンスを確実に行うことができます。
+- その変更が一般に共有されていない場合は、それを維持するための責任はあなたにあります。可能であれば、独自のカスタマイズをモジュール化して、ソースのメンテナンスの際にコミュニティ リポジトリから更新されたソースをプルし続けることができるようにすることをお勧めします。
 
-## 5. Add more sources to your project
+## 5. プロジェクトにソースを追加する
 
 ```sh
 dlt init chess duckdb
 ```
 
-To add another verified source, just run the `dlt init` command at the same location as the first
-pipeline:
+別の検証済みソースを追加するには、最初のパイプラインと同じ場所で　`dlt init` コマンドを実行するだけです:
 
-- The shared files will be updated (secrets, config).
-- A new folder will be created for the new source.
-- Do not forget to install the requirements for the second source!
+- 共有ファイルは更新されます (secrets, config).
+- 新しいソース用に新しいフォルダーが作成されます。
+- 2 番目のソースの依存モジュールをインストールすることを忘れないでください。
 
-## 6. Update the verified source with the newest version
+## 6. 検証済みのソースを最新バージョンに更新する
 
-To update the verified source you have to the newest online version just do the same init command in
-the parent folder:
+検証済みのソースを最新のオンラインバージョンに更新するには、親フォルダで同じinitコマンドを実行するだけです:
 
 ```sh
 dlt init pipedrive bigquery
 ```
 
-## 7. Advanced: Using dlt init with branches, local folders, or git repos
+## 7. 上級: ブランチ、ローカルフォルダー、または Git リポジトリで dlt init を使用する
 
-To find out more info about this command, use --help:
+このコマンドの詳細情報を確認するには、--help を使用します:
 
 ```sh
 dlt init --help
 ```
 
-To deploy from a branch of the `verified-sources` repo, you can use the following:
+`verified-sources`リポジトリのブランチからデプロイするには、以下を使用します:
 
 ```sh
 dlt init source destination --branch <branch_name>
 ```
 
-To deploy from another repo, you could fork the verified-sources repo and then provide the new repo URL as below, replacing `dlt-hub` with your fork name:
+別のリポジトリからデプロイするには、verified-sourcesリポジトリをフォークし、次のように新しいリポジトリURLを指定します。`dlt-hub`をフォーク名に置き換えます:
 
 ```sh
 dlt init pipedrive bigquery --location "https://github.com/dlt-hub/verified-sources"
 ```
-

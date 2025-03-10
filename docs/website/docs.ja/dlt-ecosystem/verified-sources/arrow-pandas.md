@@ -9,18 +9,18 @@ import Header from './_source-info-header.md';
 
 <Header/>
 
-You can load data directly from an Arrow table or Pandas dataframe.
-This is supported by all destinations, but it is especially recommended when using destinations that support the Parquet file format natively (e.g., [Snowflake](../destinations/snowflake.md) and [Filesystem](../destinations/filesystem.md)).
-See the [destination support](#destination-support-and-fallback) section for more information.
+Arrow テーブルまたは Pandas データフレームから直接データを読み込むことができます。
+これはすべての宛先でサポートされていますが、Parquet ファイル形式をネイティブにサポートする宛先 (例: [Snowflake](../destinations/snowflake.md) および [Filesystem](../destinations/filesystem.md)) を使用する場合に特に推奨されます。
+詳細については、[宛先サポート](#destination-support-and-fallback) セクションを参照してください。
 
-When used with a Parquet supported destination, this is a more performant way to load structured data since `dlt` bypasses many processing steps normally involved in passing JSON objects through the pipeline.
-`dlt` automatically translates the Arrow table's schema to the destination table's schema and writes the table to a parquet file, which gets uploaded to the destination without any further processing.
+Parquet がサポートする宛先で使用すると、`dlt` はパイプラインを介して JSON オブジェクトを渡す際に通常必要となる多くの処理手順をバイパスするため、構造化データをロードするよりパフォーマンスの高い方法になります。
+`dlt` は、Arrow テーブルのスキーマを宛先テーブルのスキーマに自動的に変換し、テーブルを parquet ファイルに書き込みます。このファイルは、それ以上の処理なしで宛先にアップロードされます。
 
-## Usage
+## 使用法
 
-To write an Arrow source, pass any `pyarrow.Table`, `pyarrow.RecordBatch`, or `pandas.DataFrame` object (or list thereof) to the pipeline's `run` or `extract` method, or yield table(s)/dataframe(s) from a `@dlt.resource` decorated function.
+Arrow ソースを書き込むには、`pyarrow.Table`、`pyarrow.RecordBatch`、または `pandas.DataFrame` オブジェクト (またはそのリスト) をパイプラインの `run` または `extract` メソッドに渡すか、`@dlt.resource` デコレートされた関数からテーブル/データフレームを生成します。
 
-This example loads a Pandas dataframe to a Snowflake table:
+この例では、Pandas データフレームを Snowflake テーブルにロードします。:
 
 ```py
 import dlt
@@ -39,10 +39,10 @@ pipeline = dlt.pipeline("orders_pipeline", destination="snowflake")
 
 pipeline.run(df, table_name="orders")
 ```
-Note that Pandas indexes are not save by default (up from `dlt` version 1.4.1). If for some reason you need the destination,
-use `Table.from_pandas` with `preserve_index` set to True to explicitly convert the dataframe into arrow table.
 
-A `pyarrow` table can be loaded in the same way:
+Pandas のインデックスはデフォルトでは保存されないことに注意してください (`dlt` バージョン 1.4.1 以降)。何らかの理由で保存先が必要な場合は、`preserve_index` を True に設定して `Table.from_pandas` を使用して、データフレームを明示的に arrow テーブルに変換します。
+
+`pyarrow`テーブルも同様の方法でロードできる:
 
 ```py
 import pyarrow as pa
@@ -54,18 +54,18 @@ table = pa.Table.from_pandas(df)
 pipeline.run(table, table_name="orders")
 ```
 
-Note: The data in the table must be compatible with the destination database as no data conversion is performed. Refer to the documentation of the destination for information about supported data types.
+注: データ変換は実行されないため、テーブル内のデータは宛先データベースと互換性がある必要があります。サポートされているデータ型の詳細については、宛先のドキュメントを参照してください。
 
-## Destination support
+## 宛先のサポート
 
-Destinations that support the Parquet format natively will have the data files uploaded directly as possible. Rewriting files can be avoided completely in many cases.
+Parquet 形式をネイティブにサポートする宛先では、データファイルが可能な限り直接アップロードされます。多くの場合、ファイルの書き換えは完全に回避できます。
 
-When the destination does not support Parquet, the rows are extracted from the table and written in the destination's native format (usually `insert_values`), and this is generally much slower
-as it requires processing the table row by row and rewriting data to disk.
+宛先が Parquet をサポートしていない場合、行はテーブルから抽出され、宛先のネイティブ形式 (通常は `insert_values`) で書き込まれます。これは、テーブルを行ごとに処理し、データをディスクに書き直す必要があるため、通常、はるかに遅くなります。
 
-The output file format is chosen automatically based on the destination's capabilities, so you can load arrow or pandas frames to any destination, but performance will vary.
+出力ファイルの形式は宛先の機能に基づいて自動的に選択されるため、arrow フレームまたは pandas フレームを任意の宛先に読み込むことができますが、パフォーマンスは異なります。
 
-### Destinations that support parquet natively for direct loading
+### 直接読み込み用に parquet をネイティブにサポートする宛先
+
 * duckdb & motherduck
 * redshift
 * bigquery
@@ -76,12 +76,11 @@ The output file format is chosen automatically based on the destination's capabi
 * dremio
 * synapse
 
+## テーブルに `_dlt_load_id` と `_dlt_id` を追加します
 
-## Add `_dlt_load_id` and `_dlt_id` to your tables
+`dlt` は、Arrow テーブルをロードするときに、デフォルトではデータ系統列を追加しません。これは、最高のパフォーマンスを提供し、不要なデータのコピーを回避するためです。
 
-`dlt` does not add any data lineage columns by default when loading Arrow tables. This is to give the best performance and avoid unnecessary data copying.
-
-But if you need them, the `_dlt_load_id` (ID of the load operation when the row was added) and `_dlt_id` (unique ID for the row) columns can be added respectively with the following configuration options:
+ただし、必要な場合は、次の構成オプションを使用して、`_dlt_load_id` (行が追加されたときのロード操作のID) と `_dlt_id` (行の一意のID) 列をそれぞれ追加できます:
 
 ```toml
 [normalize.parquet_normalizer]
@@ -89,17 +88,17 @@ add_dlt_load_id = true
 add_dlt_id = true
 ```
 
-Keep in mind that enabling these incurs some performance overhead:
+これらを有効にするとパフォーマンスのオーバーヘッドが発生することに注意してください:
 
-- `add_dlt_load_id` has minimal overhead since the column is added to the arrow table in memory during the `extract` stage, before the parquet file is written to disk
-- `add_dlt_id` adds the column during the `normalize` stage after the file has been extracted to disk. The file needs to be read back from disk in chunks, processed, and rewritten with new columns
+- `add_dlt_load_id` は、parquet ファイルがディスクに書き込まれる前の `extract` ステージでメモリ内の arrow テーブルに列が追加されるため、オーバーヘッドは最小限です。
+- `add_dlt_id` は、ファイルがディスクに抽出された後の `normalize` 段階で列を追加します。ファイルは、チャンク単位でディスクから読み戻され、処理され、新しい列で書き直される必要があります。
 
-## Incremental loading with Arrow tables
+## Arrow テーブルによるインクリメンタルローディング
 
-You can use incremental loading with Arrow tables as well.
-Usage is the same as with other dlt resources. Refer to the [incremental loading](../../general-usage/incremental-loading.md) guide for more information.
+Arrow テーブルでもインクリメンタルロードを使用できます。
+使用方法は他の dlt リソースと同じです。詳細については、[インクリメンタルローディング](../../general-usage/incremental-loading.md)ガイドを参照してください。
 
-Example:
+例:
 
 ```py
 import dlt
@@ -122,14 +121,16 @@ pipeline.run(orders)
 ```
 
 :::tip
-Look at the [Connector X + Arrow Example](../../examples/connector_x_arrow/) to see how to load data from production databases fast.
+[Connector X + Arrow の例](../../examples/connector_x_arrow/)を参照して、運用データベースからデータを高速にロードする方法を確認してください。
 :::
 
-## Loading JSON documents
-If you want to skip the default `dlt` JSON normalizer, you can use any available method to convert JSON documents into tabular data.
-* **pandas** has `read_json` and `json_normalize` methods
-* **pyarrow** can infer the table schema and convert JSON files into tables with `read_json`
-* **duckdb** can do the same with `read_json_auto`
+## JSONドキュメントの読み込み
+
+デフォルトの `dlt` JSON ノーマライザーをスキップする場合は、利用可能な任意の方法を使用して JSON ドキュメントを表形式のデータに変換できます。
+
+* **pandas** には `read_json` と `json_normalize` メソッドがあります。
+* **pyarrow** は、テーブルスキーマを推測し、`read_json` を使用してJSONファイルをテーブルに変換できます。
+* **duckdb** は `read_json_auto` で同じことができます。
 
 ```py
 import duckdb
@@ -138,32 +139,32 @@ conn = duckdb.connect()
 table = conn.execute("SELECT * FROM read_json_auto('./json_file_path')").fetch_arrow_table()
 ```
 
-Note that **duckdb** and **pyarrow** methods will generate [nested types](#loading-nested-types) for nested data, which are only partially supported by `dlt`.
+**duckdb** および **pyarrow** メソッドは、ネストされたデータに対して [ネストされた型](#loading-nested-types) を生成しますが、これは `dlt` では部分的にしかサポートされていないことに注意してください。
 
-## Supported Arrow data types
+## サポートされる Arrow データ型
 
-The Arrow data types are translated to dlt data types as follows:
+Arrowデータ型は次のようにdltデータ型に変換されます。:
 
-| Arrow type        | dlt type    | Notes                                                      |
-|-------------------|-------------|------------------------------------------------------------|
-| `string`          | `text`      |                                                            |
-| `float`/`double`  | `double`    |                                                            |
-| `boolean`         | `bool`      |                                                            |
-| `timestamp`       | `timestamp` | Precision is determined by the unit of the timestamp.      |
-| `date`            | `date`      |                                                            |
-| `time<bit_width>` | `time`      | Precision is determined by the unit of the time.           |
-| `int<bit_width>`  | `bigint`    | Precision is determined by the bit width.                  |
-| `binary`          | `binary`    |                                                            |
-| `decimal`         | `decimal`   | Precision and scale are determined by the type properties. |
-| `struct`          | `json`      |                                                            |
-|                   |             |                                                            |
+| Arrow 型        | dlt 型    | 注記                              |
+|-------------------|-------------|------------------------------------|
+| `string`          | `text`      |                                    |
+| `float`/`double`  | `double`    |                                    |
+| `boolean`         | `bool`      |                                    |
+| `timestamp`       | `timestamp` | 精度はタイムスタンプの単位によって決まります。 |
+| `date`            | `date`      |                                    |
+| `time<bit_width>` | `time`      | 精度は時間の単位によって決まります。  |
+| `int<bit_width>`  | `bigint`    | 精度はビット幅によって決まります。    |
+| `binary`          | `binary`    |                                    |
+| `decimal`         | `decimal`   | 精度とスケールは、型のプロパティによって決まります。 |
+| `struct`          | `json`      |                                    |
+|                   |             |                                    |
 
+## ネストされた型のロード
 
-## Loading nested types
-All struct types are represented as `json` and will be loaded as JSON (if the destination permits) or a string. Currently, we do not support **struct** types,
-even if they are present in the destination (except **BigQuery** which can be [configured to handle them](../destinations/bigquery.md#use-bigquery-schema-autodetect-for-nested-fields))
+すべての構造体型は `json` として表され、JSON（宛先が許可する場合）または文字列としてロードされます。現在、**struct** 型は宛先に存在していてもサポートされていません（**BigQuery** は [処理するように構成できます](../destinations/bigquery.md#use-bigquery-schema-autodetect-for-nested-fields))
 
-If you want to represent nested data as separate tables, you must yield panda frames and arrow tables as records. In the examples above:
+ネストされたデータを別々のテーブルとして表現したい場合は、pandas フレームと arrow テーブルをレコードとして生成する必要があります。上記の例では:
+
 ```py
 # yield panda frame as records
 pipeline.run(df.to_dict(orient='records'), table_name="orders")
@@ -171,5 +172,5 @@ pipeline.run(df.to_dict(orient='records'), table_name="orders")
 # yield arrow table
 pipeline.run(table.to_pylist(), table_name="orders")
 ```
-Both Pandas and Arrow allow streaming records in batches.
 
+Pandas と Arrow はどちらもレコードをバッチでストリーミングできます。

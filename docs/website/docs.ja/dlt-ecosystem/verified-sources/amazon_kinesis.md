@@ -9,59 +9,59 @@ import Header from './_source-info-header.md';
 
 <Header/>
 
-[Amazon Kinesis](https://docs.aws.amazon.com/streams/latest/dev/key-concepts.html) is a cloud-based service for real-time data streaming and analytics, enabling the processing and analysis of large streams of data in real time.
+[Amazon Kinesis](https://docs.aws.amazon.com/streams/latest/dev/key-concepts.html) は、リアルタイムのデータストリーミングと分析のためのクラウドベースのサービスであり、大量のデータストリームをリアルタイムで処理および分析できます。
 
-Our AWS Kinesis [verified source](https://github.com/dlt-hub/verified-sources/tree/master/sources/kinesis) loads messages from Kinesis streams to your preferred [destination](../../dlt-ecosystem/destinations/).
+AWS Kinesis [検証済みソース](https://github.com/dlt-hub/verified-sources/tree/master/sources/kinesis) は、Kinesis ストリームから希望する[宛先](../../dlt-ecosystem/destinations/)にメッセージを読み込みます。
 
-Resources that can be loaded using this verified source are:
+この検証済みソースを使用してロードできるリソースは:
 
-| Name             | Description                                                                              |
-|------------------|------------------------------------------------------------------------------------------|
-| kinesis_stream   | Load messages from the specified stream                                                  |
+| 名前              | 説明                                     |
+|------------------|------------------------------------------|
+| kinesis_stream   | 指定されたストリームからメッセージを読み込む |
 
 
 :::tip
-You can check out our pipeline example [here](https://github.com/dlt-hub/verified-sources/blob/master/sources/kinesis_pipeline.py).
+パイプラインの例は[こちら](https://github.com/dlt-hub/verified-sources/blob/master/sources/kinesis_pipeline.py)で確認できます。
 :::
 
-## Setup guide
+## セットアップガイド
 
-### Grab credentials
+### 資格情報を取得する
 
-To use this verified source, you need an AWS `Access key` and `Secret access key`, which can be obtained as follows:
+この検証済みソースを使用するには、AWS の `アクセスキー` と `シークレットアクセスキー`が必要です。これらは次のように取得できます:
 
-1. Sign in to your AWS Management Console.
-1. Navigate to the IAM (Identity and Access Management) dashboard.
-1. Select "Users" and choose your IAM username.
-1. Click on the "Security Credentials" tab.
-1. Choose "Create Access Key".
-1. Download or copy the Access Key ID and Secret Access Key for future use.
+1. AWS マネジメントコンソールにサインインします。
+1. IAM (Identity and Access Management) ダッシュボードに移動します。
+1. 「ユーザー」メニューから、IAM ユーザー名を選択します。
+1. 「セキュリティ資格情報」タブをクリックします。
+1. 「アクセスキーの作成」を選択します。
+1. 後で使用するために、アクセスキー ID とシークレットアクセスキーをダウンロードまたはコピーします。
 
 :::info
-The AWS UI, which is described here, might change. The full guide is available at this [link](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html).
+ここで説明されている AWS UI は変更される可能性があります。完全なガイドはこちらの[リンク](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html)から入手できます。
 :::
 
-### Initialize the verified source
+### 検証済みソースを初期化する
 
-To get started with your data pipeline, follow these steps:
+データパイプラインを開始するには、次の手順に従ってください:
 
-1. Enter the following command:
+1. 次のコマンドを入力してください:
 
    ```sh
    dlt init kinesis duckdb
    ```
 
-   [This command](../../reference/command-line-interface) will initialize [the pipeline example](https://github.com/dlt-hub/verified-sources/blob/master/sources/kinesis_pipeline.py) with Kinesis as the [source](../../general-usage/source) and [duckdb](../destinations/duckdb.md) as the [destination](../destinations).
+   [このコマンド](../../reference/command-line-interface)は、Kinesisを[ソース](../../general-usage/source)、[duckdb](../destinations/duckdb.md)を[宛先](../destinations)として[パイプラインの例](https://github.com/dlt-hub/verified-sources/blob/master/sources/kinesis_pipeline.py)を初期化します。
 
-1. If you'd like to use a different destination, simply replace `duckdb` with the name of your preferred [destination](../destinations).
+1. 別の宛先を使用する場合は、`duckdb` を希望する[宛先](../destinations)の名前に置き換えてください。
 
-1. After running this command, a new directory will be created with the necessary files and configuration settings to get started.
+1. このコマンドを実行すると、開始するために必要なファイルと構成設定を含む新しいディレクトリが作成されます。
 
-For more information, read [Add a verified source.](../../walkthroughs/add-a-verified-source)
+詳細については、[検証済みのソースを追加する](../../walkthroughs/add-a-verified-source)をお読みください。
 
-### Add credentials
+### 資格情報を追加する
 
-1. In the `.dlt` folder, there's a file called `secrets.toml`. It's where you store sensitive information securely, like access tokens. Keep this file safe. Here's its format for service account authentication:
+1. `.dlt` フォルダには `secrets.toml` というファイルがあります。アクセストークンなどの機密情報を安全に保存する場所です。このファイルを安全に保管してください。サービスアカウント認証の形式は次のとおりです:
 
    ```toml
    # Put your secret values and credentials here.
@@ -72,50 +72,50 @@ For more information, read [Add a verified source.](../../walkthroughs/add-a-ver
    region_name="please set me up!" # aws region name
    ```
 
-1. Optionally, you can configure `stream_name`. Update `.dlt/config.toml`:
+1. オプションで、`stream_name` を設定できます。`.dlt/config.toml` を更新します:
 
    ```toml
    [sources.kinesis]
    stream_name = "please set me up!" # Stream name (Optional).
    ```
 
-1. Replace the value of `aws_access_key_id` and `aws_secret_access_key` with the one that [you copied above](#grab-credentials). This will ensure that the verified source can access your Kinesis resource securely.
+1. `aws_access_key_id` と `aws_secret_access_key` の値を [上記でコピーしたもの](#grab-credentials) に置き換えます。これにより、検証済みのソースが Kinesis リソースに安全にアクセスできるようになります。
 
-1. Next, follow the instructions in [Destinations](../destinations/duckdb) to add credentials for your chosen destination. This will ensure that your data is properly routed to its final destination.
+1. 次に、[宛先](../destinations/duckdb)の指示に従って、選択した宛先の資格情報を追加します。これにより、データが最終的な宛先に適切にルーティングされるようになります。
 
-For more information, read [Credentials](../../general-usage/credentials).
+詳細については、[資格情報](../../general-usage/credentials)をご覧ください。
 
-## Run the pipeline
+## パイプラインを実行する
 
-1. Before running the pipeline, ensure that you have installed all the necessary dependencies by
-   running the command:
+1. パイプラインを実行する前に、次のコマンドを実行して必要な依存関係がすべてインストールされていることを確認してください:
+
    ```sh
    pip install -r requirements.txt
    ```
-2. You're now ready to run the pipeline! To get started, run the following command:
+
+2. これでパイプラインを実行する準備ができました。開始するには、次のコマンドを実行します:
+
    ```sh
    python kinesis_pipeline.py
    ```
-3. Once the pipeline has finished running, you can verify that everything loaded correctly by using
-   the following command:
+
+3. パイプラインの実行が終了したら、次のコマンドを使用してすべてが正しくロードされたことを確認できます:
+
    ```sh
    dlt pipeline <pipeline_name> show
    ```
-   For example, the `pipeline_name` for the above pipeline example is `kinesis_pipeline`. You may
-   also use any custom name instead.
 
-For more information, read [Run a pipeline.](../../walkthroughs/run-a-pipeline)
+   たとえば、上記のパイプラインの例の `pipeline_name` は `kinesis_pipeline` です。代わりに任意のカスタム名を使用することもできます。
 
-## Sources and resources
+詳細については、[パイプラインを実行する](../../walkthroughs/run-a-pipeline)を参照してください。
 
-`dlt` works on the principle of [sources](../../general-usage/source) and
-[resources](../../general-usage/resource).
+## ソースとリソース
 
-### Resource `kinesis_stream`
+`dlt`は[ソース](../../general-usage/source)と[リソース](../../general-usage/resource)の原則に基づいて動作します。
 
-This resource reads a Kinesis stream and yields messages. It supports
-[incremental loading](../../general-usage/incremental-loading) and parses messages as JSON by
-default.
+### `kinesis_stream` リソース
+
+このリソースは Kinesis ストリームを読み取り、メッセージを生成します。[インクリメンタルロード](../../general-usage/incremental-loading) をサポートし、デフォルトでメッセージを JSON として解析します。
 
 ```py
 @dlt.resource(
@@ -138,59 +138,48 @@ def kinesis_stream(
     ...
 ```
 
-`stream_name`: Name of the Kinesis stream. Defaults to config/secrets if unspecified.
+`stream_name`: Kinesis ストリームの名前。指定されていない場合のデフォルトは config/secrets になります。
 
-`credentials`: Credentials for Kinesis access. Uses secrets or local credentials if not provided.
+`credentials`: Kinesis アクセスの認証情報。指定されていない場合は、シークレットまたはローカル認証情報を使用します。
 
-`last_msg`: Mapping from shard_id to a message sequence for incremental loading.
+`last_msg`: インクリメンタルロードのための shard_id からメッセージ シーケンスへのマッピング。
 
-`initial_at_timestamp`: Starting timestamp for AT_TIMESTAMP or LATEST iterator; defaults to 0.
+`initial_at_timestamp`: AT_TIMESTAMP または LATEST イテレータの開始タイムスタンプ。デフォルトは 0 です。
 
-`max_number_of_messages`: Max messages per run; may exceed by chunk_size. Default: None (no limit).
+`max_number_of_messages`:実行あたりの最大メッセージ数。chunk_size を超える場合があります。デフォルトは None (制限なし)。
 
-`milliseconds_behind_latest`: Milliseconds to lag behind shard top; default is 1000.
+`milliseconds_behind_latest`: シャードトップから遅れるミリ秒。デフォルトは 1000 です。
 
-`parse_json`: Parses messages as JSON if True. Default: False.
+`parse_json`: True の場合、メッセージを JSON として解析します。デフォルトは False。
 
-`chunk_size`: Records fetched per request; default is 1000.
+`chunk_size`: リクエストごとに取得されるレコード数。デフォルトは 1000 です。
 
-### How does it work?
+### どのように動くか？
 
-You create a resource `kinesis_stream` by passing the stream name and a few other options. The
-resource will have the same name as the stream. When you iterate this resource (or pass it to
-`pipeline.run` records), it will query Kinesis for all the shards in the requested stream. For each
- shard, it will create an iterator to read messages:
+ストリーム名と他のいくつかのオプションを渡すことで、リソース `kinesis_stream` を作成します。リソースの名前はストリームと同じになります。このリソースを反復処理すると (または `pipeline.run` レコードに渡すと)、要求されたストリーム内のすべてのシャードについて Kinesis にクエリが実行されます。各シャードに対して、メッセージを読み取るためのイテレータが作成されます:
 
-1. If `initial_at_timestamp` is present, the resource will read all messages after this timestamp.
-2. If `initial_at_timestamp` is 0, only the messages at the tip of the stream are read.
-3. If no initial timestamp is provided, all messages will be retrieved (from the TRIM HORIZON).
+1. `initial_at_timestamp` が存在する場合、リソースはこのタイムスタンプ以降のすべてのメッセージを読み取ります。
+2. `initial_at_timestamp` が 0 の場合、ストリームの先端にあるメッセージのみが読み取られます。
+3. 初期タイムスタンプが指定されていない場合は、 (TRIM HORIZON から)すべてのメッセージが取得されます。
 
-The resource stores all message sequences per shard in the state. If you run the resource again, it
-will load messages incrementally:
+リソースはシャードごとにすべてのメッセージシーケンスを状態に保存します。リソースを再度実行すると、メッセージが段階的にロードされます:
 
-1. For all shards that had messages, only messages after the last message are retrieved.
-2. For shards that didn't have messages (or new shards), the last run time is used to get messages.
+1. メッセージがあったすべてのシャードについては、最後のメッセージの後のメッセージのみが取得されます。
+2. メッセージがないシャード (または新しいシャード) の場合、最後の実行時間を使用してメッセージが取得されます。
 
-Please check the `kinesis_stream` [docstring](https://github.com/dlt-hub/verified-sources/blob/master/sources/kinesis/__init__.py#L31-L46)
-for additional options, i.e., to limit the number of messages
-returned or to automatically parse JSON messages.
+返されるメッセージの数を制限したり、JSON メッセージを自動的に解析したりするなどの追加オプションについては、`kinesis_stream` の [docstring](https://github.com/dlt-hub/verified-sources/blob/master/sources/kinesis/__init__.py#L31-L46) を確認してください。
 
-### Kinesis message format
+### Kinesis メッセージ形式
 
-The `_kinesis` dictionary in the message stores the message envelope, including shard id, sequence,
-partition key, etc. The message contains `_kinesis_msg_id`, which is the primary key: a hash over
-(shard id + message sequence number). With `parse_json` set to True (default), the Data field is parsed;
-if False, `data` is returned as bytes.
+メッセージ内の `_kinesis` ディクショナリには、シャード ID、シーケンス、パーティション キーなどを含むメッセージ エンベロープが格納されます。メッセージには、主キーである `_kinesis_msg_id` が含まれます。これは、(シャード ID + メッセージ シーケンス番号) のハッシュです。`parse_json` を True (デフォルト) に設定すると、データ フィールドが解析されます。False の場合は、`data` がバイトとして返されます。
 
-## Customization
+## カスタマイズ
 
+### 独自のパイプラインを作成する
 
+独自のパイプラインを作成する場合は、この検証済みソースのソースおよびリソースメソッドを活用できます。
 
-### Create your own pipeline
-
-If you wish to create your own pipelines, you can leverage source and resource methods from this verified source.
-
-1. Configure the [pipeline](../../general-usage/pipeline) by specifying the pipeline name, destination, and dataset as follows:
+1. 次のようにパイプライン名、宛先、データセットを指定して[パイプライン](../../general-usage/pipeline)を設定します:
 
    ```py
    pipeline = dlt.pipeline(
@@ -200,7 +189,7 @@ If you wish to create your own pipelines, you can leverage source and resource m
    )
    ```
 
-1. To load messages from a stream from the last one hour:
+1. 過去1時間のストリームからメッセージを読み込むには:
 
    ```py
    # The resource below will take its name from the stream name,
@@ -215,7 +204,7 @@ If you wish to create your own pipelines, you can leverage source and resource m
    print(info)
    ```
 
-1. For incremental Kinesis streams, to fetch only new messages:
+1. インクリメンタル Kinesis ストリームの場合、新しいメッセージのみを取得する:
 
    ```py
    # Running pipeline will get only new messages.
@@ -227,7 +216,7 @@ If you wish to create your own pipelines, you can leverage source and resource m
        print(pipeline.last_trace.last_normalize_info)
    ```
 
-1. To parse JSON with a simple decoder:
+1. シンプルなデコーダーでJSONを解析する:
 
    ```py
    def _maybe_parse_json(item: TDataItem) -> TDataItem:
@@ -241,7 +230,7 @@ If you wish to create your own pipelines, you can leverage source and resource m
    print(info)
    ```
 
-1. To read Kinesis messages and send them somewhere without using a pipeline:
+1. パイプラインを使用せずにKinesisメッセージを読み取り、どこかに送信する:
 
    ```py
    from dlt.common.configuration.container import Container

@@ -6,67 +6,67 @@ keywords: [bigquery, destination, data warehouse]
 
 # Google BigQuery
 
-## Install dlt with BigQuery
+## BigQuery で dlt をインストールする
 
-**To install the dlt library with BigQuery dependencies:**
+**BigQuery の依存関係を持つ dlt ライブラリをインストールするには:**
 
 ```sh
 pip install "dlt[bigquery]"
 ```
 
-## Setup guide
+## セットアップガイド
 
-**1. Initialize a project with a pipeline that loads to BigQuery by running:**
+**1. 以下を実行して、BigQuery にロードするパイプラインでプロジェクトを初期化します:**
 
 ```sh
 dlt init chess bigquery
 ```
 
-**2. Install the necessary dependencies for BigQuery by running:**
+**2. BigQueryに必要な依存関係をインストールするには、以下を実行します:**
 
 ```sh
 pip install -r requirements.txt
 ```
 
-This will install dlt with the `bigquery` extra, which contains all the dependencies required by the BigQuery client.
+これにより、BigQuery クライアントに必要なすべての依存関係が含まれる `bigquery` などとともに dlt がインストールされます。
 
-**3. Log in to or create a Google Cloud account**
+**3. Google Cloud アカウントにログインまたは作成する**
 
-Sign up for or log in to the [Google Cloud Platform](https://console.cloud.google.com/) in your web browser.
+Web ブラウザで [Google Cloud Platform](https://console.cloud.google.com/) にサインアップまたはログインします。
 
-**4. Create a new Google Cloud project**
+**4. 新しい Google Cloud プロジェクトを作成する**
 
-After arriving at the [Google Cloud console welcome page](https://console.cloud.google.com/welcome), click the project selector in the top left, then click the `New Project` button, and finally click the `Create` button after naming the project whatever you would like.
+[Google Cloud コンソールのウェルカム ページ](https://console.cloud.google.com/welcome) にアクセスしたら、左上にあるプロジェクトセレクターをクリックし、`新しいプロジェクト` ボタンをクリックし、最後にプロジェクトに任意の名前を付けて `作成` ボタンをクリックします。
 
-**5. Create a service account and grant BigQuery permissions**
+**5. サービスアカウントを作成し、BigQuery 権限を付与する**
 
-You will then need to [create a service account](https://cloud.google.com/iam/docs/creating-managing-service-accounts#creating). After clicking the `Go to Create service account` button on the linked docs page, select the project you created and name the service account whatever you would like.
+次に、[サービス アカウントを作成](https://cloud.google.com/iam/docs/creating-managing-service-accounts#creating)する必要があります。リンクされたドキュメント ページで `サービス アカウントの作成に移動` ボタンをクリックした後、作成したプロジェクトを選択し、サービス アカウントに任意の名前を付けます。
 
-Click the `Continue` button and grant the following roles, so that `dlt` can create schemas and load data:
+`続行`ボタンをクリックして次のロールを付与し、`dlt` がスキーマを作成してデータをロードできるようにします。:
 
 - *BigQuery Data Editor*
 - *BigQuery Job User*
 - *BigQuery Read Session User*
 
-You don't need to grant users access to this service account now, so click the `Done` button.
+現時点ではユーザーにこのサービス アカウントへのアクセスを許可する必要はないので、`完了`ボタンをクリックします。
 
-**6. Download the service account JSON**
+**6. サービスアカウントJSONをダウンロードする**
 
-In the service accounts table page that you're redirected to after clicking `Done` as instructed above, select the three dots under the `Actions` column for the service account you created and select `Manage keys`.
+上記の手順に従って`完了`をクリックした後にリダイレクトされるサービスアカウントテーブルページで、作成したサービスアカウントの`アクション`列の下の 3 つのドットを選択し、`キーの管理`を選択します。
 
-This will take you to a page where you can click the `Add key` button, then the `Create new key` button, and finally the `Create` button, keeping the preselected `JSON` option.
+これにより、`キーの追加` ボタン、`新しいキーの作成` ボタン、最後に `作成` ボタンをクリックできるページが表示されます。`JSON` オプションは事前に選択されています。
 
-A `JSON` file that includes your service account private key will then be downloaded.
+サービス アカウントの秘密キーを含む `JSON` ファイルがダウンロードされます。
 
-**7. Update your `dlt` credentials file with your service account info**
+**7. サービス アカウント情報を使用して `dlt` 認証情報ファイルを更新します。**
 
-Open your `dlt` credentials file:
+`dlt` 認証情報ファイルを開く:
 
 ```sh
 open .dlt/secrets.toml
 ```
 
-Replace the `project_id`, `private_key`, and `client_email` with the values from the downloaded `JSON` file:
+`project_id`、`private_key`、`client_email` を、ダウンロードした `JSON` ファイルの値に置き換えます:
 
 ```toml
 [destination.bigquery]
@@ -78,11 +78,11 @@ private_key = "private_key" # please set me up!
 client_email = "client_email" # please set me up!
 ```
 
-You can specify the location of the data, i.e., `EU` instead of `US`, which is the default.
+データの場所を指定できます。つまり、デフォルトの `US` ではなく `EU` を指定できます。
 
-### OAuth 2.0 authentication
+### OAuth 2.0 認証
 
-You can use OAuth 2.0 authentication. You'll need to generate a **refresh token** with the right scopes (we suggest asking our GPT-4 assistant for details). Then you can fill the following information in `secrets.toml`:
+OAuth 2.0認証を使用できます。適切なスコープで**リフレッシュトークン**を生成する必要があります（詳細についてはGPT-4アシスタントに問い合わせることをお勧めします）。次に、`secrets.toml` に次の情報を入力できます:
 
 ```toml
 [destination.bigquery]
@@ -95,18 +95,19 @@ client_secret = "client_secret"  # please set me up!
 refresh_token = "refresh_token"  # please set me up!
 ```
 
-### Using default credentials
+### デフォルトの資格情報の使用
 
-Google provides several ways to get default credentials, i.e., from the `GOOGLE_APPLICATION_CREDENTIALS` environment variable or metadata services. VMs available on GCP (cloud functions, Composer runners, Colab notebooks) have associated service accounts or authenticated users. `dlt` will try to use default credentials if nothing is explicitly specified in the secrets.
+Google は、`GOOGLE_APPLICATION_CREDENTIALS` 環境変数やメタデータ サービスなど、デフォルトの認証情報を取得する方法をいくつか提供しています。GCP で利用可能な VM (クラウド ファンクション、Composer ランナー、Colab ノートブック) には、関連付けられたサービス アカウントまたは認証済みユーザーがあります。シークレットに何も明示的に指定されていない場合、`dlt` はデフォルトの認証情報を使用しようとします。
 
 ```toml
 [destination.bigquery]
 location = "US"
 ```
 
-### Using different `project_id`
+### 異なる `project_id` を使用する
 
-You can set the `project_id` in your configuration to be different from the one in your credentials, provided your account has access to it:
+アカウントがアクセスできる場合は、構成内の `project_id` を資格情報内のものと異なる値に設定できます:
+
 ```toml
 [destination.bigquery]
 project_id = "project_id_destination"
@@ -114,23 +115,25 @@ project_id = "project_id_destination"
 [destination.bigquery.credentials]
 project_id = "project_id_credentials"
 ```
-In this scenario, `project_id_credentials` will be used for authentication, while `project_id_destination` will be used as the data destination.
 
-## Write disposition
+このシナリオでは、`project_id_credentials` が認証に使用され、`project_id_destination` がデータの送信先として使用されます。
 
-All write dispositions are supported.
+## 書き込み処理
 
-If you set the [`replace` strategy](../../general-usage/full-loading.md) to `staging-optimized`, the destination tables will be dropped and recreated with a [clone command](https://cloud.google.com/bigquery/docs/table-clones-create) from the staging tables.
+すべての書き込み処理がサポートされています。
 
-## Data loading
+[`replace` 戦略](../../general-usage/full-loading.md) を `staging-optimized` に設定すると、宛先テーブルが削除され、ステージング テーブルから [clone コマンド](https://cloud.google.com/bigquery/docs/table-clones-create) を使用して再作成されます。
 
-`dlt` uses `BigQuery` load jobs that send files from the local filesystem or GCS buckets.
-The loader follows [Google recommendations](https://cloud.google.com/bigquery/docs/error-messages) when retrying and terminating jobs.
-The Google BigQuery client implements an elaborate retry mechanism and timeouts for queries and file uploads, which may be configured in destination options.
+## データのロード
 
-BigQuery destination also supports [streaming insert](https://cloud.google.com/bigquery/docs/streaming-data-into-bigquery). The mode provides better performance with small (<500 records) batches, but it buffers the data, preventing any update/delete operations on it. Due to this, streaming inserts are only available with `write_disposition="append"`, and the inserted data is blocked for editing for up to 90 min (reading, however, is available immediately). [See more](https://cloud.google.com/bigquery/quotas#streaming_inserts).
+`dlt` は、ローカル ファイル システムまたは GCS バケットからファイルを送信する `BigQuery` ロード ジョブを使用します。
+ローダーは、ジョブを再試行および終了するときに [Google の推奨事項](https://cloud.google.com/bigquery/docs/error-messages) に従います。
+Google BigQuery クライアントは、クエリとファイルのアップロードに対して精巧な再試行メカニズムとタイムアウトを実装しており、これらは宛先オプションで設定できます。
 
-To switch the resource into streaming insert mode, use hints:
+BigQuery の宛先では、[ストリーミング挿入](https://cloud.google.com/bigquery/docs/streaming-data-into-bigquery) もサポートされています。このモードでは、小規模なバッチ (<500 レコード) でパフォーマンスが向上しますが、データがバッファリングされるため、更新/削除操作ができなくなります。このため、ストリーミング挿入は `write_disposition="append"` でのみ使用でき、挿入されたデータは最大 90 分間編集がブロックされます (ただし、読み取りはすぐに使用できます)。[詳細はこちら](https://cloud.google.com/bigquery/quotas#streaming_inserts)。
+
+リソースをストリーミング挿入モードに切り替えるには、ヒントを使用します:
+
 ```py
 @dlt.resource(write_disposition="append")
 def streamed_resource():
@@ -139,15 +142,16 @@ def streamed_resource():
 streamed_resource.apply_hints(additional_table_hints={"x-insert-api": "streaming"})
 ```
 
-### Use BigQuery schema autodetect for nested fields
-You can let BigQuery infer schemas and create destination tables instead of `dlt`. As a consequence, nested fields (i.e., `RECORD`), which `dlt` does not support at
-this moment (they are stored as JSON), may be created. You can select certain resources with the [BigQuery Adapter](#bigquery-adapter) or all of them with the following config option:
+### ネストされたフィールドに BigQuery スキーマの自動検出を使用する
+
+BigQuery にスキーマを推測させて、`dlt` の代わりに宛先テーブルを作成させることができます。その結果、`dlt` が現時点でサポートしていないネストされたフィールド (つまり、`RECORD`) (JSON として保存されます) が作成されることがあります。[BigQuery アダプタ](#bigquery-adapter) を使用して特定のリソースを選択することも、次の構成オプションを使用してすべてのリソースを選択することもできます:
+
 ```toml
 [destination.bigquery]
 autodetect_schema=true
 ```
-We recommend yielding [Arrow tables](../verified-sources/arrow-pandas.md) from your resources and using the Parquet file format to load the data. In that case, the schemas generated by `dlt` and BigQuery
-will be identical. BigQuery will also preserve the column order from the generated parquet files. You can convert JSON data into Arrow tables with [pyarrow or duckdb](../verified-sources/arrow-pandas.md#loading-json-documents).
+
+リソースから [Arrow テーブル](../verified-sources/arrow-pandas.md) を生成し、Parquet ファイル形式を使用してデータをロードすることをお勧めします。その場合、`dlt` と BigQuery によって生成されるスキーマは同一になります。BigQuery は、生成された parquet ファイルの列の順序も保持します。[pyarrow または duckdb](../verified-sources/arrow-pandas.md#loading-json-documents) を使用して、JSON データを Arrow テーブルに変換できます。
 
 ```py
 import pyarrow.json as paj
@@ -166,9 +170,10 @@ pipeline.run(
   bigquery_adapter(load_cve(), autodetect_schema=True)
 )
 ```
-Above, we use the `pyarrow` library to convert a JSON document into an Arrow table and use `bigquery_adapter` to enable schema autodetect for the **cve** resource.
 
-Yielding Python dicts/lists and loading them as JSONL works as well. In many cases, the resulting nested structure is simpler than those obtained via pyarrow/duckdb and parquet. However, there are slight differences in inferred types from `dlt` (BigQuery coerces types more aggressively). BigQuery also does not try to preserve the column order in relation to the order of fields in JSON.
+上記では、`pyarrow` ライブラリを使用して JSON ドキュメントを Arrow テーブルに変換し、`bigquery_adapter` を使用して **cve** リソースのスキーマの自動検出を有効にしています。
+
+Python 辞書/リストを生成し、それを JSONL としてロードすることもできます。多くの場合、結果として得られるネストされた構造は、pyarrow/duckdb や parquet で取得されたものよりも単純です。ただし、`dlt` からの推論された型には若干の違いがあります (BigQuery は型をより積極的に強制します)。また、BigQuery は、JSON 内のフィールドの順序に関連して列の順序を保持しようとしません。
 
 ```py
 import dlt
@@ -184,73 +189,73 @@ pipeline.run(
   bigquery_adapter(load_cve(), autodetect_schema=True)
 )
 ```
-In the example below, we represent JSON data as tables up to nesting level 1. Above this nesting level, we let BigQuery create nested fields.
+
+以下の例では、JSON データをネスト レベル 1 までのテーブルとして表します。このネスト レベルより上では、BigQuery によってネストされたフィールドが作成されます。
 
 :::caution
-If you yield data as Python objects (dicts) and load this data as Parquet, the nested fields will be converted into strings. This is one of the consequences of
-`dlt` not being able to infer nested fields.
+データを Python オブジェクト (辞書) として生成し、このデータを Parquet としてロードすると、ネストされたフィールドは文字列に変換されます。これは、`dlt` がネストされたフィールドを推測できないことの結果の 1 つです。
 :::
 
-## Supported file formats
+## サポートされているファイル形式
 
-You can configure the following file formats to load data to BigQuery:
+BigQueryにデータをロードするには、次のファイル形式を設定できます:
 
-* [JSONL](../file-formats/jsonl.md) is used by default.
-* [Parquet](../file-formats/parquet.md) is supported.
+* [JSONL](../file-formats/jsonl.md) は、デフォルトです。
+* [Parquet](../file-formats/parquet.md) は、サポートされています。
 
-When staging is enabled:
+ステージングが有効になっている場合:
 
-* [JSONL](../file-formats/jsonl.md) is used by default.
-* [Parquet](../file-formats/parquet.md) is supported.
+* [JSONL](../file-formats/jsonl.md) は、デフォルトです。
+* [Parquet](../file-formats/parquet.md) は、サポートされています。
 
 :::caution
-**BigQuery cannot load JSON columns from Parquet files**. `dlt` will fail such jobs permanently. Instead:
-* Switch to JSONL to load and parse JSON properly.
-* Use schema [autodetect and nested fields](#use-bigquery-schema-autodetect-for-nested-fields)
+**BigQuery は Parquet ファイルから JSON 列を読み込むことができません**. `dlt` では、そのようなジョブは永久に失敗します。代わりに:
+* JSON を適切に読み込んで解析するには、JSONL に切り替えます。
+* スキーマを使用する [自動検出とネストされたフィールド](#use-bigquery-schema-autodetect-for-nested-fields)
 :::
 
-## Supported column hints
+## サポートされている列のヒント
 
-BigQuery supports the following [column hints](../../general-usage/schema#tables-and-columns):
+BigQuery は次の[列ヒント](../../general-usage/schema#tables-and-columns)をサポートしています:
 
-* `partition` - creates a partition with a day granularity on the decorated column (`PARTITION BY DATE`).
-  It may be used with `datetime`, `date`, and `bigint` data types.
-  Only one column per table is supported and only when a new table is created.
-  For more information on BigQuery partitioning, read the [official docs](https://cloud.google.com/bigquery/docs/partitioned-tables).
+* `partition` - 装飾された列に日単位の粒度でパーティションを作成します (`PARTITION BY DATE`)。
+`datetime`、`date`、および `bigint` データ型で使用できます。
+テーブルごとに 1 つの列のみがサポートされ、新しいテーブルが作成される場合にのみサポートされます。
+BigQuery のパーティション分割の詳細については、[公式ドキュメント](https://cloud.google.com/bigquery/docs/partitioned-tables) をご覧ください。
 
-  > ❗ `bigint` maps to BigQuery's **INT64** data type.
-  > Automatic partitioning requires converting an INT64 column to a UNIX timestamp, which `GENERATE_ARRAY` doesn't natively support.
-  > With a 10,000 partition limit, we can’t cover the full INT64 range.
-  > Instead, we set 86,400-second boundaries to enable daily partitioning.
-  > This captures typical values, but extremely large/small outliers go to an `__UNPARTITIONED__` catch-all partition.
+  > ❗ `bigint` は BigQuery の **INT64** データ型にマップされます。
+  > 自動パーティション分割では、INT64 列を UNIX タイムスタンプに変換する必要がありますが、これは `GENERATE_ARRAY` ではネイティブにサポートされていません。
+  > パーティションの制限が 10,000 個あるため、INT64 の範囲全体をカバーすることはありません。
+  > 代わりに、毎日のパーティショニングを可能にするために 86,400 秒の境界を設定しました。
+  > これは典型的な値を取得しますが、極端に大きい/小さい外れ値は `__UNPARTITIONED__` キャッチオールパーティションに送られます。
 
-* `cluster` - creates cluster column(s). Many columns per table are supported and only when a new table is created.
+* `cluster` - クラスター列を作成します。テーブルごとに複数の列がサポートされており、新しいテーブルが作成される場合のみです。
 
-### Table and column identifiers
-BigQuery uses case-sensitive identifiers by default, and this is what `dlt` assumes. If the dataset you use has case-insensitive identifiers (you have such an option
-when you create it), make sure that you use a case-insensitive [naming convention](../../general-usage/naming-convention.md#case-sensitive-and-insensitive-destinations) or you tell `dlt` about it so identifier collisions are properly detected.
+### テーブルと列の識別子
+
+BigQuery はデフォルトで大文字と小文字を区別する識別子を使用しており、`dlt` もこれを前提としています。使用するデータセットに大文字と小文字を区別しない識別子がある場合 (データセットの作成時にそのようなオプションがあります)、大文字と小文字を区別しない [命名規則](../../general-usage/naming-convention.md#case-sensitive-and-insensitive-destinations) を使用するか、識別子の衝突が適切に検出されるように `dlt` にその旨を伝えるようにしてください。
+
 ```toml
 [destination.bigquery]
 has_case_sensitive_identifiers=false
 ```
 
-You have an option to allow `dlt` to set the case sensitivity for newly created datasets. In that case, it will follow the case sensitivity of the current
-naming convention (i.e., the default **snake_case** will create a dataset with case-insensitive identifiers).
+`dlt` に、新しく作成されたデータセットの大文字と小文字の区別を設定させるオプションがあります。その場合、現在の命名規則の大文字と小文字の区別に従います (つまり、デフォルトの **snake_case** は、大文字と小文字を区別しない識別子を持つデータセットを作成します)。
+
 ```toml
 [destination.bigquery]
 should_set_case_sensitivity_on_new_dataset=true
 ```
-The option above is off by default.
 
-## Staging support
+上記のオプションはデフォルトではオフになっています。
 
-BigQuery supports GCS as a file staging destination. `dlt` will upload files in the parquet format to GCS and ask BigQuery to copy their data directly into the database.
-Please refer to the [Google Storage filesystem documentation](./filesystem.md#google-storage) to learn how to set up your GCS bucket with the bucket_url and credentials.
-If you use the same service account for GCS and your Redshift deployment, you do not need to provide additional authentication for BigQuery to be able to read from your bucket.
+## ステージングサポート
 
-Alternatively to parquet files, you can specify jsonl as the staging file format. For this, set the `loader_file_format` argument of the `run` command of the pipeline to `jsonl`.
+BigQuery は、ファイルのステージング先として GCS をサポートしています。`dlt` は parquet 形式のファイルを GCS にアップロードし、BigQuery にそのデータを直接データベースにコピーするよう要求します。bucket_url と認証情報を使用して GCS バケットを設定する方法については、[Google Storage ファイルシステムのドキュメント](./filesystem.md#google-storage) を参照してください。GCS と Redshift デプロイメントに同じサービス アカウントを使用する場合、BigQuery がバケットから読み取ることができるように追加の認証を提供する必要はありません。
 
-### BigQuery/GCS staging example
+parquet ファイルの代わりに、ステージング ファイル形式として jsonl を指定することもできます。そのためには、パイプラインの `run` コマンドの `loader_file_format` 引数を `jsonl` に設定します。
+
+### BigQuery/GCS ステージングの例
 
 ```py
 # Create a dlt pipeline that will load
@@ -264,9 +269,9 @@ pipeline = dlt.pipeline(
 )
 ```
 
-## Additional destination options
+## 追加の宛先オプション
 
-You can configure the data location and various timeouts as shown below. This information is not a secret so it can be placed in `config.toml` as well:
+以下のようにデータの場所とさまざまなタイムアウトを設定できます。この情報は秘密ではないので、`config.toml`にも配置できます:
 
 ```toml
 [destination.bigquery]
@@ -276,32 +281,32 @@ file_upload_timeout=1800.0
 retry_deadline=60.0
 ```
 
-* `location` sets the [BigQuery data location](https://cloud.google.com/bigquery/docs/locations) (default: **US**)
-* `http_timeout` sets the timeout when connecting and getting a response from the BigQuery API (default: **15 seconds**)
-* `file_upload_timeout` is a timeout for file upload when loading local files: the total time of the upload may not exceed this value (default: **30 minutes**, set in seconds)
+* `location` は [BigQuery データの場所](https://cloud.google.com/bigquery/docs/locations) を設定します (デフォルト: **US**)
+* `http_timeout` は、BigQuery API に接続して応答を取得する際のタイムアウトを設定します (デフォルト: **15 秒**)
+* `file_upload_timeout` は、ローカルファイルをロードする際のファイルアップロードのタイムアウトです。アップロードの合計時間は、この値を超えてはなりません (デフォルト: **30 分**、秒単位で設定)
 * `retry_deadline` is a deadline for a [DEFAULT_RETRY used by Google](https://cloud.google.com/python/docs/reference/storage/1.39.0/retry_timeout)
 
-### dbt support
+### dbt サポート
 
-This destination [integrates with dbt](../transformations/dbt/dbt.md) via [dbt-bigquery](https://github.com/dbt-labs/dbt-bigquery).
-Credentials, if explicitly defined, are shared with `dbt` along with other settings like **location**, retries, and timeouts.
-In the case of implicit credentials (i.e., available in a cloud function), `dlt` shares the `project_id` and delegates obtaining credentials to the `dbt` adapter.
+この宛先は、[dbt-bigquery](https://github.com/dbt-labs/dbt-bigquery) を介して [dbt と統合](../transformations/dbt/dbt.md) します。
+認証情報は、明示的に定義されている場合、**場所**、再試行、タイムアウトなどの他の設定とともに `dbt` と共有されます。
+暗黙的な認証情報 (つまり、クラウド関数で使用可能) の場合、`dlt` は `project_id` を共有し、認証情報の取得を `dbt` アダプターに委任します。
 
-### Syncing of dlt state
+### dlt の状態の同期
 
-This destination fully supports [dlt state sync](../../general-usage/state#syncing-state-with-destination).
+この宛先は、[dlt state sync](../../general-usage/state#syncing-state-with-destination)を完全にサポートします。
 
-## BigQuery adapter
+## BigQuery アダプタ
 
-You can use the `bigquery_adapter` to add BigQuery-specific hints to a resource.
-These hints influence how data is loaded into BigQuery tables, such as specifying partitioning, clustering, and numeric column rounding modes.
-Hints can be defined at both the column level and table level.
+`bigquery_adapter` を使用すると、BigQuery 固有のヒントをリソースに追加できます。
+これらのヒントは、パーティション分割、クラスタリング、数値列の丸めモードの指定など、BigQuery テーブルへのデータのロード方法に影響します。
+ヒントは、列レベルとテーブルレベルの両方で定義できます。
 
-The adapter updates the DltResource with metadata about the destination column and table DDL options.
+アダプターは、宛先列とテーブル DDL オプションに関するメタデータを使用して DltResource を更新します。
 
-### Use an adapter to apply hints to a resource
+### アダプタを使用してリソースにヒントを適用する
 
-Here is an example of how to use the `bigquery_adapter` method to apply hints to a resource on both the column level and table level:
+ここでは、`bigquery_adapter` メソッドを使用して、列レベルとテーブルレベルの両方でリソースにヒントを適用する方法の例を示します:
 
 ```py
 
@@ -335,25 +340,25 @@ bigquery_adapter(event_data, table_description="Dummy event data.")
 bigquery_adapter(event_data, insert_api="streaming")
 ```
 
-In the example above, the adapter specifies that `event_date` should be used for partitioning and both `event_date` and `user_id` should be used for clustering (in the given order) when the table is created.
+上記の例では、アダプタは、テーブルの作成時に、パーティション分割に `event_date` を使用し、クラスタリングに `event_date` と `user_id` の両方を (指定された順序で) 使用するように指定しています。
 
-Some things to note with the adapter's behavior:
+アダプタの動作に関する注意点:
 
-- You can only partition on one column (refer to [supported hints](#supported-column-hints)).
-- You can cluster on as many columns as you would like.
-- Sequential adapter calls on the same resource accumulate parameters, akin to an OR operation, for a unified execution.
+- パーティション分割できるのは1つの列のみです（[サポートされているヒント](#supported-column-hints)を参照）。
+- 必要な数の列をクラスター化できます。
+- 同じリソースに対する連続的なアダプタ呼び出しは、OR 演算に似たパラメータを蓄積し、統一された実行を実現します。
 
 :::caution
-At the time of writing, table level options aren't supported for `ALTER` operations.
+執筆時点では、`ALTER` 操作ではテーブルレベルのオプションはサポートされていません。
 
-Note that `bigquery_adapter` updates the resource *in place*, but returns the resource for convenience, i.e., both the following are valid:
+`bigquery_adapter` はリソースを *その場で* 更新しますが、便宜上リソースを返すことに注意してください。つまり、次の両方とも有効です:
 
 ```py
 bigquery_adapter(my_resource, partition="partition_column_name")
 my_resource = bigquery_adapter(my_resource, partition="partition_column_name")
 ```
 
-Refer to the [full API specification](../../api_reference/destinations/impl/bigquery/bigquery_adapter) for more details.
+詳細については、[完全な API 仕様](../../api_reference/destinations/impl/bigquery/bigquery_adapter)を参照してください。
 :::
 
 <!--@@@DLT_TUBA bigquery-->

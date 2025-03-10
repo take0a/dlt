@@ -6,39 +6,46 @@ keywords: [redshift, destination, data warehouse]
 
 # Amazon Redshift
 
-## Install dlt with Redshift
-**To install the dlt library with Redshift dependencies:**
+## Redshift と dlt をインストールする
+
+**Redshift 依存関係を持つ dlt ライブラリをインストールするには:**
+
 ```sh
 pip install "dlt[redshift]"
 ```
 
-## Setup guide
-### 1. Initialize the dlt project
+## セットアップガイド
 
-Let's start by initializing a new dlt project as follows:
+### 1. dlt プロジェクトを初期化する
+
+まず、新しい dlt プロジェクトを次のように初期化します:
 
 ```sh
 dlt init chess redshift
 ```
-> 💡 This command will initialize your pipeline with chess as the source and Redshift as the destination.
 
-The above command generates several files and directories, including `.dlt/secrets.toml` and a requirements file for Redshift. You can install the necessary dependencies specified in the requirements file by executing it as follows:
+> 💡 このコマンドは、chess をソース、Redshift を宛先としてパイプラインを初期化します。
+
+上記のコマンドは、`.dlt/secrets.toml` や Redshift の要件ファイルなど、いくつかのファイルとディレクトリを生成します。要件ファイルで指定された必要な依存関係は、次のように実行することでインストールできます:
+
 ```sh
 pip install -r requirements.txt
 ```
-or with `pip install "dlt[redshift]"`, which installs the `dlt` library and the necessary dependencies for working with Amazon Redshift as a destination.
 
-### 2. Setup Redshift cluster
-To load data into Redshift, you need to create a Redshift cluster and enable access to your IP address through the VPC inbound rules associated with the cluster. While we recommend asking our GPT-4 assistant for details, we have provided a general outline of the process below:
+または、`pip install "dlt[redshift]"` を使用すると、`dlt` ライブラリと、Amazon Redshift を宛先として使用するために必要な依存関係がインストールされます。
 
-1. You can use an existing cluster or create a new one.
-2. To create a new cluster, navigate to the 'Provisioned Cluster Dashboard' and click 'Create Cluster'.
-3. Specify the required details such as 'Cluster Identifier', 'Node Type', 'Admin User Name', 'Admin Password', and 'Database Name'.
-4. In the 'Network and Security' section, you can configure the cluster's VPC (Virtual Private Cloud). Remember to add your IP address to the inbound rules of the VPC on AWS.
+### 2. Redshift クラスターのセットアップ
 
-### 3. Add credentials
+Redshift にデータをロードするには、Redshift クラスターを作成し、クラスターに関連付けられた VPC インバウンド ルールを通じて IP アドレスへのアクセスを有効にする必要があります。詳細については GPT-4 アシスタントに問い合わせることをお勧めしますが、以下にプロセスの概要を示します:
 
-1. Next, set up the Redshift credentials in the `.dlt/secrets.toml` file as shown below:
+1. 既存のクラスターを使用することも、新しいクラスターを作成することもできます。
+2. 新しいクラスターを作成するには、「プロビジョニングされたクラスターダッシュボード」に移動し、「クラスターの作成」をクリックします。
+3. 「クラスター識別子」、「ノード タイプ」、「管理者ユーザー名」、「管理者パスワード」、「データベース名」などの必要な詳細を指定します。
+4. 「ネットワークとセキュリティ」セクションでは、クラスターの VPC (仮想プライベートクラウド) を設定できます。AWS 上の VPC の受信ルールに IP アドレスを追加することを忘れないでください。
+
+### 3. 資格情報を追加する
+
+1. 次に、以下に示すように、`.dlt/secrets.toml` ファイルに Redshift 認証情報を設定します:
 
     ```toml
     [destination.redshift.credentials]
@@ -50,7 +57,7 @@ To load data into Redshift, you need to create a Redshift cluster and enable acc
     connect_timeout = 15 # Enter the timeout value
     ```
 
-2. The "host" is derived from the cluster endpoint specified in the “General Configuration.” For example:
+2. 「ホスト」は、「一般設定」で指定されたクラスターエンドポイントから派生します。例:
 
     ```sh
     # If the endpoint is:
@@ -59,77 +66,81 @@ To load data into Redshift, you need to create a Redshift cluster and enable acc
     redshift-cluster-1.cv3cmsy7t4il.us-east-1.redshift.amazonaws.com
     ```
 
-3. The `connect_timeout` is the number of minutes the pipeline will wait before timing out.
+3. `connect_timeout` は、パイプラインがタイムアウトするまで待機する分数です。
 
-You can also pass a database connection string similar to the one used by the `psycopg2` library or [SQLAlchemy](https://docs.sqlalchemy.org/en/20/core/engines.html#postgresql). The credentials above will look like this:
+`psycopg2` ライブラリや [SQLAlchemy](https://docs.sqlalchemy.org/en/20/core/engines.html#postgresql) で使用されるものと同様のデータベース接続文字列を渡すこともできます。上記の資格情報は次のようになります:
+
 ```toml
 # Keep it at the top of your TOML file, before any section starts
 destination.redshift.credentials="redshift://loader:<password>@localhost/dlt_data?connect_timeout=15"
 ```
 
 :::note
-Use the PostgreSQL driver for PostgreSQL-based setups or the Amazon Redshift driver for native Redshift; [see documentation](https://docs.aws.amazon.com/redshift/latest/dg/c_redshift-postgres-jdbc.html).
+PostgreSQL ベースのセットアップには PostgreSQL ドライバーを使用し、ネイティブ Redshift には Amazon Redshift ドライバーを使用します。[ドキュメントを参照](https://docs.aws.amazon.com/redshift/latest/dg/c_redshift-postgres-jdbc.html)。
 :::
 
-## Write disposition
+## 書き込み処理
 
-All [write dispositions](../../general-usage/incremental-loading#choosing-a-write-disposition) are supported.
+すべての [書き込み処理](../../general-usage/incremental-loading#choosing-a-write-disposition) がサポートされています。
 
-## Supported file formats
-[SQL Insert](../file-formats/insert-format) is used by default.
+## サポートされているファイル形式
 
-When staging is enabled:
-* [JSONL](../file-formats/jsonl.md) is used by default.
-* [Parquet](../file-formats/parquet.md) is supported.
+デフォルトでは[SQL Insert](../file-formats/insert-format)が使用されます。
+
+ステージングが有効になっている場合:
+
+* [JSONL](../file-formats/jsonl.md) は、デフォルトです。
+* [Parquet](../file-formats/parquet.md) は、サポートされます。
 
 :::caution
-- **Redshift cannot load `VARBYTE` columns from JSON files**. `dlt` will fail such jobs permanently. Switch to Parquet to load binaries.
+- **Redshift は JSON ファイルから `VARBYTE` 列をロードできません**。 `dlt` では、このようなジョブが永久に失敗します。バイナリをロードするには Parquet に切り替えてください。
 
-- **Redshift cannot load `TIME` columns from JSON or Parquet files**. `dlt` will fail such jobs permanently. Switch to direct `insert_values` to load time columns.
+- **Redshift は JSON または Parquet ファイルから `TIME` 列をロードできません**。 `dlt` はこのようなジョブを永久に失敗します。時間列をロードするために `insert_values` を直接実行するように切り替えます。
 
-- **Redshift cannot detect compression type from JSON files**. `dlt` assumes that JSONL files are gzip compressed, which is the default.
+- **Redshift は JSON ファイルから圧縮タイプを検出できません**。 `dlt` は、JSONL ファイルが gzip 圧縮されていると想定します (これがデフォルトです)。
 
-- **Redshift loads JSON types as strings into SUPER with Parquet**. Use JSONL format to store JSON in SUPER natively or transform your SUPER columns with `PARSE_JSON`.
+- **Redshift は Parquet を使用して JSON 型を文字列として SUPER に読み込みます**。 JSONL 形式を使用して JSON を SUPER にネイティブに保存するか、`PARSE_JSON` を使用して SUPER 列を変換します。
 :::
 
-## Supported column hints
+## サポートされている列のヒント
 
-Amazon Redshift supports the following column hints:
+Amazon Redshiftは次の列ヒントをサポートしています:
 
-- `cluster` - This hint is a Redshift term for table distribution. Applying it to a column makes it the "DISTKEY," affecting query and join performance. Check the following [documentation](https://docs.aws.amazon.com/redshift/latest/dg/c_best-practices-best-dist-key.html) for more info.
-- `sort` - This hint creates a SORTKEY to order rows on disk physically. It is used to improve query and join speed in Redshift. Please read the [sort key docs](https://docs.aws.amazon.com/redshift/latest/dg/c_best-practices-sort-key.html) to learn more.
+- `cluster` - このヒントは、テーブル分散を表す Redshift 用語です。これを列に適用すると、その列は「DISTKEY」となり、クエリと結合のパフォーマンスに影響します。詳細については、次の [ドキュメント](https://docs.aws.amazon.com/redshift/latest/dg/c_best-practices-best-dist-key.html) を確認してください。
+- `sort` - このヒントは、ディスク上の行を物理的に順序付けるための SORTKEY を作成します。これは、Redshift でのクエリと結合の速度を向上させるために使用されます。詳細については、[ソートキーのドキュメント](https://docs.aws.amazon.com/redshift/latest/dg/c_best-practices-sort-key.html) をお読みください。
 
-### Table and column identifiers
-Redshift **by default** uses case-insensitive identifiers and **will lower case all the identifiers** that are stored in the INFORMATION SCHEMA. Do not use
-[case-sensitive naming conventions](../../general-usage/naming-convention.md#case-sensitive-and-insensitive-destinations). Letter casing will be removed anyway, and you risk generating identifier collisions, which are detected by `dlt` and will fail the load process.
+### テーブルと列の識別子
 
-You can [put Redshift in case-sensitive mode](https://docs.aws.amazon.com/redshift/latest/dg/r_enable_case_sensitive_identifier.html). Configure your destination as below in order to use case-sensitive naming conventions:
+Redshift は**デフォルトで**、大文字と小文字を区別しない識別子を使用し、INFORMATION SCHEMA に保存される**すべての識別子を小文字にします**。[大文字と小文字を区別する命名規則](../../general-usage/naming-convention.md#case-sensitive-and-insensitive-destinations) は使用しないでください。いずれにしても大文字と小文字は削除され、識別子の衝突が発生するリスクがあります。これは `dlt` によって検出され、ロード プロセスが失敗します。
+
+[Redshift を大文字と小文字を区別するモードにする](https://docs.aws.amazon.com/redshift/latest/dg/r_enable_case_sensitive_identifier.html)ことができます。大文字と小文字を区別する命名規則を使用するには、次のように宛先を設定します:
+
 ```toml
 [destination.redshift]
 has_case_sensitive_identifiers=true
 ```
 
+## ステージングサポート
 
-## Staging support
+Redshift は、ファイルのステージング先として s3 をサポートしています。`dlt` は parquet 形式のファイルを s3 にアップロードし、そのデータを直接 db にコピーするように Redshift に要求します。bucket_url と認証情報を使用して s3 バケットを設定する方法については、[S3 ドキュメント](./filesystem.md#aws-s3) を参照してください。`dlt` Redshift ローダーは、特に指定がない限り、s3 に提供された AWS 認証情報を使用して s3 バケットにアクセスします (以下の構成オプションを参照)。parquet ファイルの代わりに、ステージング ファイル形式として jsonl を指定することもできます。これを行うには、パイプラインの `run` コマンドの `loader_file_format` 引数を `jsonl` に設定します。
 
-Redshift supports s3 as a file staging destination. `dlt` will upload files in the parquet format to s3 and ask Redshift to copy their data directly into the db. Please refer to the [S3 documentation](./filesystem.md#aws-s3) to learn how to set up your s3 bucket with the bucket_url and credentials. The `dlt` Redshift loader will use the AWS credentials provided for s3 to access the s3 bucket if not specified otherwise (see config options below). Alternatively to parquet files, you can also specify jsonl as the staging file format. For this, set the `loader_file_format` argument of the `run` command of the pipeline to `jsonl`.
+## 識別子名と大文字と小文字の区別
 
-## Identifier names and case sensitivity
-* Up to 127 characters
-* Case insensitive
-* Stores identifiers in lower case
-* Has case-sensitive mode, if enabled you must [enable case sensitivity in destination factory](../../general-usage/destination.md#control-how-dlt-creates-table-column-and-other-identifiers)
+* 最大127文字
+* 大文字と小文字を区別しない
+* 識別子を小文字で保存します
+* 大文字と小文字を区別するモードがあり、有効になっている場合は、[宛先ファクトリで大文字と小文字の区別を有効にする](../../general-usage/destination.md#control-how-dlt-creates-table-column-and-other-identifiers)必要があります。
 
-### Authentication IAM Role
+### 認証IAMロール
 
-If you would like to load from s3 without forwarding the AWS staging credentials but authorize with an IAM role connected to Redshift, follow the [Redshift documentation](https://docs.aws.amazon.com/redshift/latest/mgmt/authorizing-redshift-service.html) to create a role with access to s3 linked to your Redshift cluster and change your destination settings to use the IAM role:
+AWS ステージング認証情報を転送せずに s3 からロードし、Redshift に接続された IAM ロールで認証する場合は、[Redshift ドキュメント](https://docs.aws.amazon.com/redshift/latest/mgmt/authorizing-redshift-service.html) に従って、Redshift クラスターにリンクされた s3 へのアクセス権を持つロールを作成し、IAM ロールを使用するように宛先設定を変更します。
 
 ```toml
 [destination]
 staging_iam_role="arn:aws:iam::..."
 ```
 
-### Redshift/S3 staging example code
+### Redshift/S3 ステージングのサンプルコード
 
 ```py
 # Create a dlt pipeline that will load
@@ -143,17 +154,19 @@ pipeline = dlt.pipeline(
 )
 ```
 
-## Additional destination options
-### dbt support
+## 追加の宛先オプション
 
-- This destination [integrates with dbt](../transformations/dbt) via [dbt-redshift](https://github.com/dbt-labs/dbt-redshift). Credentials and timeout settings are shared automatically with `dbt`.
+### dbt サポート
 
-### Syncing of `dlt` state
-- This destination fully supports [dlt state sync.](../../general-usage/state#syncing-state-with-destination)
+- この宛先は、[dbt-redshift](https://github.com/dbt-labs/dbt-redshift) を介して [dbt と統合](../transformations/dbt) します。資格情報とタイムアウト設定は `dbt` と自動的に共有されます。
 
-## Supported loader file formats
+### `dlt` の状態の同期
 
-Supported loader file formats for Redshift are `sql` and `insert_values` (default). When using a staging location, Redshift supports Parquet and JSONL.
+- この宛先は、[dlt state sync.](../../general-usage/state#syncing-state-with-destination) を完全にサポートしています。
+
+## サポートされているローダーファイル形式
+
+Redshift でサポートされているローダー ファイル形式は、`sql` と `insert_values` (デフォルト) です。ステージング ロケーションを使用する場合、Redshift は Parquet と JSONL をサポートします。
 
 <!--@@@DLT_TUBA redshift-->
 

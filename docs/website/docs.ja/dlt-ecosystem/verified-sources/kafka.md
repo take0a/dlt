@@ -9,56 +9,46 @@ import Header from './_source-info-header.md';
 
 <Header/>
 
-[Kafka](https://www.confluent.io/) is an open-source distributed event streaming platform, organized
-in the form of a log with message publishers and subscribers.
-The Kafka `dlt` verified source loads data using the Confluent Kafka API to the destination of your choice.
-See a [pipeline example](https://github.com/dlt-hub/verified-sources/blob/master/sources/kafka_pipeline.py).
+[Kafka](https://www.confluent.io/) は、メッセージの発行者と購読者を含むログの形式で編成されたオープンソースの分散イベントストリーミングプラットフォームです。
+Kafka `dlt` 検証済みソースは、Confluent Kafka API を使用して、選択した宛先にデータをロードします。
+[パイプラインの例](https://github.com/dlt-hub/verified-sources/blob/master/sources/kafka_pipeline.py)を参照ください
 
-The resource that can be loaded:
+ロードできるリソース:
 
-| Name              | Description                                |
+| 名前              | 説明                                |
 | ----------------- |--------------------------------------------|
-| kafka_consumer    | Extracts messages from Kafka topics        |
+| kafka_consumer    | Kafkaトピックからメッセージを抽出します        |
 
-## Setup guide
+## セットアップガイド
 
-### Grab Kafka cluster credentials
+### Kafka クラスターの資格情報を取得する
 
-1. Follow the [Kafka Setup](https://developer.confluent.io/get-started/python/#kafka-setup) to tweak a
-project.
-2. Follow the [Configuration](https://developer.confluent.io/get-started/python/#configuration) to
-get the project credentials.
+1. プロジェクトを微調整するには、[Kafka セットアップ](https://developer.confluent.io/get-started/python/#kafka-setup) に従ってください。
+2. [構成](https://developer.confluent.io/get-started/python/#configuration)に従って、プロジェクトの資格情報を取得します。
 
-### Initialize the verified source
+### 検証済みソースを初期化する
 
-To get started with your data pipeline, follow these steps:
+データパイプラインを開始するには、次の手順に従ってください:
 
-1. Enter the following command:
+1. 次のコマンドを入力してください:
 
    ```sh
    dlt init kafka duckdb
    ```
 
-   [This command](../../reference/command-line-interface) will initialize
-   [the pipeline example](https://github.com/dlt-hub/verified-sources/blob/master/sources/kafka_pipeline.py)
-   with Kafka as the [source](../../general-usage/source) and [duckdb](../destinations/duckdb.md)
-   as the [destination](../destinations).
+   [このコマンド](../../reference/command-line-interface)は、Kafka を[ソース](../../general-usage/source)、[duckdb](../destinations/duckdb.md) を[宛先](../destinations)として[パイプラインの例](https://github.com/dlt-hub/verified-sources/blob/master/sources/kafka_pipeline.py)を初期化します。
 
-2. If you'd like to use a different destination, simply replace `duckdb` with the name of your
-   preferred [destination](../destinations).
+2. 別の宛先を使用する場合は、`duckdb` を希望する[宛先](../destinations)の名前に置き換えてください。
 
-3. After running this command, a new directory will be created with the necessary files and
-   configuration settings to get started.
+3. このコマンドを実行すると、開始するために必要なファイルと構成設定を含む新しいディレクトリが作成されます。
 
-For more information, read the
-[Walkthrough: Add a verified source.](../../walkthroughs/add-a-verified-source)
+詳細については、[ウォークスルー: 検証済みソースを追加する](../../walkthroughs/add-a-verified-source)をお読みください。
 
-### Add credentials
+### 資格情報を追加する
 
-1. In the `.dlt` folder, there's a file called `secrets.toml`. It's where you store sensitive
-   information securely, like access tokens. Keep this file safe.
+1. `.dlt` フォルダには、`secrets.toml` というファイルがあります。アクセス トークンなどの機密情報を安全に保存する場所です。このファイルを安全に保管してください。
 
-   Use the following format for service account authentication:
+   サービスアカウント認証には次の形式を使用します:
 
 ```toml
 [sources.kafka.credentials]
@@ -70,44 +60,41 @@ sasl_username="example_username"
 sasl_password="example_secret"
 ```
 
-2. Enter credentials for your chosen destination as per the [docs](../destinations/).
+2. [ドキュメント](../destinations/)に従って、選択した宛先の資格情報を入力します。
 
-## Run the pipeline
+## パイプラインを実行する
 
-1. Before running the pipeline, ensure that you have installed all the necessary dependencies by
-   running the command:
+1. パイプラインを実行する前に、次のコマンドを実行して必要な依存関係がすべてインストールされていることを確認してください:
 
    ```sh
    pip install -r requirements.txt
    ```
 
-2. You're now ready to run the pipeline! To get started, run the following command:
+2. これでパイプラインを実行する準備ができました。開始するには、次のコマンドを実行します:
 
    ```sh
    python kafka_pipeline.py
    ```
 
-3. Once the pipeline has finished running, you can verify that everything loaded correctly by using
-   the following command:
+3. パイプラインの実行が終了したら、次のコマンドを使用してすべてが正しくロードされたことを確認できます:
 
    ```sh
    dlt pipeline <pipeline_name> show
    ```
 
-For more information, read the [Walkthrough: Run a pipeline](../../walkthroughs/run-a-pipeline).
+詳細については、[ウォークスルー: パイプラインを実行する](../../walkthroughs/run-a-pipeline)をお読みください。
 
 :::info
-If you created a topic and start reading from it immediately, the brokers may not yet be synchronized, and the offset from which `dlt` reads messages may become invalid. In this case, the resource will return no messages. Pending messages will be received on the next run (or when brokers synchronize).
+トピックを作成してすぐに読み取りを開始すると、ブローカーがまだ同期されていない可能性があり、`dlt` がメッセージを読み取るオフセットが無効になる可能性があります。この場合、リソースはメッセージを返しません。保留中のメッセージは、次回の実行時 (またはブローカーが同期するとき) に受信されます。
 :::
 
-## Sources and resources
+## ソースとリソース
 
-`dlt` works on the principle of [sources](../../general-usage/source) and
-[resources](../../general-usage/resource).
+`dlt`は[ソース](../../general-usage/source)と[リソース](../../general-usage/resource)の原則に基づいて動作します。
 
-### Source `kafka_consumer`
+### `kafka_consumer` ソース
 
-This function retrieves messages from the given Kafka topics.
+この関数は指定されたKafkaトピックからメッセージを取得します.
 
 ```py
 @dlt.resource(name="kafka_messages", table_name=lambda msg: msg["_kafka"]["topic"], standalone=True)
@@ -122,36 +109,23 @@ def kafka_consumer(
    ...
 ```
 
-`topics`: A list of Kafka topics to be extracted.
+`topics`: 抽出する Kafka トピックのリスト。
 
-`credentials`: By default, it is initialized with the data from
-the `secrets.toml`. It may be used explicitly to pass an initialized
-Kafka Consumer object.
+`credentials`: デフォルトでは、`secrets.toml` のデータで初期化されます。初期化された Kafka Consumer オブジェクトを渡すために明示的に使用できます。
 
-`msg_processor`: A function that will be used to process every message
-read from the given topics before saving them in the destination.
-It can be used explicitly to pass a custom processor. See the
-[default processor](https://github.com/dlt-hub/verified-sources/blob/fe8ed7abd965d9a0ca76d100551e7b64a0b95744/sources/kafka/helpers.py#L14-L50)
-as an example of how to implement processors.
+`msg_processor`: 指定されたトピックから読み取られたすべてのメッセージを、宛先に保存する前に処理するために使用される関数です。カスタム プロセッサを渡すために明示的に使用できます。プロセッサの実装方法の例として、[デフォルトのプロセッサ](https://github.com/dlt-hub/verified-sources/blob/fe8ed7abd965d9a0ca76d100551e7b64a0b95744/sources/kafka/helpers.py#L14-L50)を参照してください。
 
-`batch_size`: The number of messages to extract from the cluster
-at once. It can be set to tweak performance.
+`batch_size`: クラスターから一度に抽出するメッセージの数。パフォーマンスを微調整するために設定できます。
 
-`batch_timeout`: The maximum timeout (in seconds) for a single batch reading
-operation. It can be set to tweak performance.
+`batch_timeout`: 1 回のバッチ読み取り操作の最大タイムアウト (秒単位)。パフォーマンスを微調整するために設定できます。
 
-`start_from`: A timestamp, starting from which the messages must
-be read. When passed, `dlt` asks the Kafka cluster for an offset,
-which is actual for the given timestamp, and starts to read messages from
-this offset.
+`start_from`: メッセージの読み取り開始点となるタイムスタンプ。渡されると、`dlt` は Kafka クラスターに指定されたタイムスタンプの実際のオフセットを要求し、このオフセットからメッセージの読み取りを開始します。
 
+## カスタマイズ
 
-## Customization
+### 独自のパイプラインを作成する
 
-### Create your own pipeline
-
-
-1. Configure the pipeline by specifying the pipeline name, destination, and dataset as follows:
+1. パイプライン名、宛先、データセットを次のように指定してパイプラインを構成します:
 
    ```py
    pipeline = dlt.pipeline(
@@ -161,7 +135,7 @@ this offset.
    )
    ```
 
-2. To extract several topics:
+2. 複数のトピックを抽出する:
 
    ```py
    topics = ["topic1", "topic2", "topic3"]
@@ -170,7 +144,7 @@ this offset.
    pipeline.run(resource, write_disposition="replace")
    ```
 
-3. To extract messages and process them in a custom way:
+3. メッセージを抽出し、カスタムした方法で処理する:
 
    ```py
     def custom_msg_processor(msg: confluent_kafka.Message) -> Dict[str, Any]:
@@ -187,7 +161,7 @@ this offset.
     pipeline.run(resource)
    ```
 
-4. To extract messages, starting from a timestamp:
+4. タイムスタンプからメッセージを抽出するには:
 
    ```py
     resource = kafka_consumer("topic", start_from=pendulum.DateTime(2023, 12, 15))

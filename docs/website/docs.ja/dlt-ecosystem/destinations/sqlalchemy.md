@@ -4,54 +4,60 @@ description: SQLAlchemy destination
 keywords: [sql, sqlalchemy, database, destination]
 ---
 
-# SQLAlchemy destination
+# SQLAlchemy の宛先
 
-The SQLAlchemy destination allows you to use any database that has an [SQLAlchemy dialect](https://docs.sqlalchemy.org/en/20/dialects/) implemented as a destination.
+SQLAlchemy 宛先を使用すると、[SQLAlchemy 方言](https://docs.sqlalchemy.org/en/20/dialects/) が実装されている任意のデータベースを宛先として使用できます。
 
-Currently, MySQL and SQLite are considered to have full support and are tested as part of the `dlt` CI suite. Other dialects are not tested but should generally work.
+現在、MySQL と SQLite は完全にサポートされていると考えられており、`dlt` CI スイートの一部としてテストされています。他の方言はテストされていませんが、通常は動作するはずです。
 
-## Install dlt with SQLAlchemy
+## SQLAlchemyでdltをインストールする
 
-Install dlt with the `sqlalchemy` extra dependency:
+`sqlalchemy` の追加依存関係を使用して dlt をインストールする:
 
 ```sh
 pip install "dlt[sqlalchemy]"
 ```
 
-Note that database drivers are not included and need to be installed separately for the database you plan on using. For example, for MySQL:
+データベースドライバは含まれていないので、使用する予定のデータベースに合わせて別途インストールする必要があることに注意してください。たとえば、MySQLの場合:
 
 ```sh
 pip install mysqlclient
 ```
 
-Refer to the [SQLAlchemy documentation on dialects](https://docs.sqlalchemy.org/en/20/dialects/) for information about client libraries required for supported databases.
+サポートされているデータベースに必要なクライアント ライブラリの詳細については、[方言に関する SQLAlchemy のドキュメント](https://docs.sqlalchemy.org/en/20/dialects/)を参照してください。
 
-### Create a pipeline
+### パイプラインを作成する
 
-**1. Initialize a project with a pipeline that loads to MS SQL by running:**
+**1. MS SQLにロードするパイプラインでプロジェクトを初期化するために、以下を実行します:**
+
 ```sh
 dlt init chess sqlalchemy
 ```
 
-**2. Install the necessary dependencies for SQLAlchemy by running:**
+**2. SQLAlchemyに必要な依存関係をインストールするには、以下を実行します:**
+
 ```sh
 pip install -r requirements.txt
 ```
-or run:
+
+または、以下を実行します:
+
 ```sh
 pip install "dlt[sqlalchemy]"
 ```
 
-**3. Install your database client library.**
+**3. データベース クライアント ライブラリをインストールします。**
 
-E.g., for MySQL:
+例えば、MySQLの場合:
+
 ```sh
 pip install mysqlclient
 ```
 
-**4. Enter your credentials into `.dlt/secrets.toml`.**
+**4. `.dlt/secrets.toml` に資格情報を入力します。**
 
-For example, replace with your database connection info:
+たとえば、データベース接続情報に置き換えます:
+
 ```toml
 [destination.sqlalchemy.credentials]
 database = "dlt_data"
@@ -62,21 +68,20 @@ port = 3306
 driver_name = "mysql"
 ```
 
-Alternatively, a valid SQLAlchemy database URL can be used, either in `secrets.toml` or as an environment variable.
-E.g.
+あるいは、`secrets.toml` 内または環境変数として、有効な SQLAlchemy データベース URL を使用することもできます。たとえば
 
 ```toml
 [destination.sqlalchemy]
 credentials = "mysql://loader:<password>@localhost:3306/dlt_data"
 ```
 
-or
+または
 
 ```sh
 export DESTINATION__SQLALCHEMY__CREDENTIALS="mysql://loader:<password>@localhost:3306/dlt_data"
 ```
 
-An SQLAlchemy `Engine` can also be passed directly by creating an instance of the destination:
+SQLAlchemyの`Engine`は、宛先のインスタンスを作成することによって直接渡すこともできます:
 
 ```py
 import sqlalchemy as sa
@@ -91,24 +96,25 @@ pipeline = dlt.pipeline(
 )
 ```
 
-## Notes on SQLite
+## SQLite に関する注意事項
 
-### Dataset files
-When using an SQLite database file, each dataset is stored in a separate file since SQLite does not support multiple schemas in a single database file.
-Under the hood, this uses [`ATTACH DATABASE`](https://www.sqlite.org/lang_attach.html).
+### データセットファイル
 
-The file is stored in the same directory as the main database file (provided by your database URL).
+SQLite データベース ファイルを使用する場合、SQLite は単一のデータベース ファイルで複数のスキーマをサポートしていないため、各データセットは別々のファイルに保存されます。
+内部的には、[`ATTACH DATABASE`](https://www.sqlite.org/lang_attach.html) が使用されます。
 
-E.g., if your SQLite URL is `sqlite:////home/me/data/chess_data.db` and your `dataset_name` is `games`, the data
-is stored in `/home/me/data/chess_data__games.db`
+ファイルは、メイン データベース ファイル (データベース URL によって提供される) と同じディレクトリに保存されます。
 
-**Note**: If the dataset name is `main`, no additional file is created as this is the default SQLite database.
+たとえば、SQLite URL が `sqlite:////home/me/data/chess_data.db` で、`dataset_name` が `games` の場合、データは `/home/me/data/chess_data__games.db` に保存されます。
 
-### In-memory databases
-In-memory databases require a persistent connection as the database is destroyed when the connection is closed.
-Normally, connections are opened and closed for each load job and in other stages during the pipeline run.
-To ensure the database persists throughout the pipeline run, you need to pass in an SQLAlchemy `Engine` object instead of credentials.
-This engine is not disposed of automatically by `dlt`. Example:
+**注記**: データセット名が `main` の場合、これはデフォルトの SQLite データベースであるため、追加のファイルは作成されません。
+
+### インメモリデータベース
+
+インメモリ データベースでは、接続が閉じられるとデータベースが破棄されるため、永続的な接続が必要です。
+通常、接続は各ロードジョブおよびパイプライン実行中の他のステージで開かれたり閉じられたりします。
+パイプラインの実行中もデータベースが維持されるようにするには、資格情報ではなく SQLAlchemy の `Engine` オブジェクトを渡す必要があります。
+このエンジンは `dlt` によって自動的に破棄されません。例:
 
 ```py
 import dlt
@@ -129,49 +135,52 @@ with engine.connect() as conn:
     print(result.fetchall())
 ```
 
-## Notes on other dialects
-We tested this destination on **mysql** and **sqlite** dialects. Below are a few notes that may help enabling other dialects:
-1. `dlt` must be able to recognize if a database exception relates to non existing entity (like table or schema). We put
-some work to recognize those for most of the popular dialects (look for `db_api_client.py`)
-2. Primary keys and unique constraints are not created by default to avoid problems with particular dialects.
-3. `merge` write disposition uses only `DELETE` and `INSERT` operations to enable as many dialects as possible.
+## 他の方言に関する注記
 
-Please report issues with particular dialects. We'll try to make them work.
+この宛先は **mysql** および **sqlite** 方言でテストしました。以下は、他の方言を有効にするのに役立つ可能性のあるいくつかの注意事項です:
 
+1. `dlt` は、データベース例外が存在しないエンティティ (テーブルやスキーマなど) に関連している場合にそれを認識できる必要があります。私たちは、一般的な方言のほとんどでそれを認識できるように取り組んでいます (`db_api_client.py` を参照してください)
+2. 特定の方言で問題が発生するのを避けるため、主キーと一意制約はデフォルトでは作成されません。
+3. `merge` 書き込み処理では、できるだけ多くの方言を有効にするために `DELETE` および `INSERT` 操作のみを使用します。
 
-## Write dispositions
+特定の方言に関する問題を報告してください。問題が解決するように努力します。
 
-The following write dispositions are supported:
+## 書き込み処理
+
+以下の書き込み処理がサポートされています:
 
 - `append`
-- `replace` with `truncate-and-insert` and `insert-from-staging` replace strategies. `staging-optimized` falls back to `insert-from-staging`.
-- `merge` with `delete-insert` and `scd2` merge strategies.
+- `replace` は `truncate-and-insert` および `insert-from-staging` 置換戦略で使用します。`staging-optimized` は `insert-from-staging` にフォールバックします。
+- `merge`　は `delete-insert` および `scd2` マージ戦略を使用します。
 
-## Data loading
+## データのロード
 
-Data is loaded in a dialect-agnostic manner with an `insert` statement generated by SQLAlchemy's core API.
-Rows are inserted in batches as long as the underlying database driver supports it. By default, the batch size is 10,000 rows.
+データは、SQLAlchemy のコア API によって生成された `insert` ステートメントを使用して、方言に依存しない方法でロードされます。
+基礎となるデータベース ドライバーがサポートしている限り、行はバッチで挿入されます。デフォルトでは、バッチ サイズは 10,000 行です。
 
-## Syncing of `dlt` state
+## `dlt` の状態の同期
 
-This destination fully supports [dlt state sync](../../general-usage/state#syncing-state-with-destination).
+この宛先は、[dlt state sync](../../general-usage/state#syncing-state-with-destination)を完全にサポートします。
 
-### Data types
+### データ型
 
-All `dlt` data types are supported, but how they are stored in the database depends on the SQLAlchemy dialect.
-For example, SQLite does not have `DATETIME` or `TIMESTAMP` types, so `timestamp` columns are stored as `TEXT` in ISO 8601 format.
+すべての `dlt` データ型がサポートされていますが、データベースにどのように格納されるかは SQLAlchemy 方言によって異なります。
+たとえば、SQLite には `DATETIME` 型や `TIMESTAMP` 型がないため、`timestamp` 列は ISO 8601 形式の `TEXT` として保存されます。
 
-## Supported file formats
+## サポートされているファイル形式
 
-* [typed-jsonl](../file-formats/jsonl.md) is used by default. JSON-encoded data with typing information included.
-* [Parquet](../file-formats/parquet.md) is supported.
+* [typed-jsonl](../file-formats/jsonl.md) がデフォルトで使用されます。型付け情報を含む JSON エンコードされたデータ。
+* [Parquet](../file-formats/parquet.md) は、サポートされています。
 
-## Supported column hints
-No indexes or constraints are created on the table. You can enable the following via destination configuration
+## サポートされている列のヒント
+
+テーブルにインデックスや制約は作成されません。宛先設定で以下を有効にすることができます。
+
 ```toml
 [destination.sqlalchemy]
 create_unique_indexes=true
 create_primary_keys=true
 ```
-* `unique` hints are translated to `UNIQUE` constraints via SQLAlchemy.
-* `primary_key` hints are translated to `PRIMARY KEY` constraints via SQLAlchemy.
+
+* `unique` ヒントは、SQLAlchemy を介して `UNIQUE` 制約に変換されます。
+* `primary_key` ヒントは、SQLAlchemy を介して `PRIMARY KEY` 制約に変換されます。

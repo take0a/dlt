@@ -1,14 +1,14 @@
 ---
-title: Advanced filesystem usage
+title: 高度なファイルシステムの使用
 description: Use filesystem source as a building block
 keywords: [readers source and filesystem, files, filesystem, readers source, cloud storage]
 ---
 
-The filesystem source provides the building blocks to load data from files. This section explains how you can customize the filesystem source for your use case.
+ファイルシステム ソースは、ファイルからデータをロードするための構成要素を提供します。このセクションでは、ユースケースに合わせてファイルシステム ソースをカスタマイズする方法について説明します。
 
-## Standalone filesystem resource
+## スタンドアロンファイルシステムリソース
 
-You can use the [standalone filesystem](../../../general-usage/resource#declare-a-standalone-resource) resource to list files in cloud storage or a local filesystem. This allows you to customize file readers or manage files using [fsspec](https://filesystem-spec.readthedocs.io/en/latest/index.html).
+[スタンドアロンファイルシステム](../../../general-usage/resource#declare-a-standalone-resource)リソースを使用して、クラウドストレージまたはローカルファイルシステム内のファイルを一覧表示できます。これにより、ファイルリーダーをカスタマイズしたり、[fsspec](https://filesystem-spec.readthedocs.io/en/latest/index.html)を使用してファイルを管理したりできます。
 
 ```py
 from dlt.sources.filesystem import filesystem
@@ -18,49 +18,49 @@ files = filesystem(bucket_url="s3://my_bucket/data", file_glob="csv_folder/*.csv
 pipeline.run(files)
 ```
 
-The filesystem ensures consistent file representation across bucket types and offers methods to access and read data. You can quickly build pipelines to:
+ファイルシステムは、バケットタイプ間で一貫したファイル表現を保証し、データにアクセスして読み取る方法を提供します:
 
-- Extract text from PDFs ([unstructured data source](https://github.com/dlt-hub/verified-sources/tree/master/sources/unstructured_data)).
-- Stream large file content directly from buckets.
-- Copy files locally ([copy files](#copy-files-locally))
+- PDFからテキストを抽出する ([非構造化データソース](https://github.com/dlt-hub/verified-sources/tree/master/sources/unstructured_data)).
+- 大きなファイルコンテンツをバケットから直接ストリーミングします。
+- ファイルをローカルにコピーする ([ファイルをコピーする](#copy-files-locally))
 
-### `FileItem` representation
+### `FileItem` 表現
 
-- All dlt sources/resources that yield files follow the [FileItem](https://github.com/dlt-hub/dlt/blob/devel/dlt/common/storages/fsspec_filesystem.py#L40) contract.
-- File content is typically not loaded (you can control it with the `extract_content` parameter of the filesystem resource). Instead, full file info and methods to access content are available.
-- Users can request an authenticated [fsspec AbstractFileSystem](https://filesystem-spec.readthedocs.io/en/latest/_modules/fsspec/spec.html#AbstractFileSystem) instance.
+- ファイルを生成するすべての dlt ソース/リソースは、[FileItem](https://github.com/dlt-hub/dlt/blob/devel/dlt/common/storages/fsspec_filesystem.py#L40) に従います。
+- ファイルコンテンツは通常は読み込まれません (ファイルシステムリソースの `extract_content` パラメータを使用して制御できます)。代わりに、完全なファイル情報とコンテンツにアクセスするためのメソッドが利用できます。
+- ユーザーは認証された [fsspec AbstractFileSystem](https://filesystem-spec.readthedocs.io/en/latest/_modules/fsspec/spec.html#AbstractFileSystem) インスタンスをリクエストできます。
 
-#### `FileItem` fields
+#### `FileItem` のフィールド
 
-- `file_url` - complete URL of the file (e.g., `s3://bucket-name/path/file`). This field serves as a primary key.
-- `file_name` - name of the file from the bucket URL.
-- `relative_path` - set when doing `glob`, is a relative path to a `bucket_url` argument.
-- `mime_type` - file's MIME type. It is sourced from the bucket provider or inferred from its extension.
-- `modification_date` - file's last modification time (format: `pendulum.DateTime`).
-- `size_in_bytes` - file size.
-- `file_content` - content, provided upon request.
+- `file_url` - ファイルの完全な URL (例: `s3://bucket-name/path/file`)。このフィールドは主キーとして機能します。
+- `file_name` - バケット URL からのファイルの名前。
+- `relative_path` - `glob` を実行するときに設定され、`bucket_url` 引数への相対パスになります。
+- `mime_type` - ファイルの MIME タイプ。バケットプロバイダーから取得されるか、拡張子から推測されます。
+- `modification_date` - ファイルの最終変更時刻 (形式: `pendulum.DateTime`)。
+- `size_in_bytes` - ファイルのサイズ.
+- `file_content` - コンテンツはリクエストに応じて提供されます。
 
 :::info
-When using a nested or recursive glob pattern, `relative_path` will include the file's path relative to `bucket_url`. For instance, using the resource: `filesystem("az://dlt-ci-test-bucket/standard_source/samples", file_glob="met_csv/A801/*.csv")` will produce file names relative to the `/standard_source/samples` path, such as `met_csv/A801/A881_20230920.csv`. For local filesystems, POSIX paths (using "/" as separator) are returned.
+ネストされたまたは再帰的な glob パターンを使用する場合、`relative_path` には `bucket_url` を基準としたファイルのパスが含まれます。たとえば、リソース `filesystem("az://dlt-ci-test-bucket/standard_source/samples", file_glob="met_csv/A801/*.csv")` を使用すると、`met_csv/A801/A881_20230920.csv` など、`/standard_source/samples` パスを基準としたファイル名が生成されます。ローカル ファイル システムの場合、POSIX パス (区切り文字として "/" を使用) が返されます。
 :::
 
-### File manipulation
+### ファイル操作
 
-[FileItem](https://github.com/dlt-hub/dlt/blob/devel/dlt/common/storages/fsspec_filesystem.py#L40), backed by a dictionary implementation, offers these helpers:
+[FileItem](https://github.com/dlt-hub/dlt/blob/devel/dlt/common/storages/fsspec_filesystem.py#L40)は、辞書実装に基づいており、これらのヘルパーを提供します:
 
-- `read_bytes()` - method, which returns the file content as bytes.
-- `open()` - method which provides a file object when opened.
-- `filesystem` - field, which gives access to authorized `AbstractFilesystem` with standard fsspec methods.
+- `read_bytes()` - ファイルの内容をバイト列として返すメソッド。
+- `open()` - 開いたときにファイル オブジェクトを提供するメソッド。
+- `filesystem` - 標準の fsspec メソッドを使用して承認された `AbstractFilesystem` へのアクセスができるフィールド。
 
-## Create your own transformer
+## 独自のトランスフォーマーを作成する
 
-Although the `filesystem` resource yields the files from cloud storage or a local filesystem, you need to apply a transformer resource to retrieve the records from files. dlt natively supports three file types: [CSV](../../file-formats/csv.md), [Parquet](../../file-formats/parquet.md), and [JSONL](../../file-formats/jsonl.md) (more details in [filesystem transformer resource](../filesystem/basic#2-choose-the-right-transformer-resource)).
+`filesystem` リソースはクラウドストレージまたはローカルファイルシステムからファイルを生成しますが、ファイルからレコードを取得するにはトランスフォーマーリソースを適用する必要があります。dlt はネイティブで 3 つのファイルタイプをサポートしています: [CSV](../../file-formats/csv.md) と [Parquet](../../file-formats/parquet.md) と [JSONL](../../file-formats/jsonl.md) (詳細については [filesystem transformer リソース](../filesystem/basic#2-choose-the-right-transformer-resource)を参照してください)
 
-But you can easily create your own. In order to do this, you just need a function that takes as input a `FileItemDict` iterator and yields a list of records (recommended for performance) or individual records.
+ただし、独自のものを簡単に作成できます。これを行うには、`FileItemDict` イテレータを入力として受け取り、レコードのリスト (パフォーマンスのために推奨) または個々のレコードを生成する関数が必要です。
 
-### Example: read data from Excel files
+### 例: Excel ファイルからデータを読み取る
 
-The code below sets up a pipeline that reads from an Excel file using a standalone transformer:
+以下のコードは、スタンドアロンのトランスフォーマーを使用してExcelファイルから読み取るパイプラインを設定します:
 
 ```py
 import dlt
@@ -97,9 +97,9 @@ load_info = pipeline.run(example_xls.with_name("example_xls_data"))
 print(load_info)
 ```
 
-### Example: read data from XML files
+### 例: XML ファイルからデータを読み取る
 
-You can use any third-party library to parse an `xml` file (e.g., [BeautifulSoup](https://pypi.org/project/beautifulsoup4/), [pandas](https://pandas.pydata.org/docs/reference/api/pandas.read_xml.html)). In the following example, we will be using the [xmltodict](https://pypi.org/project/xmltodict/) Python library.
+任意のサードパーティライブラリを使用して `xml` ファイルを解析できます (例: [BeautifulSoup](https://pypi.org/project/beautifulsoup4/)、[pandas](https://pandas.pydata.org/docs/reference/api/pandas.read_xml.html))。次の例では、[xmltodict](https://pypi.org/project/xmltodict/) Python ライブラリを使用します。
 
 ```py
 import dlt
@@ -135,9 +135,9 @@ load_info = pipeline.run(example_xml.with_name("example_xml_data"))
 print(load_info)
 ```
 
-## Clean files after loading
+## 読み込み後にファイルをクリーンアップする
 
-You can get an fsspec client from the filesystem resource after it was extracted, i.e., in order to delete processed files, etc. The filesystem module contains a convenient method `fsspec_from_resource` that can be used as follows:
+ファイルシステムリソースを抽出した後、処理済みのファイルなどを削除するために、ファイルシステムリソースから fsspec クライアントを取得できます。ファイルシステムモジュールには、次のように使用できる便利なメソッド `fsspec_from_resource` が含まれています:
 
 ```py
 from dlt.sources.filesystem import filesystem, read_csv
@@ -154,9 +154,9 @@ fs_client = fsspec_from_resource(gs_resource)
 fs_client.ls("ci-test-bucket/standard_source/samples")
 ```
 
-## Copy files locally
+## ファイルをローカルにコピーする
 
-To copy files locally, add a step in the filesystem resource and then load the listing to the database:
+ファイルをローカルにコピーするには、ファイルシステムリソースにステップを追加し、リストをデータベースにロードします:
 
 ```py
 import os
