@@ -4,73 +4,66 @@ description: How to deploy a pipeline with Dagster
 keywords: [how to, deploy a pipeline, Dagster]
 ---
 
-# Deploy with Dagster
+# Dagsterでデプロイ
 
-## Introduction to Dagster
+## Dagsterの紹介
 
-Dagster is an orchestrator designed for developing and maintaining data assets, such as
-tables, datasets, machine learning models, and reports. Dagster ensures these processes are
-reliable and focuses on using software-defined assets (SDAs) to simplify complex data management,
-enhance the ability to reuse code, and provide a better understanding of data.
+Dagster は、テーブル、データセット、機械学習モデル、レポートなどのデータ資産の開発と保守用に設計されたオーケストレーターです。Dagster は、これらのプロセスの信頼性を確保し、ソフトウェア定義資産 (SDA) を使用して複雑なデータ管理を簡素化し、コードの再利用性を高め、データの理解を深めることに重点を置いています。
 
-To read more, please refer to Dagster’s
-[documentation.](https://docs.dagster.io/getting-started?_gl=1*19ikq9*_ga*NTMwNTUxNDAzLjE3MDg5Mjc4OTk.*_ga_84VRQZG7TV*MTcwOTkwNDY3MS4zLjEuMTcwOTkwNTYzNi41Ny4wLjA.*_gcl_au*OTM3OTU1ODMwLjE3MDg5Mjc5MDA.)
+詳細については、Dagster の[ドキュメント](https://docs.dagster.io/getting-started?_gl=1*19ikq9*_ga*NTMwNTUxNDAzLjE3MDg5Mjc4OTk.*_ga_84VRQZG7TV*MTcwOTkwNDY3MS4zLjEuMTcwOTkwNTYzNi41Ny4wLjA.*_gcl_au*OTM3OTU1ODMwLjE3MDg5Mjc5MDA.)
+を参照してください。
 
-### Dagster Cloud features
+### Dagster Cloud の機能
 
-Dagster Cloud offers an enterprise-level orchestration service with serverless or hybrid deployment
-options. It incorporates native branching and built-in CI/CD to prioritize the developer experience.
-It enables scalable, cost-effective operations without the hassle of infrastructure management.
+Dagster Cloud は、サーバーレスまたはハイブリッドのデプロイメント オプションを備えたエンタープライズ レベルのオーケストレーション サービスを提供します。ネイティブ ブランチと組み込みの CI/CD を組み込んで、開発者エクスペリエンスを優先します。
+インフラストラクチャ管理の手間をかけずに、スケーラブルでコスト効率の高い運用を実現します。
 
-### Dagster deployment options: **Serverless** versus **Hybrid**
+### Dagster の展開オプション: **サーバーレス** と **ハイブリッド**
 
-The *serverless* option fully hosts the orchestration engine, while the *hybrid* model offers
-flexibility to use your computing resources, with Dagster managing the control plane, reducing
-operational overhead and ensuring security.
+*サーバーレス* オプションはオーケストレーションエンジンを完全にホストしますが、*ハイブリッド* モデルはコンピューティング リソースを使用する柔軟性を提供し、Dagster がコントロール プレーンを管理して、運用オーバーヘッドを削減し、セキュリティを確保します。
 
-For more info, please refer to the Dagster Cloud [docs.](https://dagster.io/cloud)
+詳細については、Dagster Cloud [ドキュメント](https://dagster.io/cloud)を参照してください。
 
-### Using Dagster for free
+### Dagster を無料で利用する
 
-Dagster offers a 30-day free trial during which you can explore its features, such as pipeline
-orchestration, data quality checks, and embedded ELTs. You can try Dagster using its open source or
-by signing up for the trial.
+Dagster は 30 日間の無料トライアルを提供しており、その期間中にパイプライン オーケストレーション、データ品質チェック、埋め込み ELT などの機能を試すことができます。オープン ソースを使用するか、トライアルにサインアップして Dagster を試すことができます。
 
-## Building data pipelines with `dlt`
+## `dlt` を使用したデータ パイプラインの構築
 
-**How does `dlt` integrate with Dagster for pipeline orchestration?**
+**パイプラインオーケストレーションとして `dlt` はどのように Dagster と統合されるのか？**
 
-`dlt` integrates with Dagster for pipeline orchestration, providing a streamlined process for
-building, enhancing, and managing data pipelines. This enables developers to leverage `dlt`'s
-capabilities for handling data extraction and load, and Dagster's orchestration features to efficiently manage and monitor data pipelines.
+`dlt` はパイプライン オーケストレーションのために Dagster と統合され、データ パイプラインの構築、拡張、管理のための合理化されたプロセスを提供します。これにより、開発者はデータの抽出とロードを処理するための `dlt` の機能と、データ パイプラインを効率的に管理および監視するための Dagster のオーケストレーション機能を活用することができます。
 
-Dagster supports [native integration with dlt](https://docs.dagster.io/integrations/embedded-elt/dlt),
-here is a guide on how this integration works.
+Dagster は [dlt とのネイティブ統合](https://docs.dagster.io/integrations/embedded-elt/dlt) をサポートしています。この統合の仕組みに関するガイドはこちらです。
 
-### Orchestrating `dlt` pipeline on Dagster
+### Dagster での `dlt` パイプラインのオーケストレーション
 
-Here's a concise guide to orchestrating a `dlt` pipeline with Dagster, creating a pipeline that ingests GitHub issues data from a repository and loads it into DuckDB.
+ここでは、Dagster を使用して `dlt` パイプラインをオーケストレーションし、リポジトリから GitHub の問題データを取り込み、それを DuckDB にロードするパイプラインを作成するための簡潔なガイドを紹介します。
 
-You can find the full example code in [this repository](https://github.com/dlt-hub/dlthub-education/blob/main/workshops/workshop_august_2024/part2/deployment/deploy_dagster/README.md).
+完全なサンプルコードは、[このリポジトリ](https://github.com/dlt-hub/dlthub-education/blob/main/workshops/workshop_august_2024/part2/deployment/deploy_dagster/README.md)にあります。
 
-**The steps are as follows:**
+**手順は次のとおりです:**
 
-1. Install Dagster and the embedded ELT package using pip:
+1. pip を使用して Dagster と組み込み ELT パッケージをインストールします:
+
     ```sh
     pip install dagster dagster-embedded-elt
     ```
 
-1. Set up a Dagster project:
+1. Dagster プロジェクトを設定します:
+
       ```sh
       mkdir dagster_github_issues
       cd dagster_github_issues
       dagster project scaffold --name github-issues
       ```
+
       ![image](https://github.com/user-attachments/assets/f9002de1-bcdf-49f4-941b-abd59ea7968d)
 
-1. In your Dagster project, define the dlt pipeline in the `github_source` folder.
+1. Dagster プロジェクトで、`github_source` フォルダーに dlt パイプラインを定義します。
 
-   **Note**: The dlt Dagster helper works only with dlt sources. Your resources should always be grouped in a source.
+   **注意**: dlt Dagster ヘルパーは dlt ソースでのみ機能します。リソースは常にソースにグループ化する必要があります。
+
      ```py
      import dlt
      ...
@@ -92,12 +85,12 @@ You can find the full example code in [this repository](https://github.com/dlt-h
      def github_source():
          return get_issues()
      ```
- 1. Create a `dlt_assets` definition.
+ 
+ 1. `dlt_assets` 定義を作成します。
 
-    The `@dlt_assets` decorator takes a `dlt_source` and `dlt_pipeline` parameter.
-    In this example, we used the `github_source` source and created a `dlt_pipeline` to ingest data from GitHub to DuckDB.
+    `@dlt_assets` デコレータは、`dlt_source` および `dlt_pipeline` パラメータを受け取ります。この例では、`github_source` ソースを使用し、GitHub から DuckDB にデータを取り込むための `dlt_pipeline` を作成しました。
 
-    Here’s an example of how to define assets (`github_source/assets.py`):
+    アセットを定義する方法の例を次に示します (`github_source/assets.py`):
 
       ```py
       import dlt
@@ -120,12 +113,11 @@ You can find the full example code in [this repository](https://github.com/dlt-h
           yield from dlt.run(context=context)
       ```
 
-    For more information, please refer to
-    [Dagster’s documentation.](https://docs.dagster.io/_apidocs/libraries/dagster-embedded-elt#dagster_embedded_elt.dlt.dlt_assets)
+    詳細については、[Dagster のドキュメント](https://docs.dagster.io/_apidocs/libraries/dagster-embedded-elt#dagster_embedded_elt.dlt.dlt_assets)を参照してください。
 
- 1. Create the Definitions object.
+ 1. 定義オブジェクトを作成します。
 
-    The last step is to include the assets and resource in a [Definitions](https://docs.dagster.io/_apidocs/definitions#dagster.Definitions) object (`github_source/definitions.py`). This enables Dagster tools to load everything we have defined:
+    最後のステップは、アセットとリソースを [Definitions](https://docs.dagster.io/_apidocs/definitions#dagster.Definitions) オブジェクト (`github_source/definitions.py`) に含めることです。これにより、Dagster ツールは定義したすべてのものを読み込むことができます:
 
      ```py
      import assets
@@ -143,52 +135,54 @@ You can find the full example code in [this repository](https://github.com/dlt-h
      )
      ```
 
-1. Run the web server locally:
-    1. Install the necessary dependencies using the following command:
+1. Web サーバーをローカルで実行します:
+
+    1. 次のコマンドを使用して、必要な依存関係をインストールします:
 
        ```sh
        pip install -e ".[dev]"
        ```
 
-       We use -e to install dependencies in [editable mode](https://pip.pypa.io/en/latest/topics/local-project-installs/#editable-installs). This allows changes to be automatically applied when we modify the code.
+       -e を使用して、依存関係を [編集可能モード](https://pip.pypa.io/en/latest/topics/local-project-installs/#editable-installs) でインストールします。これにより、コードを変更したときに変更が自動的に適用されます。
 
-    2. Run the project:
+    2. プロジェクトを実行します:
 
        ```sh
        dagster dev
        ```
 
-    3. Navigate to localhost:3000 in your web browser to access the Dagster UI.
+    3. Dagster UI にアクセスするには、Web ブラウザーで localhost:3000 に移動します:
 
        ![image](https://github.com/user-attachments/assets/97b74b86-df94-47e5-8ae2-de7cc47f56d8)
 
-1. Run the pipeline.
+1. パイプラインを実行します。
 
-   Now that you have a running instance of Dagster, you can run your data pipeline.
+   Dagster のインスタンスが実行中になったので、データ パイプラインを実行できます。
 
-   To run the pipeline, go to **Assets** and click the **Materialize** button in the top right. In Dagster, materialization refers to executing the code associated with an asset to produce an output.
+   パイプラインを実行するには、**Assets** に移動し、右上の **Materialize** ボタンをクリックします。Dagster では、マテリアライズとは、アセットに関連付けられたコードを実行して出力を生成することを指します。
 
    ![image](https://github.com/user-attachments/assets/79416fb7-8362-4640-b205-e59aa7ac785c)
 
-   You will see the following logs in your command line:
+   コマンドラインに次のログが表示されます:
 
    ![image](https://github.com/user-attachments/assets/f0e3bec8-f702-46a6-b69f-194a1dacf625)
 
-   Want to see real-world examples of dlt in production? Check out how dlt is used internally at Dagster in the [Dagster Open Platform](https://github.com/dagster-io/dagster-open-platform) project.
+   実際の運用環境での dlt の例をご覧になりたいですか? [Dagster Open Platform](https://github.com/dagster-io/dagster-open-platform) プロジェクトで、Dagster 社内で dlt がどのように使用されているかを確認してください。
 
 
 :::info
-For a complete picture of Dagster's integration with dlt, please refer to their [documentation](https://docs.dagster.io/integrations/embedded-elt/dlt). This documentation offers a detailed overview and steps for ingesting GitHub data and storing it in Snowflake. You can use a similar approach to build your pipelines.
+Dagster と dlt の統合の全体像については、[ドキュメント](https://docs.dagster.io/integrations/embedded-elt/dlt) を参照してください。このドキュメントでは、GitHub データを取り込んで Snowflake に保存するための詳細な概要と手順が説明されています。同様のアプローチを使用してパイプラインを構築できます。
 :::
 
-### Frequently Asked Questions
-- **Can I remove the generated `.dlt` folder with `secrets.toml` and `config.toml` files?**
+### よくある質問
 
-  Yes. Since dlt is compatible with environment variables, you can use this for secrets required by both Dagster and dlt.
+- **`secrets.toml` および `config.toml` ファイルを含む生成された `.dlt` フォルダーを削除できますか?**
 
-- **I'm working with several sources – how can I best group these assets?**
+  はい。dlt は環境変数と互換性があるため、Dagster と dlt の両方に必要なシークレットにこれを使用できます。
 
-  To effectively group assets in Dagster when working with multiple sources, use the `group_name` parameter in your `@dlt_assets` decorator. This helps organize and visualize assets related to a particular source or theme in the Dagster UI. Here’s a simplified example:
+- **複数のソースを扱っています。これらのアセットを最適にグループ化するにはどうすればよいでしょうか？**
+
+  複数のソースを扱うときに Dagster でアセットを効果的にグループ化するには、`@dlt_assets` デコレータで `group_name` パラメータを使用します。これにより、Dagster UI で特定のソースまたはテーマに関連するアセットを整理して視覚化できます。以下に簡略化した例を示します:
 
   ```py
   import dlt
@@ -222,11 +216,9 @@ For a complete picture of Dagster's integration with dlt, please refer to their 
       yield from dlt.run(context=context)
   ```
 
+- **パーティション分割されたテーブルに対して、Dagster で `bigquery_adapter` と `@dlt_assets` を使用するにはどうすればよいですか？**
 
-
-- **How can I use `bigquery_adapter` with `@dlt_assets` in Dagster for partitioned tables?**
-
-  To use `bigquery_adapter` with `@dlt_assets` in Dagster for partitioned tables, modify your resource setup to include `bigquery_adapter` with the partition parameter. Here's a quick example:
+  Dagster でパーティション分割されたテーブルに対して `bigquery_adapter` を `@dlt_assets` とともに使用するには、リソース設定を変更して、パーティション パラメータを持つ `bigquery_adapter` を含めます。簡単な例を次に示します:
 
   ```py
   import dlt
@@ -278,29 +270,25 @@ For a complete picture of Dagster's integration with dlt, please refer to their 
       return resource_list
   ```
 
-### Additional resources
+### 追加リソース
 
-- Check out the [Dagster Cloud Documentation](https://docs.dagster.cloud/) to learn more about deploying on Dagster Cloud.
+- Dagster Cloud へのデプロイの詳細については、[Dagster Cloud ドキュメント](https://docs.dagster.cloud/) をご覧ください。
 
-- Learn more about Dagster's integration with dlt:
+- Dagster と dlt の統合の詳細については、以下をご覧ください:
   [dlt & Dagster](https://docs.dagster.io/integrations/embedded-elt/dlt)
   [Embedded ELT Documentation](https://docs.dagster.io/_apidocs/libraries/dagster-embedded-elt#dagster_embedded_elt.dlt.dlt_assets).
 
-- A general configurable `dlt` resource orchestrated on Dagster:
+- Dagster 上でオーケストレーションされた一般的な構成可能な `dlt` リソース:
   [dlt resource](https://github.com/dagster-io/dagster-open-platform/blob/5030ff6828e2b001a557c6864f279c3b476b0ca0/dagster_open_platform/resources/dlt_resource.py#L29).
 
-- Configure `dlt` pipelines for Dagster:
+- Dagster で `dlt` パイプラインを構成します:
   [dlt pipelines](https://github.com/dagster-io/dagster-open-platform/tree/5030ff6828e2b001a557c6864f279c3b476b0ca0/dagster_open_platform/assets/dlt_pipelines).
 
-- Configure MongoDB source as an Asset factory:
+- MongoDB ソースをアセット ファクトリとして構成します:
 
-   Dagster provides the feature of
-   [@multi_asset](https://github.com/dlt-hub/dlt-dagster-demo/blob/21a8d18b6f0424f40f2eed5030989306af8b8edb/mongodb_dlt/mongodb_dlt/assets/__init__.py#L18)
-   declaration that will allow us to convert each collection under a database into a separate
-   asset. This will make our pipeline easy to debug in case of failure and the collections
-   independent of each other.
+   Dagster は、データベースの各コレクションを個別のアセットに変換できる [@multi_asset](https://github.com/dlt-hub/dlt-dagster-demo/blob/21a8d18b6f0424f40f2eed5030989306af8b8edb/mongodb_dlt/mongodb_dlt/assets/__init__.py#L18) 宣言の機能を提供します。これにより、障害が発生した場合にパイプラインを簡単にデバッグでき、コレクションが互いに独立します。
 
 :::note
-Some of these are external repositories and are subject to change.
+これらの一部は外部リポジトリであり、変更される可能性があります。
 :::
 

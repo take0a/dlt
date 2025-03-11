@@ -6,138 +6,117 @@ keywords: [schema, dlt schema, yaml]
 
 # Schema
 
-The schema describes the structure of normalized data (e.g., tables, columns, data types, etc.) and
-provides instructions on how the data should be processed and loaded. dlt generates schemas from
-the data during the normalization process. Users can affect this standard behavior by providing
-**hints** that change how tables, columns, and other metadata are generated and how the data is
-loaded. Such hints can be passed in the code, i.e., to the `dlt.resource` decorator or `pipeline.run`
-method. Schemas can also be exported and imported as files, which can be directly modified.
+スキーマは、正規化されたデータの構造 (テーブル、列、データ型など) を記述し、データの処理方法とロード方法に関する指示を提供します。dlt は、正規化プロセス中にデータからスキーマを生成します。ユーザーは、テーブル、列、その他のメタデータの生成方法とデータのロード方法を変更する **ヒント** を提供することで、この標準の動作に影響を与えることができます。このようなヒントは、コード内で、つまり `dlt.resource` デコレータまたは `pipeline.run` メソッドに渡すことができます。スキーマは、直接変更できるファイルとしてエクスポートおよびインポートすることもできます。
 
-> 💡 `dlt` associates a schema with a [source](source.md) and a table schema with a
-> [resource](resource.md).
+> 💡 `dlt` はスキーマを [ソース](source.md) に関連付け、テーブルスキーマを [リソース](resource.md) に関連付けます。
 
-## Schema content hash and version
+## スキーマコンテンツのハッシュとバージョン
 
-Each schema file contains a content-based hash `version_hash` that is used to:
+各スキーマファイルには、コンテンツベースのハッシュ「version_hash」が含まれており:
 
-1. Detect manual changes to the schema (i.e., user edits content).
-1. Detect if the destination database schema is synchronized with the file schema.
+1. スキーマへの手動変更 (つまり、ユーザーによるコンテンツの編集) を検出します。
+1. 宛先データベースのスキーマがファイルのスキーマと同期されているかどうかを検出します。
 
-Each time the schema is saved, the version hash is updated.
+スキーマが保存されるたびに、バージョンハッシュが更新されます。
 
-Each schema contains a numeric version which increases automatically whenever the schema is updated and
-saved. The numeric version is meant to be human-readable. There are cases (parallel processing) where
-the order is lost.
+各スキーマには数値バージョンが含まれており、スキーマが更新されて保存されるたびに自動的に増加します。数値バージョンは人間が判読できるようになっています。順序が失われる場合があります (並列処理)。
 
-> 💡 The schema in the destination is migrated if its hash is not stored in the `_dlt_versions` table. In
-> principle, many pipelines may send data to a single dataset. If table names clash, then a single
-> table with the union of the columns will be created. If columns clash, and they have different
-> types, etc., then the load may fail if the data cannot be coerced.
+> 💡 ハッシュが `_dlt_versions` テーブルに格納されていない場合、宛先のスキーマは移行されます。原則として、多くのパイプラインが単一のデータセットにデータを送信する場合があります。テーブル名が競合する場合は、列の結合を含む単一のテーブルが作成されます。列が競合し、タイプが異なるなどの場合、データを強制変換できないとロードが失敗する可能性があります。
 
-## Naming convention
+## 命名規則
 
-`dlt` creates tables, nested tables, and column schemas from the data. The data being loaded,
-typically JSON documents, contains identifiers (i.e., key names in a dictionary) with any Unicode
-characters, any lengths, and naming styles. On the other hand, the destinations accept very strict
-namespaces for their identifiers. Like Redshift, that accepts case-insensitive alphanumeric
-identifiers with a maximum of 127 characters.
+`dlt` は、データからテーブル、ネストされたテーブル、および列スキーマを作成します。ロードされるデータ (通常は JSON ドキュメント) には、任意の Unicode 文字、任意の長さ、および命名スタイルを持つ識別子 (辞書内のキー名など) が含まれます。一方、宛先は識別子に対して非常に厳密な名前空間を受け入れます。Redshift と同様に、最大 127 文字の大文字と小文字を区別しない英数字の識別子を受け入れます。
 
-Each schema contains a [naming convention](naming-convention.md) that tells dlt how to translate identifiers to the
-namespace that the destination understands. This convention can be configured, changed in code, or enforced via
-destination.
+各スキーマには、[命名規則](naming-convention.md) が含まれており、これは dlt に識別子を宛先が理解できる名前空間に変換する方法を伝えます。この規則は、コードで構成したり、変更したり、宛先を介して適用したりできます。
 
-The default naming convention:
+デフォルトの命名規則:
 
-1. Converts identifiers to snake_case, small caps. Removes all ASCII characters except ASCII
-   alphanumerics and underscores.
-1. Adds `_` if the name starts with a number.
-1. Multiples of `_` are converted into a single `_`.
-1. Nesting is expressed as double `_` in names.
-1. It shortens the identifier if it exceeds the length at the destination.
+1. 識別子をスネークケース、小文字に変換します。ASCII 英数字とアンダースコアを除くすべての ASCII 文字を削除します。
+1. 名前が数字で始まる場合は `_` を追加します。
+1. 複数の `_` は 1 つの `_` に変換されます。
+1. ネストは名前の中で二重の `_` として表現されます。
+1. 宛先で識別子の長さを超える場合は、識別子を短縮します。
 
-> 💡 The standard behavior of `dlt` is to **use the same naming convention for all destinations** so
-> users always see the same tables and columns in their databases.
+> 💡 `dlt` の標準的な動作は、**すべての宛先に同じ命名規則を使用する** ことで、ユーザーはデータベース内で常に同じテーブルと列を参照できます。
 
-> 💡 If you provide any schema elements that contain identifiers via decorators or arguments (i.e.,
-> `table_name` or `columns`), all the names used will be converted via the naming convention when
-> adding to the schema. For example, if you execute `dlt.run(... table_name="CamelCase")` the data
-> will be loaded into `camel_case`.
+> 💡 デコレータまたは引数 (つまり、`table_name` または `columns`) を介して識別子を含むスキーマ要素を指定すると、使用されるすべての名前は、スキーマに追加するときに命名規則によって変換されます。たとえば、`dlt.run(... table_name="CamelCase")` を実行すると、データは `camel_case` にロードされます。
 
-> 💡 Use simple, short, small caps identifiers for everything!
+> 💡 すべてにシンプルで短い小文字の識別子を使用してください。
 
-To retain the original naming convention (like keeping `"createdAt"` as it is instead of converting it to `"created_at"`), you can use the direct naming convention in "config.toml" as follows:
+元の命名規則を維持するには（`"createdAt"` を `"created_at"` に変換せずにそのままにしておくなど）、次のように "config.toml" で直接命名規則を使用できます:
+
 ```toml
 [schema]
 naming="direct"
 ```
+
 :::caution
-Opting for `"direct"` naming bypasses most name normalization processes. This means any unusual characters present will be carried over unchanged to database tables and columns. Please be aware of this behavior to avoid potential issues.
+`"direct"` 命名を選択すると、ほとんどの名前正規化プロセスがバイパスされます。つまり、存在する異常な文字は変更されずにデータベース テーブルと列に引き継がれます。潜在的な問題を回避するために、この動作に注意してください。
 :::
 
-The naming convention is configurable, and users can easily create their own
-conventions that, i.e., pass all the identifiers unchanged if the destination accepts that (i.e.,
-DuckDB).
+命名規則は設定可能で、ユーザーは独自の規則を簡単に作成できます。つまり、宛先がそれを受け入れる場合 (つまり、DuckDB)、すべての識別子を変更せずに渡すことができます。
 
-## Data normalizer
+## データ正規化
 
-The data normalizer changes the structure of the input data so it can be loaded into the destination. The standard `dlt` normalizer creates a relational structure from Python dictionaries and lists. Elements of that structure, such as table and column definitions, are added to the schema.
+データ ノーマライザーは、入力データの構造を変更して、宛先にロードできるようにします。標準の `dlt` ノーマライザーは、Python 辞書とリストからリレーショナル構造を作成します。テーブルや列の定義などの構造の要素がスキーマに追加されます。
 
-The data normalizer is configurable, and users can plug in their own normalizers, for example, to handle nested table linking differently or generate parquet-like data structures instead of nested tables.
+データ正規化機能は構成可能で、ユーザーは独自の正規化機能をプラグインして、たとえば、ネストされたテーブルのリンクを別の方法で処理したり、ネストされたテーブルの代わりに parquet のようなデータ構造を生成したりできます。
 
-## Tables and columns
+## テーブルと列
 
-The key components of a schema are tables and columns. You can find a dictionary of tables in the `tables` key or via the `tables` property of the Schema object.
+スキーマの主要コンポーネントはテーブルと列です。テーブルの辞書は、`tables` キー内、または Schema オブジェクトの `tables` プロパティで見つけることができます。
 
-A table schema has the following properties:
+テーブルスキーマには次のプロパティがあります:
 
-1. `name` and `description`.
-2. `columns` with a dictionary of table schemas.
-3. `write_disposition` hint telling `dlt` how new data coming to the table is loaded.
-4. `schema_contract` - describes a [contract on the table](schema-contracts.md).
-5. `parent` is a part of the nested reference, defined on a nested table and points to the parent table.
+1. `name` と `description`。
+2. テーブルスキーマの辞書に `columns`
+3. `write_disposition` ヒントは、テーブルに送られる新しいデータがどのようにロードされるかを `dlt` に伝えます。
+4. `schema_contract` - [テーブル上の契約](schema-contracts.md)を記述します。
+5. `parent` はネストされた参照の一部であり、ネストされたテーブル上で定義され、親テーブルを指します。
 
-The table schema is extended by the data normalizer. The standard data normalizer adds propagated columns to it.
+テーブル スキーマはデータ ノーマライザーによって拡張されます。標準データノーマライザーは、伝播された列を追加します。
 
-A column schema contains the following properties:
+列スキーマには次のプロパティが含まれます:
 
-1. `name` and `description` of a column in a table.
+1. テーブル内の列の `name` と `description`。
 
-Data type information:
+データ型の情報:
 
-1. `data_type` with a column data type.
-2. `precision` is a precision for **text**, **timestamp**, **time**, **bigint**, **binary**, and **decimal** types.
-3. `scale` is a scale for the **decimal** type.
-4. `timezone` is a flag indicating TZ aware or NTZ **timestamp** and **time**. The default value is **true**.
-5. `nullable` tells if the column is nullable or not.
-6. `is_variant` indicates that the column was generated as a variant of another column.
+1. 列のデータ型を持つ `data_type`。
+2. `precision` は、**text**、**timestamp**、**time**、**bigint**、**binary**、および **decimal** 型の精度です。
+3. `scale` は **decimal** 型のスケールです。
+4. `timezone` は、TZ 対応または NTZ **timestamp** と **time** を示すフラグです。デフォルト値は **true** です。
+5. `nullable` は列が null 可能かどうかを示します。
+6. `is_variant` は、列が別の列のバリアントとして生成されたことを示します。
 
-A column schema contains the following basic hints:
+列スキーマには以下の基本的なヒントが含まれています:
 
-1. `primary_key` marks a column as part of the primary key.
-2. `unique` indicates that the column is unique. On some destinations, this generates a unique index.
-3. `merge_key` marks a column as part of the merge key used by [incremental load](./incremental-loading.md#merge-incremental_loading).
+1. `primary_key` は列を主キーの一部としてマークします。
+2. `unique` は列が一意であることを示します。一部の宛先では、これにより一意のインデックスが生成されます。
+3. `merge_key` は、[インクリメンタルロード](./incremental-loading.md#merge-incremental_loading) で使用されるマージ キーの一部として列をマークします。
 
-Hints below are used to create [nested references](#root-and-nested-tables-nested-references):
-1. `row_key` is a special form of primary key created by `dlt` to uniquely identify rows of data.
-2. `parent_key` is a special form of foreign key used by nested tables to refer to parent tables.
-3. `root_key` marks a column as part of the root key, which is a type of foreign key always referring to the root table.
-4. `_dlt_list_idx` is an index on a nested list from which a nested table is created.
+以下のヒントは、[ネストされた参照](#root-and-nested-tables-nested-references) を作成するために使用されます:
 
-`dlt` lets you define additional performance hints:
+1. `row_key` は、データの行を一意に識別するために `dlt` によって作成される特別な形式の主キーです。
+2. `parent_key` は、ネストされたテーブルが親テーブルを参照するために使用する特別な形式の外部キーです。
+3. `root_key` は、常にルート テーブルを参照する外部キーの一種であるルート キーの一部として列をマークします。
+4. `_dlt_list_idx` は、ネストされたテーブルが作成されるネストされたリスト上のインデックスです。
 
-1. `partition` marks a column to be used to partition data.
-2. `cluster` marks a column to be used to cluster data.
-3. `sort` marks a column as sortable/having order. On some destinations, this non-unique generates an index.
+`dlt` を使用すると、追加のパフォーマンスヒントを定義できます。:
+
+1. `partition` は、データをパーティション分割するために使用される列をマークします。
+2. `cluster` は、データをクラスタ化するために使用する列をマークします。
+3. `sort` は、列をソート可能/順序付きとしてマークします。一部の宛先では、この非一意のインデックスが生成されます。
 
 :::note
-Each destination can interpret the hints in its own way. For example, the `cluster` hint is used by Redshift to define table distribution and by BigQuery to specify a cluster column. DuckDB and Postgres ignore it when creating tables.
+各宛先は独自の方法でヒントを解釈できます。たとえば、`cluster` ヒントは、Redshift ではテーブル分散を定義するために使用され、BigQuery ではクラスター列を指定するために使用されます。DuckDB と Postgres はテーブルの作成時にこれを無視します。
 :::
 
-### Variant columns
+### バリアント列
 
-Variant columns are generated by a normalizer when it encounters a data item with a type that cannot be coerced into an existing column. Please see our [`coerce_row`](https://github.com/dlt-hub/dlt/blob/7d9baf1b8fdf2813bcf7f1afe5bb3558993305ca/dlt/common/schema/schema.py#L205) if you are interested in seeing how it works internally.
+バリアント列は、既存の列に強制変換できないタイプのデータ項目に遭遇したときに、ノーマライザーによって生成されます。内部でどのように動作するかを確認するには、[`coerce_row`](https://github.com/dlt-hub/dlt/blob/7d9baf1b8fdf2813bcf7f1afe5bb3558993305ca/dlt/common/schema/schema.py#L205) を参照してください。
 
-Let's consider our [getting started](../intro) example with a slightly different approach, where `id` is an integer type at the beginning:
+少し異なるアプローチで [はじめに](../intro) の例を考えてみましょう。ここでは、最初は `id` が整数型です:
 
 ```py
 data = [
@@ -145,14 +124,14 @@ data = [
 ]
 ```
 
-Once the pipeline runs, we will have the following schema:
+パイプラインが実行されると、次のスキーマが作成されます:
 
 | name          | data_type     | nullable |
 | ------------- | ------------- | -------- |
 | id            | bigint        | true     |
 | human_name    | text          | true     |
 
-Now imagine the data has changed and the `id` field also contains strings:
+ここで、データが変更され、`id` フィールドにも文字列が含まれていると想像してください:
 
 ```py
 data = [
@@ -161,7 +140,7 @@ data = [
 ]
 ```
 
-So after you run the pipeline, `dlt` will automatically infer type changes and will add a new field in the schema `id__v_text` to reflect that new data type for `id`. For any type that is not compatible with integer, it will create a new field.
+したがって、パイプラインを実行すると、`dlt` は自動的に型の変更を推測し、`id` の新しいデータ型を反映するためにスキーマ `id__v_text` に新しいフィールドを追加します。整数と互換性のない型の場合は、新しいフィールドが作成されます。
 
 | name          | data_type     | nullable |
 | ------------- | ------------- | -------- |
@@ -169,78 +148,77 @@ So after you run the pipeline, `dlt` will automatically infer type changes and w
 | human_name    | text          | true     |
 | id__v_text    | text          | true     |
 
-On the other hand, if the `id` field was already a string, then introducing new data with `id` containing other types will not change the schema because they can be coerced to string.
+一方、`id` フィールドがすでに文字列である場合、`id` に他の型を含む新しいデータを導入しても、強制的に文字列に変換できるため、スキーマは変更されません。
 
-Now go ahead and try to add a new record where `id` is a float number; you should see a new field `id__v_double` in the schema.
+次に、`id` が浮動小数点数である新しいレコードを追加してみてください。スキーマに新しいフィールド `id__v_double` が表示されます。
 
-### Data types
+### データ型
 
-| dlt Data Type | Source Value Example                                | Precision and Scale                                     |
-| ------------- | --------------------------------------------------- | ------------------------------------------------------- |
-| text          | `'hello world'`                                     | Supports precision, typically mapping to **VARCHAR(N)** |
-| double        | `45.678`                                            |                                                         |
-| bool          | `True`                                              |                                                         |
-| timestamp     | `'2023-07-26T14:45:00Z'`, `datetime.datetime.now()` | Supports precision expressed as parts of a second       |
-| date          | `datetime.date(2023, 7, 26)`                        |                                                         |
-| time          | `'14:01:02'`, `datetime.time(14, 1, 2)`             | Supports precision - see **timestamp**                  |
-| bigint        | `9876543210`                                        | Supports precision as number of bits                    |
-| binary        | `b'\x00\x01\x02\x03'`                               | Supports precision, like **text**                       |
-| json          | `[4, 5, 6]`, `{'a': 1}`                             |                                                         |
-| decimal       | `Decimal('4.56')`                                   | Supports precision and scale                            |
-| wei           | `2**56`                                             |                                                         |
+| dlt Data Type | Source Value Example                              | Precision and Scale |
+| ------------- | ------------------------------------------------- |-------------------- |
+| text          | `'hello world'` | 精度をサポートし、通常は **VARCHAR(N)** にマッピングされます。 |
+| double        | `45.678`                            |                         |
+| bool          |                |                                                       |
+| timestamp     | `'2023-07-26T14:45:00Z'`, `datetime.datetime.now()` | 秒単位で表された精度をサポート       |
+| date          | `datetime.date(2023, 7, 26)           |                                 |
+| time          | `'14:01:02'`, `datetime.time(14, 1, 2)`   | 精度をサポートします - **timestamp** を参照してください            |
+| bigint        | `9876543210`  | ビット数による精度をサポート                    |
+| binary        | `b'\x00\x01\x02\x03'`    | **text** のような精度をサポートします     |
+| json          | `[4, 5, 6]`, `{'a': 1}   |                                              |
+| decimal       | `Decimal('4.56')`  | 精度とスケールをサポート          |
+| wei           | `2**56`      |                                                         |
 
-`wei` is a datatype that tries to best represent native Ethereum 256-bit integers and fixed-point decimals. It works correctly on Postgres and BigQuery. All other destinations have insufficient precision.
+`wei` は、ネイティブ Ethereum 256 ビット整数と固定小数点小数を最適に表現しようとするデータ型です。Postgres と BigQuery では正しく動作します。他のすべての宛先では精度が不十分です。
 
-`json` data type tells `dlt` to load that element as JSON or string and not attempt to flatten or create a nested table out of it. Note that structured types like arrays or maps are not supported by `dlt` at this point.
+`json` データ型は、`dlt` にその要素を JSON または文字列として読み込み、それをフラット化したりネストされたテーブルを作成したりしないように指示します。配列やマップなどの構造化型は、現時点では `dlt` ではサポートされていないことに注意してください。
 
-`time` data type is saved in the destination without timezone info; if timezone is included, it is stripped. E.g., `'14:01:02+02:00` -> `'14:01:02'`.
+`time` データ型はタイムゾーン情報なしで保存先に保存されます。タイムゾーンが含まれている場合は削除されます。例: `'14:01:02+02:00` -> `'14:01:02'`。
 
 :::tip
-The precision and scale are interpreted by the particular destination and are validated when a column is created. Destinations that do not support precision for a given data type will ignore it.
+精度とスケールは特定の宛先によって解釈され、列の作成時に検証されます。特定のデータ型の精度をサポートしていない宛先では、そのデータ型は無視されます。
 
-The precision for **timestamp** is useful when creating **parquet** files. Use 3 for milliseconds, 6 for microseconds, and 9 for nanoseconds.
+**timestamp** の精度は、**parquet** ファイルを作成するときに役立ちます。ミリ秒の場合は 3、マイクロ秒の場合は 6、ナノ秒の場合は 9 を使用します。
 
-The precision for **bigint** is mapped to available integer types, i.e., TINYINT, INT, BIGINT. The default is 64 bits (8 bytes) precision (BIGINT).
+**bigint** の精度は、使用可能な整数型、つまり TINYINT、INT、BIGINT にマップされます。デフォルトは 64 ビット (8 バイト) の精度 (BIGINT) です。
 :::
 
-## Table references
-`dlt` tables refer to other tables. It supports two types of such references:
-1. **Nested reference** created automatically when nested data (i.e., a `json` document containing a nested list) is converted into relational form. These references use specialized column and table hints and are used, for example, when [merging data](incremental-loading.md).
-2. **Table references** are optional, user-defined annotations that are not verified and enforced but may be used by downstream tools, for example, to generate automatic tests or models for the loaded data.
+## テーブル参照
 
-### Nested references: root and nested tables
-When `dlt` normalizes nested data into a relational schema, it automatically creates [**root** and **nested** tables](destination-tables.md) and links them using **nested references**.
+`dlt`テーブルは他のテーブルを参照します。このような参照には2つの種類があります:
 
-1. All tables receive a column with the `row_key` hint (named `_dlt_id` by default) to uniquely identify each row of data.
-2. Nested tables receive a `parent` table hint with the name of the parent table. The root table does not have a `parent` hint defined.
-3. Nested tables receive a column with the `parent_key` hint (named `_dlt_parent_id` by default) that refers to the `row_key` of the `parent` table.
+1. **ネストされた参照** は、ネストされたデータ (つまり、ネストされたリストを含む `json` ドキュメント) がリレーショナル形式に変換されるときに自動的に作成されます。これらの参照は、特殊な列とテーブルのヒントを使用し、たとえば [データのマージ](incremental-loading.md) 時に使用されます。
+2. **テーブル参照** は、検証および強制されないオプションのユーザー定義の注釈ですが、たとえば、読み込まれたデータの自動テストやモデルを生成するために下流のツールによって使用される場合があります。
 
-`parent` + `row_key` + `parent_key` form a **nested reference**: from the nested table to the `parent` table and are extensively used when loading data. Both `replace` and `merge` write dispositions.
+### ネストされた参照: ルートとネストされたテーブル
 
-`row_key` is created as follows:
-1. A random string on **root** tables, except for [`upsert`](incremental-loading.md#upsert-strategy) and
-[`scd2`](incremental-loading.md#scd2-strategy) merge strategies, where it is a deterministic hash of the `primary_key` (or whole row, so-called `content_hash`, if PK is not defined).
-2. A deterministic hash of `parent_key`, `parent` table name, and position in the list (`_dlt_list_idx`)
-for **nested** tables.
+`dlt` がネストされたデータをリレーショナル スキーマに正規化すると、[**ルート** テーブルと **ネストされた** テーブル](destination-tables.md) が自動的に作成され、**ネストされた参照** を使用してリンクされます。
 
-You are able to bring your own `row_key` by adding a `_dlt_id` column/field to your data (both root and nested). All data types with an equal operator are supported.
+1. すべてのテーブルには、データの各行を一意に識別するための `row_key` ヒント (デフォルトでは `_dlt_id` という名前) を持つ列が割り当てられます。
+2. ネストされたテーブルは、親テーブルの名前を持つ `parent` テーブルヒントを受け取ります。ルート テーブルには `parent` ヒントが定義されていません。
+3. ネストされたテーブルは、`parent` テーブルの `row_key` を参照する `parent_key` ヒント (デフォルトでは `_dlt_parent_id` という名前) を持つ列を受け取ります。
 
-`merge` write disposition requires an additional nested reference that goes from **nested** to **root** table, skipping all parent tables in between. This reference is created by [adding a column with a hint](incremental-loading.md#forcing-root-key-propagation) `root_key` (named `_dlt_root_id` by default) to nested tables.
+`parent` + `row_key` + `parent_key` は、ネストされたテーブルから `parent` テーブルへの **ネストされた参照** を形成し、データのロード時に広く使用されます。`replace` と `merge` はどちらも処理を書き込みます。
 
-### Table references
-You can annotate tables with table references. This feature is coming soon.
+`row_key` は次のように作成されます:
 
-## Schema settings
+1. [`upsert`](incremental-loading.md#upsert-strategy) および [`scd2`](incremental-loading.md#scd2-strategy) マージ戦略を除く **root** テーブル上のランダムな文字列。この場合、これは `primary_key` (または PK が定義されていない場合は行全体、いわゆる `content_hash`) の決定論的なハッシュです。
+2. **ネストされた** テーブルの場合、`parent_key`、`parent` テーブル名、およびリスト内の位置 (`_dlt_list_idx`) の決定論的なハッシュ。
 
-The `settings` section of the schema file lets you define various global rules that impact how tables
-and columns are inferred from data. For example, you can assign a **primary_key** hint to all columns named `id` or force a **timestamp** data type on all columns containing `timestamp` with the use of a regex pattern.
+データ (ルートとネストの両方) に `_dlt_id` 列/フィールドを追加することで、独自の `row_key` を使用できます。等号演算子を持つすべてのデータ型がサポートされています。
 
-### Data type autodetectors
+`merge` 書き込み処理には、**ネストされた** テーブルから **ルート** テーブルまで、その間にあるすべての親テーブルをスキップする追加のネストされた参照が必要です。この参照は、`root_key` (デフォルトでは `_dlt_root_id` という名前) [ヒントを含む列](incremental-loading.md#forcing-root-key-propagation)をネストされたテーブルに追加することによって作成されます。
 
-You can define a set of functions that will be used to infer the data type of a column from a
-value. The functions are run from top to bottom on the lists. Look in `detections.py` to see what is
-available. The **iso_timestamp** detector that looks for ISO 8601 strings and converts them to **timestamp**
-is enabled by default.
+### テーブル参照
+
+テーブル参照を使用してテーブルに注釈を付けることができます。この機能は近日中にリリースされる予定です。
+
+## スキーマ設定
+
+スキーマ ファイルの `settings` セクションでは、データからテーブルと列を推測する方法に影響を与えるさまざまなグローバル ルールを定義できます。たとえば、`id` という名前のすべての列に **primary_key** ヒントを割り当てたり、正規表現パターンを使用して `timestamp` を含むすべての列に **timestamp** データ型を強制したりできます。
+
+### データ型自動検出
+
+値から列のデータ型を推測するために使用される関数のセットを定義できます。関数はリストの上から下に向かって実行されます。何が利用できるかを確認するには、`detections.py` を参照してください。ISO 8601 文字列を探して **timestamp** に変換する **iso_timestamp** 検出器は、デフォルトで有効になっています。
 
 ```yaml
 settings:
@@ -253,7 +231,8 @@ settings:
     - wei_to_double
 ```
 
-Alternatively, you can add and remove detections from code:
+あるいは、コードから検出を追加したり削除したりすることもできます:
+
 ```py
   source = data_source()
   # remove iso time detector
@@ -261,13 +240,14 @@ Alternatively, you can add and remove detections from code:
   # convert UNIX timestamp (float, within a year from NOW) into timestamp
   source.schema.add_type_detection("timestamp")
 ```
-Above, we modify a schema that comes with a source to detect UNIX timestamps with the **timestamp** detector.
 
-### Column hint rules
+上記では、**timestamp** 検出器を使用して UNIX タイムスタンプを検出するために、ソースに付属するスキーマを変更します。
 
-You can define global rules that will apply hints to newly inferred columns. These rules apply to normalized column names. You can use column names directly or with regular expressions. `dlt` matches the column names **after they have been normalized with naming conventions**.
+### 列ヒントのルール
 
-By default, the schema adopts hint rules from the json(relational) normalizer to support correct hinting of columns added by the normalizer:
+新しく推測された列にヒントを適用するグローバル ルールを定義できます。これらのルールは正規化された列名に適用されます。列名は直接使用することも、正規表現を使用して使用することもできます。`dlt` は、**命名規則で正規化された後の**列名と一致します。
+
+デフォルトでは、スキーマはjson(リレーショナル)ノーマライザーからヒントルールを採用し、ノーマライザーによって追加された列の正しいヒントをサポートします:
 
 ```yaml
 settings:
@@ -287,13 +267,17 @@ settings:
     root_key:
       - _dlt_root_id
 ```
-Above, we require an exact column name match for a hint to apply. You can also use a regular expression (which we call `SimpleRegex`) as follows:
+
+上記では、ヒントを適用するには列名が完全に一致している必要があります。次のように正規表現（`SimpleRegex`と呼びます）を使用することもできます:
+
 ```yaml
 settings:
     partition:
       - re:_timestamp$
 ```
-Above, we add a `partition` hint to all columns ending with `_timestamp`. You can do the same thing in the code:
+
+上記では、`_timestamp`で終わるすべての列に`partition`ヒントを追加しています。コードでも同じことができます:
+
 ```py
   from dlt.common.schema.typing import TSimpleRegex
   
@@ -302,11 +286,11 @@ Above, we add a `partition` hint to all columns ending with `_timestamp`. You ca
   source.schema.merge_hints({"partition": [TSimpleRegex("re:_timestamp$")]})
 ```
 
-### Preferred data types
+### 推奨されるデータ型
 
-You can define rules that will set the data type for newly created columns. Put the rules under the `preferred_types` key of `settings`. On the left side, there's a rule on a column name; on the right side is the data type. You can use column names directly or with regular expressions. `dlt` matches the column names **after they have been normalized with naming conventions**.
+新しく作成された列のデータ型を設定するルールを定義できます。ルールは、`settings` の `preferred_types` キーの下に配置します。左側には列名に関するルールがあり、右側にはデータ型があります。列名は直接使用することも、正規表現を使用して使用することもできます。`dlt` は、**命名規則で正規化された後** に列名と一致します。
 
-Example:
+例:
 
 ```yaml
 settings:
@@ -317,8 +301,9 @@ settings:
     updated_at: timestamp
 ```
 
-Above, we prefer the `timestamp` data type for all columns containing the **timestamp** substring and define a few exact matches, i.e., **created_at**.
-Here's the same thing in code:
+上記では、**timestamp** サブ文字列を含むすべての列に `timestamp` データ型を使用し、いくつかの完全一致 (つまり **created_at**) を定義します。
+同じことをコードで表すと次のようになります:
+
 ```py
   source = data_source()
   source.schema.update_preferred_types(
@@ -330,25 +315,29 @@ Here's the same thing in code:
     }
   )
 ```
-### Applying data types directly with `@dlt.resource` and `apply_hints`
-`dlt` offers the flexibility to directly apply data types and hints in your code, bypassing the need for importing and adjusting schemas. This approach is ideal for rapid prototyping and handling data sources with dynamic schema requirements.
 
-### Direct specification in `@dlt.resource`
-Directly define data types and their properties, such as nullability, within the `@dlt.resource` decorator. This eliminates the dependency on external schema files. For example:
+### `@dlt.resource` と `apply_hints` を使用してデータ型を直接適用する
+
+`dlt` は、スキーマのインポートや調整を必要とせず、コードにデータ型とヒントを直接適用する柔軟性を提供します。このアプローチは、動的なスキーマ要件を持つデータ ソースの迅速なプロトタイピングと処理に最適です。
+
+### `@dlt.resource` での直接指定
+
+`@dlt.resource` デコレータ内でデータ型とそのプロパティ（null 値など）を直接定義します。これにより、外部スキーマ ファイルへの依存がなくなります。たとえば:
 
 ```py
-
 @dlt.resource(name='my_table', columns={"my_column": {"data_type": "bool", "nullable": True}})
 def my_resource():
     for i in range(10):
         yield {'my_column': i % 2 == 0}
 ```
-This code snippet sets up a nullable boolean column named `my_column` directly in the decorator.
 
-#### Using `apply_hints`
-When dealing with dynamically generated resources or needing to programmatically set hints, `apply_hints` is your tool. It's especially useful for applying hints across various collections or tables at once.
+このコード スニペットは、デコレータ内で直接 `my_column` という名前の null 許容のブール列を設定します。
 
-For example, to apply a `json` data type across all collections from a MongoDB source:
+#### `apply_hints` の使用
+
+動的に生成されたリソースを扱ったり、プログラムでヒントを設定したりする必要がある場合は、`apply_hints` が役立ちます。これは、さまざまなコレクションやテーブルに一度にヒントを適用する場合に特に便利です。
+
+たとえば、MongoDBソースからのすべてのコレクションに`json`データ型を適用するには:
 
 ```py
 all_collections = ["collection1", "collection2", "collection3"]  # replace with your actual collection names
@@ -364,15 +353,18 @@ pipeline = dlt.pipeline(
 )
 load_info = pipeline.run(source_data)
 ```
-This example iterates through MongoDB collections, applying the **json** [data type](schema#data-types) to a specified column, and then processes the data with `pipeline.run`.
 
-## View and print the schema
-To view and print the default schema in a clear YAML format, use the command:
+この例では、MongoDB コレクションを反復処理し、**json** [データ型](schema#data-types) を指定された列に適用してから、`pipeline.run` を使用してデータを処理します。
+
+## スキーマを表示および印刷する
+
+デフォルトのスキーマをYAML形式で表示および印刷するには、次のコマンドを使用します:
 
 ```py
 pipeline.default_schema.to_pretty_yaml()
 ```
-This can be used in a pipeline as:
+
+これはパイプラインで次のように使用できます:
 
 ```py
 # Create a pipeline
@@ -387,46 +379,36 @@ load_info = pipeline.run(source)
 # Print the default schema in a pretty YAML format
 print(pipeline.default_schema.to_pretty_yaml())
 ```
-This will display a structured YAML representation of your schema, showing details like tables, columns, data types, and metadata, including version, version_hash, and engine_version.
 
-## Export and import schema files
+これにより、スキーマの構造化された YAML 表現が表示され、テーブル、列、データ型、メタデータ (バージョン、version_hash、engine_version など) などの詳細が示されます。
 
-Please follow the guide on [how to adjust a schema](../walkthroughs/adjust-a-schema.md) to export and import YAML
-schema files in your pipeline.
+## スキーマファイルのエクスポートとインポート
 
-## Attaching schemas to sources
+パイプラインで YAML スキーマ ファイルをエクスポートおよびインポートするには、[スキーマを調整する方法](../walkthroughs/adjust-a-schema.md) のガイドに従ってください。
 
-We recommend not creating schemas explicitly. Instead, users should provide a few global schema
-settings and then let the table and column schemas be generated from the resource hints and the
-data itself.
+## ソースにスキーマを添付する
 
-The `dlt.source` decorator accepts a schema instance that you can create yourself and modify in
-whatever way you wish. The decorator also supports a few typical use cases:
+スキーマを明示的に作成しないことをお勧めします。代わりに、ユーザーはいくつかのグローバルスキーマ設定を提供し、リソースヒントとデータ自体からテーブルと列のスキーマを生成できるようにする必要があります。
 
-### Schema created implicitly by decorator
+`dlt.source`デコレータは、自分で作成して好きなように変更できるスキーマインスタンスを受け入れます。デコレータは、いくつかの典型的な使用例もサポートしています:
 
-If no schema instance is passed, the decorator creates a schema with the name set to the source name and
-all the settings to default.
+### デコレータによって暗黙的に作成されたスキーマ
 
-### Automatically load schema file stored with source python module
+スキーマ インスタンスが渡されない場合、デコレータは名前をソース名に設定し、すべての設定をデフォルトにしたスキーマを作成します。
 
-If no schema instance is passed, and a file with a name `{source name}_schema.yml` exists in the
-same folder as the module with the decorated function, it will be automatically loaded and used as
-the schema.
+### ソース Python モジュールに保存されたスキーマファイルを自動ロード
 
-This should make it easier to bundle a fully specified (or pre-configured) schema with a source.
+スキーマ インスタンスが渡されず、装飾された関数を含むモジュールと同じフォルダーに `{source name}_schema.yml` という名前のファイルが存在する場合、そのファイルは自動的に読み込まれ、スキーマとして使用されます。
 
-### Schema is modified in the source function body
+これにより、完全に指定された（または事前構成された）スキーマをソースにバンドルすることが容易になります。
 
-What if you can configure your schema or add some tables only inside your schema function, when, for example,
-you have the source credentials and user settings available? You could, for example, add detailed
-schemas of all the database tables when someone requests table data to be loaded. This information
-is available only at the moment the source function is called.
+### ソース関数本体でスキーマが変更される
 
-Similarly to the `source_state()` and `resource_state()`, the source and resource function has the current
-schema available via `dlt.current.source_schema()`.
+たとえば、ソース資格情報とユーザー設定が利用可能な場合、スキーマ関数内でのみスキーマを構成したり、一部のテーブルを追加したりできるとしたらどうでしょうか。たとえば、誰かがテーブル データのロードを要求したときに、すべてのデータベース テーブルの詳細なスキーマを追加できます。この情報は、ソース関数が呼び出された瞬間にのみ利用できます。
 
-Example:
+`source_state()` および `resource_state()` と同様に、ソースおよびリソース関数には `dlt.current.source_schema()` を介して利用できる現在のスキーマがあります。
+
+例:
 
 ```py
 @dlt.source

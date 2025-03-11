@@ -4,16 +4,16 @@ description: Transforming the data loaded by a dlt pipeline with dbt Cloud
 keywords: [transform, sql]
 ---
 
-# dbt Cloud client and helper functions
+# dbt クラウドのクライアントとヘルパー関数
 
 :::tip dlt+
-If you want to generate your dbt models automatically, check out [dlt+](../../../plus/features/transformations/dbt-transformations.md).
+dbt モデルを自動的に生成したい場合は、[dlt+](../../../plus/features/transformations/dbt-transformations.md) を参照してください。
 :::
 
-## API client
+## APIクライアント
 
-The dbt Cloud Client is a Python class designed to interact with the dbt Cloud API (version 2).
-It provides methods to perform various operations on dbt Cloud, such as triggering job runs and retrieving job run statuses.
+dbt Cloud Client は、dbt Cloud API (バージョン 2) と対話するように設計された Python クラスです。
+ジョブ実行のトリガーやジョブ実行ステータスの取得など、dbt Cloud でさまざまな操作を実行するためのメソッドを提供します。
 
 ```py
 from dlt.helpers.dbt_cloud import DBTCloudClientV2
@@ -30,15 +30,15 @@ run_status = client.get_run_status(run_id=job_run_id)
 print(f"Job run status: {run_status['status_humanized']}")
 ```
 
-## Helper functions
+## ヘルパー関数
 
-These Python functions provide an interface to interact with the dbt Cloud API.
-They simplify the process of triggering and monitoring job runs in dbt Cloud.
+これらの Python 関数は、dbt Cloud API と対話するためのインターフェースを提供します。
+これにより、dbt Cloud でのジョブ実行のトリガーと監視のプロセスが簡素化されます。
 
 ### `run_dbt_cloud_job()`
 
-This function triggers a job run in dbt Cloud using the specified configuration.
-It supports various customization options and allows for monitoring the job's status.
+この関数は、指定された構成を使用して dbt Cloud でジョブの実行をトリガーします。
+さまざまなカスタマイズオプションをサポートし、ジョブのステータスを監視できます。
 
 ```py
 from dlt.helpers.dbt_cloud import run_dbt_cloud_job
@@ -57,10 +57,10 @@ status = run_dbt_cloud_job(job_id=1234, data=additional_data, wait_for_outcome=T
 
 ### `get_dbt_cloud_run_status()`
 
-If you have already started a job run and have a run ID, then you can use the `get_dbt_cloud_run_status` function.
+すでにジョブ実行を開始していて、実行 ID を持っている場合は、`get_dbt_cloud_run_status` 関数を使用できます。
 
-This function retrieves the full information about a specific dbt Cloud job run.
-It also supports options for waiting until the run is complete.
+この関数は、特定の dbt Cloud ジョブ実行に関する完全な情報を取得します。
+実行が完了するまで待機するオプションもサポートしています。
 
 ```py
 from dlt.helpers.dbt_cloud import get_dbt_cloud_run_status
@@ -69,18 +69,18 @@ from dlt.helpers.dbt_cloud import get_dbt_cloud_run_status
 status = get_dbt_cloud_run_status(run_id=1234, wait_for_outcome=True)
 ```
 
-## Set credentials
+## 資格情報を設定する
 
 ### secrets.toml
 
-When using dlt locally, we recommend using the `.dlt/secrets.toml` method to set credentials.
+dlt をローカルで使用する場合は、`.dlt/secrets.toml` メソッドを使用して資格情報を設定することをお勧めします。
 
-If you used the `dlt init` command, then the `.dlt` folder has already been created.
-Otherwise, create a `.dlt` folder in your working directory and a `secrets.toml` file inside it.
+`dlt init` コマンドを使用した場合、`.dlt` フォルダーはすでに作成されています。
+それ以外の場合は、作業ディレクトリに `.dlt` フォルダーを作成し、その中に `secrets.toml` ファイルを作成します。
 
-This is where you store sensitive information securely, like access tokens. Keep this file safe.
+ここには、アクセス トークンなどの機密情報が安全に保存されます。このファイルを安全に保管してください。
 
-Use the following format for dbt Cloud API authentication:
+dbt Cloud API認証には次の形式を使用します:
 
 ```toml
 [dbt_cloud]
@@ -90,15 +90,15 @@ job_id = "set me up!" # optional only for the run_dbt_cloud_job function (you ca
 run_id = "set me up!" # optional for the get_dbt_cloud_run_status function (you can pass this explicitly as an argument to the function)
 ```
 
-### Environment variables
+### 環境変数
 
-dlt supports reading credentials from the environment.
+dlt は環境からの資格情報の読み取りをサポートします。
 
-If dlt tries to read this from environment variables, it will use a different naming convention.
+dlt が環境変数からこれを読み取ろうとする場合、異なる命名規則が使用されます。
 
-For environment variables, all names are capitalized and sections are separated with a double underscore "__".
+環境変数の場合、すべての名前は大文字で表記され、セクションは二重のアンダースコア「__」で区切られます。
 
-For example, for the above secrets, we would need to put into the environment:
+上記の機密情報を環境変数に置く必要がある場合:
 
 ```sh
 DBT_CLOUD__API_TOKEN
@@ -106,5 +106,4 @@ DBT_CLOUD__ACCOUNT_ID
 DBT_CLOUD__JOB_ID
 ```
 
-For more information, read the [Credentials](../../../general-usage/credentials) documentation.
-
+詳細については、[資格情報](../../../general-usage/credentials)のドキュメントをお読みください。

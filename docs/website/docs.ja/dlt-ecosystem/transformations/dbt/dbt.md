@@ -4,35 +4,35 @@ description: Transforming the data loaded by a dlt pipeline with dbt
 keywords: [transform, dbt, runner]
 ---
 
-# Transforming data with dbt
+# dbt によるデータの変換
 
 :::tip dlt+
-If you want to generate your dbt models automatically, check out [dlt+](../../../plus/features/transformations/dbt-transformations.md).
+dbt モデルを自動的に生成したい場合は、[dlt+](../../../plus/features/transformations/dbt-transformations.md) を参照してください。
 :::
 
-[dbt](https://github.com/dbt-labs/dbt-core) is a framework that allows for the simple structuring of your transformations into DAGs. The benefits of using dbt include:
+[dbt](https://github.com/dbt-labs/dbt-core)は、DAGへの変換を簡単に構造化できるフレームワークです。dbtを使用する利点は次のとおりです:
 
-- End-to-end cross-db compatibility for dlt→dbt pipelines.
-- Ease of use by SQL analysts, with a low learning curve.
-- High flexibility and configurability in usage, supports templating, can run backfills, etc.
-- Support for testing and accelerated troubleshooting.
+- dlt→dbt パイプラインのエンドツーエンドでクロス DB な互換性。
+- 学習曲線が低く、SQL アナリストにとって使いやすい。
+- 使用時の柔軟性と構成可能性が高く、テンプレートをサポートし、バックフィルなどを実行できます。
+- テストと迅速なトラブルシューティングのサポート。
 
-## dbt runner in dlt
+## dlt の dbt ランナー
 
-You can run dbt with `dlt` by using the dbt runner.
+dbt ランナーを使用すると、`dlt` で dbt を実行できます。
 
-The dbt runner:
+dbtランナーは:
 
-- Can create a virtual environment for dbt on the fly;
-- Can run a dbt package from online sources (e.g., GitHub) or from local files;
-- Passes configuration and credentials to dbt, so you do not need to handle them separately from `dlt`, enabling dbt to configure on the fly.
+- dbt の仮想環境を即座に作成できます。
+- オンラインソース (GitHub など) またはローカルファイルから dbt パッケージを実行できます。
+- 構成と資格情報を dbt に渡すため、`dlt` と別に処理する必要がなく、dbt をその場で構成できるようになります。
 
-## How to use the dbt runner
+## dbtランナーの使い方
 
-For an example of how to use the dbt runner, see the [jaffle shop example](https://github.com/dlt-hub/dlt/blob/devel/docs/examples/archive/dbt_run_jaffle.py).
-Included below is another example where we run a `dlt` pipeline and then a dbt package via `dlt`:
+dbt ランナーの使用方法の例については、[jaffle shop の例](https://github.com/dlt-hub/dlt/blob/devel/docs/examples/archive/dbt_run_jaffle.py) を参照してください。
+以下は、`dlt` パイプラインを実行し、次に `dlt` 経由で dbt パッケージを実行する別の例です:
 
-> 💡 Docstrings are available to read in your IDE.
+> 💡 Docstring は IDE で読み取ることができます。
 
 ```py
 # Load all Pipedrive endpoints to the pipedrive_raw dataset
@@ -81,13 +81,14 @@ for m in models:
     )
 ```
 
-## How to run dbt runner without pipeline
-You can use the dbt runner without a dlt pipeline. The example below will clone and run **jaffle shop** using a dbt profile that you supply.
-It assumes that dbt is installed in the current Python environment and the `profile.yml` is in the same folder as the Python script.
+## パイプラインなしで dbt ランナーを実行する方法
+
+dbt ランナーは dlt パイプラインなしでも使用できます。以下の例では、指定した dbt プロファイルを使用して **jaffle shop** を複製して実行します。
+これは、dbt が現在の Python 環境にインストールされており、`profile.yml` が Python スクリプトと同じフォルダーにあることを前提としています。
 <!--@@@DLT_SNIPPET ./dbt-snippets.py::run_dbt_standalone-->
 
+**duckdb** プロファイルの例を以下に示します:
 
-Here's an example **duckdb** profile:
 ```yaml
 config:
   # Do not track usage, do not create .user.yml
@@ -104,13 +105,13 @@ duckdb_dlt_dbt_test:
         - httpfs
         - parquet
 ```
-You can run the example with dbt debug log: `RUNTIME__LOG_LEVEL=DEBUG python dbt_standalone.py`
 
+dbt デバッグログを使用してサンプルを実行できます: `RUNTIME__LOG_LEVEL=DEBUG python dbt_standalone.py`
 
-## Other transforming tools
+## その他の変換ツール
 
-If you want to transform your data before loading, you can use Python. If you want to transform your data after loading, you can use dbt or one of the following:
+ロード前にデータを変換したい場合は、Python を使用できます。ロード後にデータを変換したい場合は、dbt または次のいずれかを使用できます:
 
 1. [`dlt` SQL client.](../sql.md)
-2. [Python with dataframes or arrow tables.](../python.md)
+2. [Python でデータフレームまたは arrow テーブルを処理](../python.md)
 

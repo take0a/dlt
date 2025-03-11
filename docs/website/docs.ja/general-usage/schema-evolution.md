@@ -1,28 +1,28 @@
 ---
-title: Schema evolution
+title: スキーマの進化
 description: A small guide to elaborate on how schema evolution works
 keywords: [schema evolution, schema, dlt schema]
 ---
 
-## When to use schema evolution?
+## スキーマの進化はいつ使用すればよいですか?
 
-Schema evolution is a best practice when ingesting most data. It's simply a way to get data across a format barrier.
+スキーマの進化は、ほとんどのデータを取り込む際のベストプラクティスです。これは、単に形式の障壁を越えてデータを取得する方法です。
 
-It separates the technical challenge of "loading" data from the business challenge of "curating" data. This enables us to have pipelines that are maintainable by different individuals at different stages.
+これにより、データの「ロード」という技術的な課題と、データの「キュレーション」というビジネス上の課題が分離されます。これにより、さまざまな段階でさまざまな個人が保守できるパイプラインを実現できます。
 
-However, for cases where schema evolution might be triggered by malicious events, such as in web tracking, data contracts are advised. Read more about how to implement data contracts [here](./schema-contracts).
+ただし、Web トラッキングなどの悪意のあるイベントによってスキーマの進化がトリガーされる可能性がある場合は、データコントラクトを使用することをお勧めします。データコントラクトの実装方法の詳細については、[こちら](./schema-contracts) を参照してください。
 
-## Schema evolution with `dlt`
+## `dlt` によるスキーマの進化
 
-`dlt` automatically infers the initial schema for your first pipeline run. However, in most cases, the schema tends to change over time, which makes it critical for downstream consumers to adapt to schema changes.
+`dlt` は、最初のパイプライン実行の初期スキーマを自動的に推測します。ただし、ほとんどの場合、スキーマは時間の経過とともに変化する傾向があるため、下流の消費者がスキーマの変更に適応することが重要になります。
 
-As the structure of data changes, such as the addition of new columns or changing data types, `dlt` handles these schema changes, enabling you to adapt to changes without losing velocity.
+新しい列の追加やデータ型の変更など、データの構造が変化すると、`dlt` はこれらのスキーマの変更を処理し、速度を落とさずに変更に適応できるようにします。
 
-## Inferring a schema from nested data
+## ネストされたデータからスキーマを推測する
 
-The first run of a pipeline will scan the data that goes through it and generate a schema. To convert nested data into a relational format, `dlt` flattens dictionaries and unpacks nested lists into sub-tables.
+パイプラインの最初の実行では、パイプラインを通過するデータがスキャンされ、スキーマが生成されます。ネストされたデータをリレーショナル形式に変換するために、`dlt` は辞書をフラット化し、ネストされたリストをサブテーブルに展開します。
 
-We'll review some examples here and figure out how `dlt` creates the initial schema and how normalization works. Consider a pipeline that loads the following schema:
+ここでいくつかの例を確認し、`dlt` がどのように初期スキーマを作成し、正規化がどのように機能するかを理解します。次のスキーマをロードするパイプラインを検討します:
 
 ```py
 data = [{
@@ -42,27 +42,29 @@ data = [{
 dlt.pipeline("organizations_pipeline", destination="duckdb").run(data, table_name="org")
 ```
 
-The schema of data above is loaded to the destination as follows:
+上記のデータのスキーマは次のように宛先にロードされます:
+
 <iframe width="560" height="315" src='https://dbdiagram.io/e/65e5c68bcd45b569fb7805e8/65e7ff92cd45b569fba253d9'> </iframe>
 
-### What did the schema inference engine do?
+### スキーマ推論エンジンは何を実行しましたか?
 
-As you can see above, the dlt's inference engine generates the structure of the data based on the source and provided hints. It normalizes the data, creates tables and columns, and infers data types.
+上でご覧のとおり、DLT の推論エンジンは、ソースと提供されたヒントに基づいてデータの構造を生成します。データを正規化し、テーブルと列を作成し、データ型を推論します。
 
-For more information, you can refer to the [Schema](./schema) and [Adjust a Schema](../walkthroughs/adjust-a-schema) sections in the documentation.
+詳細については、ドキュメントの [スキーマ](./schema) および [スキーマの調整](../walkthroughs/adjust-a-schema) セクションを参照してください。
 
-## Evolving the schema
+## スキーマの進化
 
-For a typical data source, the schema tends to change over time, and dlt handles this changing schema seamlessly.
+一般的なデータ ソースの場合、スキーマは時間の経過とともに変化する傾向があり、dlt はこの変化するスキーマをシームレスに処理します。
 
-Let’s add the following 4 cases:
+次の4つのケースを追加してみましょう:
 
-- A column is added: a field named “CEO” was added.
-- A column type is changed: The datatype of the column named “inventory_nr” was changed from integer to string.
-- A column is removed: a field named “room” was commented out/removed.
-- A column is renamed: a field “building” was renamed to “main_block”.
+- 列が追加されました: 「CEO」という名前のフィールドが追加されました。
+- 列の型が変更されました: 「inventory_nr」という列のデータ型が整数から文字列に変更されました。
+- 列が削除されました: 「room」という名前のフィールドがコメントアウト/削除されました。
+- 列の名前が変更されました: フィールド「building」の名前が「main_block」に変更されました。
 
-Please update the pipeline for the cases discussed above.
+上記のケースのパイプラインを更新してください。
+
 ```py
 data = [{
     "organization": "Tech Innovations Inc.",
@@ -86,31 +88,33 @@ data = [{
 dlt.pipeline("organizations_pipeline", destination="duckdb").run(data, table_name="org")
 ```
 
-Let’s load the data and look at the tables:
+データをロードしてテーブルを見てみましょう:
+
 <iframe width="560" height="315" src='https://dbdiagram.io/e/65e80303cd45b569fba28e9d/65e80556cd45b569fba2b8ab'> </iframe>
 
-What happened?
+何が起きたの？
 
-- Added column:
-    - A new column named `ceo` is added to the “org” table.
-- Variant column:
-    - A new column named `inventory_nr__v_text` is added as the datatype of the column was changed from “integer” to “string”.
-- Removed column stopped loading:
-    - New data to column `room` is not loaded.
-- Column stopped loading and new one was added:
-    - A new column `address__main_block` was added and now data will be loaded to that and stop loading in the column `address__building`.
+- 追加された列:
+    - 「org」テーブルに `ceo` という名前の新しい列が追加されます。
+- バリアント列:
+    - 列のデータ型が「整数」から「文字列」に変更されたため、`inventory_nr__v_text` という名前の新しい列が追加されました。
+- 列を削除し、ロードを停止しました:
+    - 列 `room` への新しいデータは読み込まれません。
+- 列の読み込みが停止し、新しい列が追加されました:
+    - 新しい列 `address__main_block` が追加され、データはそこにロードされ、列 `address__building` でのロードは停止します。
 
-## Alert schema changes to curate new data
+## 新しいデータをキュレートするためにスキーマの変更を警告する
 
-By separating the technical process of loading data from curation, you free the data engineer to do engineering, and the analytics to curate data without technical obstacles. So, the analyst must be kept in the loop.
+データのロードの技術的プロセスをキュレーションから分離することで、データ エンジニアはエンジニアリングに専念でき、アナリティクスは技術的な障害なしにデータをキュレーションできるようになります。そのため、アナリストは常に最新情報を把握しておく必要があります。
 
-**Tracking column lineage**
+**カラムの系統を追跡する**
 
-The column lineage can be tracked by loading the 'load_info' to the destination. The 'load_info' contains information about columns’ data types, add times, and load id. To read more please see [the data lineage article](https://dlthub.com/blog/dlt-data-lineage) we have on the blog.
+列の系統は、「load_info」を宛先にロードすることで追跡できます。「load_info」には、列のデータ型、追加時刻、ロード ID に関する情報が含まれています。詳細については、ブログの [データ系統の記事](https://dlthub.com/blog/dlt-data-lineage) をご覧ください。
 
-**Getting notifications**
+**通知を受け取る**
 
-We can read the load outcome and send it to a Slack webhook with dlt.
+ロード結果を読み取り、dlt を使用して Slack Webhook に送信できます。
+
 ```py
 # Import the send_slack_message function from the dlt library
 from dlt.common.runtime.slack import send_slack_message
@@ -135,17 +139,18 @@ for package in load_info.load_packages:
                 )
             )
 ```
-This script sends Slack notifications for schema updates using the `send_slack_message` function from the `dlt` library. It provides details on the updated table and column.
 
-## How to control evolution
+このスクリプトは、`dlt` ライブラリの `send_slack_message` 関数を使用して、スキーマの更新に関する Slack 通知を送信します。更新されたテーブルと列の詳細を提供します。
 
-`dlt` allows schema evolution control via its schema and data contracts. Refer to our **[documentation](./schema-contracts)** for details.
+## 進化を制御する方法
 
-### How to test for removed columns - applying "not null" constraint
+`dlt` は、スキーマとデータ コントラクトを介してスキーマ進化の制御を可能にします。詳細については、**[ドキュメント](./schema-contracts)** を参照してください。
 
-A column not existing and a column being null are two different things. However, when it comes to APIs and JSON, it’s usually all treated the same - the key-value pair will simply not exist.
+### 削除された列をテストする方法 - 「not null」制約を適用する
 
-To remove a column, exclude it from the output of the resource function. Subsequent data inserts will treat this column as null. Verify column removal by applying a not null constraint. For instance, after removing the "room" column, apply a not null constraint to confirm its exclusion.
+列が存在しないということと、列が null であることは、2 つの異なることです。ただし、API と JSON に関しては、通常はすべて同じように扱われます。つまり、キーと値のペアは単に存在しないことになります。
+
+列を削除するには、リソース関数の出力から除外します。後続のデータ挿入では、この列は null として扱われます。列の削除を確認するには、not null 制約を適用します。たとえば、「room」列を削除した後、not null 制約を適用して除外を確認します。
 
 ```py
 data = [{
@@ -165,11 +170,12 @@ pipeline = dlt.pipeline("organizations_pipeline", destination="duckdb")
 # Adding not null constraint
 pipeline.run(data, table_name="org", columns={"room": {"data_type": "bigint", "nullable": False}})
 ```
-During pipeline execution, a data validation error indicates that a removed column is being passed as null.
 
-## Some schema changes in the data
+パイプラインの実行中に、データ検証エラーは、削除された列が null として渡されていることを示します。
 
-The data in the pipeline mentioned above is modified.
+## データのスキーマ変更
+
+上記のパイプライン内のデータが変更されます。
 
 ```py
 data = [{
@@ -196,20 +202,22 @@ data = [{
 # Run `dlt` pipeline
 dlt.pipeline("organizations_pipeline", destination="duckdb").run(data, table_name="org")
 ```
-The schema of the data above is loaded to the destination as follows:
+
+上記のデータのスキーマは次のように宛先にロードされます:
+
 <iframe width="560" height="315" src='https://dbdiagram.io/e/65e80b31cd45b569fba33169/65e81055cd45b569fba3aa20'> </iframe>
 
-## What did the schema evolution engine do?
+## スキーマ進化エンジンは何ができますか？
 
-The schema evolution engine in the `dlt` library is designed to handle changes in the structure of your data over time. For example:
+`dlt`ライブラリのスキーマ進化エンジンは、時間の経過とともにデータの構造が変化するのを処理するように設計されています。たとえば:
 
-- As above in continuation of the inferred schema, the “specifications” are nested in "details", which are nested in “Inventory”, all under the table name “org”. So the table created for projects is `org__inventory__details__specifications`.
+- 上記の推論されたスキーマの続きとして、「specifications」は「details」にネストされ、さらに「details」は「Inventory」にネストされ、すべて「org」というテーブル名の下にあります。したがって、プロジェクト用に作成されたテーブルは `org__inventory__details__specifications` です。
 
-This is a simple example of how schema evolution works.
+これは、スキーマの進化がどのように機能するかを示す簡単な例です。
 
-## Schema evolution using schema and data contracts
+## スキーマとデータのコントラクトを使用したスキーマの進化
 
-Demonstrating schema evolution without talking about schema and data contracts is only one side of the coin. Schema and data contracts dictate the terms of how the schema being written to the destination should evolve.
+スキーマとデータのコントラクトについて説明せずにスキーマの進化を示すことは、物事の片面にすぎません。スキーマとデータのコントラクトは、宛先に書き込まれるスキーマがどのように進化するかという条件を規定します。
 
-Schema and data contracts can be applied to entities such as ‘tables’, ‘columns’, and ‘data_types’ using contract modes such as ‘evolve’, ‘freeze’, ‘discard_rows’, and ‘discard_columns’ to tell dlt how to apply contracts for a particular entity. To read more about **schema and data contracts**, read our [documentation](./schema-contracts).
+スキーマとデータ コントラクトは、コントラクト モード (「evolve」、「freeze」、「discard_rows」、「discard_columns」など) を使用して、「tables」、「columns」、「data_types」などのエンティティに適用でき、特定のエンティティにコントラクトを適用する方法を dlt に指示します。**スキーマとデータのコントラクト** の詳細については、[ドキュメント](./schema-contracts) をお読みください。
 

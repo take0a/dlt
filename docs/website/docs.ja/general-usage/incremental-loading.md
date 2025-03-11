@@ -4,23 +4,23 @@ description: Incremental loading with dlt
 keywords: [incremental loading, loading methods, append, merge]
 ---
 
-# Incremental loading
+# インクリメンタルローディング
 
-Incremental loading is the act of loading only new or changed data and not old records that we have already loaded. It enables low-latency and low-cost data transfer.
+インクリメンタルローディングとは、すでにロードされている古いレコードではなく、新しいデータまたは変更されたデータのみをロードする操作です。これにより、低レイテンシで低コストのデータ転送が可能になります。
 
-The challenge of incremental pipelines is that if we do not keep track of the state of the load (i.e., which increments were loaded and which are to be loaded), we may encounter issues. Read more about state [here](state.md).
+インクリメンタルなパイプラインの課題は、ロードの状態 (つまり、どの増分がロードされたか、どの増分がロードされるか) を追跡しないと、問題が発生する可能性があることです。状態の詳細については、[こちら](state.md) を参照してください。
 
-## Choosing a write disposition
+## 書き込み処理の選択
 
-### The 3 write dispositions:
+### ３つの書き込み処理:
 
-- **Full load**: replaces the destination dataset with whatever the source produced on this run. To achieve this, use `write_disposition='replace'` in your resources. Learn more in the [full loading docs](./full-loading.md).
+- **Full load**: 宛先データセットを、この実行でソースが生成したものに置き換えます。これを実現するには、リソースで `write_disposition='replace'` を使用します。詳細については、[フルロードのドキュメント](./full-loading.md)を参照してください。
 
-- **Append**: appends the new data to the destination. Use `write_disposition='append'`.
+- **Append**: 新しいデータを宛先に追加します。`write_disposition='append'` を使用します。
 
-- **Merge**: Merges new data into the destination using `merge_key` and/or deduplicates/upserts new data using `primary_key`. Use `write_disposition='merge'`.
+- **Merge**: `merge_key` を使用して新しいデータを宛先にマージしたり、`primary_key` を使用して新しいデータを重複排除/アップサートしたりします。
 
-### Two simple questions determine the write disposition you use
+### 2つの簡単な質問で、使用する書き込み処理が決まります
 
 <div style={{textAlign: 'center'}}>
 
@@ -28,34 +28,34 @@ The challenge of incremental pipelines is that if we do not keep track of the st
 
 </div>
 
-The "write disposition" you choose depends on the dataset and how you can extract it.
+選択する「書き込み処理」は、データセットとその抽出方法によって異なります。
 
-To find the "write disposition" you should use, the first question you should ask yourself is "Is my data stateful or stateless"? Stateful data has a state that is subject to change - for example, a user's profile. Stateless data cannot change - for example, a recorded event, such as a page view.
+使用すべき「書き込み処理」を見つけるには、まず「データはステートフルかステートレスか」と自問する必要があります。ステートフル データの状態は変更される可能性があります (ユーザーのプロファイルなど)。ステートレス データは変更できません (ページ ビューなどの記録されたイベントなど)。
 
-Because stateless data does not need to be updated, we can just append it.
+ステートレス データは更新する必要がないため、追加するだけで済みます。
 
-For stateful data, comes a second question - Can I extract it incrementally from the source? If yes, you should use [slowly changing dimensions (Type-2)](#scd2-strategy), which allow you to maintain historical records of data changes over time.
+ステートフル データの場合、2 番目の質問が来ます - ソースから増分的に抽出できますか? できる場合は、[ゆっくり変化するディメンション (タイプ 2)](#scd2-strategy) を使用する必要があります。これにより、時間の経過に伴うデータの変更の履歴レコードを維持できます。
 
-If not, then we need to replace the entire dataset. However, if we can request the data incrementally, such as "all users added or modified since yesterday," then we can simply apply changes to our existing dataset with the merge write disposition.
+そうでない場合は、データセット全体を置き換える必要があります。ただし、「昨日以降に追加または変更されたすべてのユーザー」のように、データを段階的に要求できる場合は、マージ書き込み処理を使用して既存のデータセットに変更を適用するだけで済みます。
 
-## Merge incremental loading
+## インクリメンタルローディングでのマージ
 
-The `merge` write disposition can be used with three different strategies:
+`merge`書き込み処理は3つの異なる戦略で使用できます:
 
 1. `delete-insert` (default strategy)
 2. `scd2`
 3. `upsert`
 
-### `delete-insert` strategy
+### `delete-insert` 戦略
 
-The default `delete-insert` strategy is used in two scenarios:
+デフォルトの「削除-挿入」戦略は2つのシナリオで使用されます:
 
-1. You want to keep only one instance of a certain record, i.e., you receive updates of the `user` state from an API and want to keep just one record per `user_id`.
-2. You receive data in daily batches, and you want to make sure that you always keep just a single instance of a record for each batch, even in case you load an old batch or load the current batch several times a day (i.e., to receive "live" updates).
+1. 特定のレコードのインスタンスを 1 つだけ保持したい場合、つまり、API から `user` 状態の更新を受信し、`user_id` ごとに 1 つのレコードだけを保持したい場合です。
+2. データは毎日バッチで受信され、古いバッチをロードしたり、現在のバッチを 1 日に数回ロードする場合でも (つまり、「ライブ」更新を受信するため)、各バッチのレコードのインスタンスを常に 1 つだけ保持するようにする必要があります。
 
-The `delete-insert` strategy loads data to a `staging` dataset, deduplicates the staging data if a `primary_key` is provided, deletes the data from the destination using `merge_key` and `primary_key`, and then inserts the new records. All of this happens in a single atomic transaction for a root and all nested tables.
+`delete-insert` 戦略は、データを `staging` データセットにロードし、`primary_key` が提供されている場合はステージング データを重複排除し、`merge_key` と `primary_key` を使用して宛先からデータを削除し、新しいレコードを挿入します。このすべては、ルートとすべてのネストされたテーブルに対して単一のアトミック トランザクションで実行されます。
 
-Example below loads all the GitHub events and updates them in the destination using "id" as the primary key, making sure that only a single copy of the event is present in the `github_repo_events` table:
+以下の例では、すべての GitHub イベントをロードし、主キーとして「id」を使用して宛先で更新し、`github_repo_events` テーブルにイベントのコピーが 1 つだけ存在するようにします:
 
 ```py
 @dlt.resource(primary_key="id", write_disposition="merge")
@@ -63,7 +63,7 @@ def github_repo_events():
     yield from _get_event_pages()
 ```
 
-You can use compound primary keys:
+複合主キーも使用できます:
 
 ```py
 @dlt.resource(primary_key=("id", "url"), write_disposition="merge")
@@ -71,7 +71,7 @@ def resource():
     ...
 ```
 
-By default, `primary_key` deduplication is arbitrary. You can pass the `dedup_sort` column hint with a value of `desc` or `asc` to influence which record remains after deduplication. Using `desc`, the records sharing the same `primary_key` are sorted in descending order before deduplication, making sure the record with the highest value for the column with the `dedup_sort` hint remains. `asc` has the opposite behavior.
+デフォルトでは、`primary_key` 重複排除は任意です。`dedup_sort` 列ヒントに `desc` または `asc` の値を渡して、重複排除後にどのレコードを残すかを指定できます。`desc` を使用すると、同じ `primary_key` を共有するレコードは重複排除前に降順で並べ替えられ、`dedup_sort` ヒントを持つ列の最高値を持つレコードが確実に残ります。`asc` は逆の動作をします。
 
 ```py
 @dlt.resource(
@@ -83,8 +83,8 @@ def resource():
     ...
 ```
 
-Example below merges on a column `batch_day` that holds the day for which the given record is valid.
-Merge keys also can be compound:
+以下の例では、指定されたレコードが有効な日を保持する列 `batch_day` でマージします。
+マージキーは複合キーにすることもできます:
 
 ```py
 @dlt.resource(merge_key="batch_day", write_disposition="merge")
@@ -92,7 +92,7 @@ def get_daily_batch(day):
     yield _get_batch_from_bucket(day)
 ```
 
-As with any other write disposition, you can use it to load data ad hoc. Below we load issues with top reactions for the `duckdb` repo. The lists have, obviously, many overlapping issues, but we want to keep just one instance of each.
+他の書き込み処理と同様に、これを使用してアドホックにデータを読み込むことができます。以下では、`duckdb` リポジトリのトップ反応を持つ問題を読み込みます。リストには明らかに重複する問題が多数ありますが、各問題を 1 つのインスタンスだけ保持します。
 
 ```py
 p = dlt.pipeline(destination="bigquery", dataset_name="github")
@@ -106,7 +106,7 @@ for reaction in reactions:
 p.run(issues, write_disposition="merge", primary_key="id", table_name="issues")
 ```
 
-Example below dispatches GitHub events to several tables by event type, keeps one copy of each event by "id" and skips loading of past records using "last value" incremental. As you can see, all of this we can just declare in our resource.
+以下の例では、GitHub イベントをイベント タイプ別に複数のテーブルにディスパッチし、各イベントのコピーを「id」別に 1 つ保持し、「最後の値」増分を使用して過去のレコードの読み込みをスキップします。ご覧のとおり、これらすべてをリソース内で宣言するだけで済みます。
 
 ```py
 @dlt.resource(primary_key="id", write_disposition="merge", table_name=lambda i: i['type'])
@@ -116,20 +116,23 @@ def github_repo_events(last_created_at = dlt.sources.incremental("created_at", "
 ```
 
 :::note
-If you use the `merge` write disposition, but do not specify merge or primary keys, merge will fallback to `append`.
-The appended data will be inserted from a staging table in one transaction for most destinations in this case.
+`merge` 書き込み処理を使用しても、マージまたは主キーを指定しない場合、merge は `append` にフォールバックします。
+この場合、追加されたデータは、ほとんどの宛先に対して 1 つのトランザクションでステージングテーブルから挿入されます。
 :::
 
-#### Delete records
-The `hard_delete` column hint can be used to delete records from the destination dataset. The behavior of the delete mechanism depends on the data type of the column marked with the hint:
-1) `bool` type: only `True` leads to a delete—`None` and `False` values are disregarded.
-2) Other types: each `not None` value leads to a delete.
+#### レコードを削除する
 
-Each record in the destination table with the same `primary_key` or `merge_key` as a record in the source dataset that's marked as a delete will be deleted.
+`hard_delete`列ヒントは、宛先データセットからレコードを削除するために使用できます。削除メカニズムの動作は、ヒントでマークされた列のデータ型によって異なります。:
 
-Deletes are propagated to any nested table that might exist. For each record that gets deleted in the root table, all corresponding records in the nested table(s) will also be deleted. Records in parent and nested tables are linked through the `root key` that is explained in the next section.
+1) `bool` 型: `True` のみが削除につながり、`None` および `False` 値は無視されます。
+2) その他のタイプ: `None でない` 値ごとに削除されます。
 
-##### Example: with primary key and boolean delete column
+削除としてマークされているソース データセット内のレコードと同じ `primary_key` または `merge_key` を持つ宛先テーブル内の各レコードが削除されます。
+
+削除は、存在する可能性のあるネストされたテーブルに伝播されます。ルート テーブルで削除されるレコードごとに、ネストされたテーブル内の対応するレコードもすべて削除されます。親テーブルとネストされたテーブルのレコードは、次のセクションで説明する `ルートキー` を通じてリンクされます。
+
+##### 例: 主キーとブール値の削除列
+
 ```py
 @dlt.resource(
     primary_key="id",
@@ -152,7 +155,8 @@ def resource():
 ...
 ```
 
-##### Example: with merge key and non-boolean delete column
+##### 例: マージキーと非ブール削除列
+
 ```py
 @dlt.resource(
     merge_key="id",
@@ -170,7 +174,8 @@ def resource():
 ...
 ```
 
-##### Example: with primary key and "dedup_sort" hint
+##### 例: 主キーと「dedup_sort」ヒントを使用
+
 ```py
 @dlt.resource(
     primary_key="id",
@@ -193,12 +198,12 @@ def resource():
 ```
 
 :::note
-Indexing is important for doing lookups by column value, especially for merge writes, to ensure acceptable performance in some destinations.
+インデックス作成は、特にマージ書き込みの場合に列値による検索を実行し、一部の宛先で許容できるパフォーマンスを確保する上で重要です。
 :::
 
-#### Forcing root key propagation
+#### ルートキーの伝播を強制する
 
-Merge write disposition requires that the `_dlt_id` (`row_key`) of the root table be propagated to nested tables. This concept is similar to a foreign key but always references the root (top level) table, skipping any intermediate parents. We call it `root key`. The root key is automatically propagated for all tables that have the `merge` write disposition set. We do not enable it everywhere because it takes up storage space. Nevertheless, in some cases, you may want to permanently enable root key propagation.
+マージ書き込み処理では、ルート テーブルの `_dlt_id` (`row_key`) をネストされたテーブルに伝播する必要があります。この概念は外部キーに似ていますが、中間の親をスキップして常にルート (最上位) テーブルを参照します。これを `ルート キー` と呼びます。ルート キーは、`merge` 書き込み処理が設定されているすべてのテーブルに自動的に伝播されます。これはストレージ スペースを占有するため、どこでも有効にできるわけではありません。ただし、場合によっては、ルート キーの伝播を永続的に有効にする必要があります。
 
 ```py
 pipeline = dlt.pipeline(
@@ -220,25 +225,29 @@ fb_ads.ads.bind(states=("PAUSED", ))
 info = pipeline.run(fb_ads.with_resources("ads"), write_disposition="merge")
 ```
 
-In the example above, we enforce the root key propagation with `fb_ads.root_key = True`. This ensures that the correct data is propagated on the initial `replace` load so the future `merge` load can be executed. You can achieve the same in the decorator `@dlt.source(root_key=True)`.
+上記の例では、`fb_ads.root_key = True` を使用してルート キーの伝播を強制しています。これにより、最初の `replace` ロードで正しいデータが伝播され、将来の `merge` ロードが実行できるようになります。デコレータ `@dlt.source(root_key=True)` でも同じことを実現できます。
 
-### `scd2` strategy
-`dlt` can create [Slowly Changing Dimension Type 2](https://en.wikipedia.org/wiki/Slowly_changing_dimension#Type_2:_add_new_row) (SCD2) destination tables for dimension tables that change in the source. By default, the resource is expected to provide a full extract of the source table each run, but [incremental extracts](#example-incremental-scd2) are also possible. A row hash is stored in `_dlt_id` and used as surrogate key to identify source records that have been inserted, updated, or deleted. A `NULL` value is used by default to indicate an active record, but it's possible to use a configurable high timestamp (e.g. 9999-12-31 00:00:00.000000) instead.
+### `scd2` 戦略
+
+`dlt` は、ソースで変更されるディメンション テーブルに対して [Slowly Changing Dimension Type 2](https://en.wikipedia.org/wiki/Slowly_changing_dimension#Type_2:_add_new_row) (SCD2) 宛先テーブルを作成できます。デフォルトでは、リソースは実行ごとにソース テーブルの完全な抽出を提供することが想定されていますが、[インクリメンタルな抽出](#example-incremental-scd2) も可能です。行ハッシュは `_dlt_id` に格納され、挿入、更新、または削除されたソース レコードを識別するための代理キーとして使用されます。デフォルトでは、アクティブなレコードを示すために `NULL` 値が使用されますが、代わりに構成可能な上限タイムスタンプ (例: 9999-12-31 00:00:00.000000) を使用することもできます。
 
 :::note
-The `unique` hint for `_dlt_id` in the root table is set to `false` when using `scd2`. This differs from [default behavior](./destination-tables.md#child-and-parent-tables). The reason is that the surrogate key stored in `_dlt_id` contains duplicates after an _insert-delete-reinsert_ pattern:
-1. A record with surrogate key X is inserted in a load at `t1`.
-2. The record with surrogate key X is deleted in a later load at `t2`.
-3. The record with surrogate key X is reinserted in an even later load at `t3`.
+`scd2` を使用する場合、ルート テーブルの `_dlt_id` の `unique` ヒントは `false` に設定されます。これは [デフォルトの動作](./destination-tables.md#child-and-parent-tables) とは異なります。その理由は、`_dlt_id` に格納されている代理キーに、_insert-delete-reinsert_ パターンの後に重複が含まれているためです。:
 
-After this pattern, the `scd2` table in the destination has two records for surrogate key X: one for the validity window `[t1, t2]`, and one for `[t3, NULL]`. A duplicate value exists in `_dlt_id` because both records have the same surrogate key.
+1. 代理キー X を持つレコードが `t1` でのロードで挿入されます。
+2. 代理キー X を持つレコードは、後の `t2` でのロードで削除されます。
+3. 代理キー X を持つレコードは、さらに後の `t3` でのロードで再挿入されます。
 
-Note that:
-- The composite key `(_dlt_id, _dlt_valid_from)` is unique.
-- `_dlt_id` remains unique for nested tables—`scd2` does not affect this.
+このパターンの後、宛先の `scd2` テーブルには、代理キー X のレコードが 2 つあります。1 つは有効期間 `[t1, t2]` 用、もう 1 つは `[t3, NULL]` 用です。両方のレコードに同じ代理キーがあるため、`_dlt_id` に重複した値が存在します。
+
+以下に注意ください:
+
+- 複合キー `(_dlt_id, _dlt_valid_from)` は一意です。
+- `_dlt_id` はネストされたテーブルに対して一意のままです。`scd2` はこれに影響しません。
 :::
 
-#### Example: `scd2` merge strategy
+#### 例: `scd2` マージ戦略
+
 ```py
 @dlt.resource(
     write_disposition={"disposition": "merge", "strategy": "scd2"}
@@ -254,7 +263,7 @@ pipeline.run(dim_customer())  # first run — 2024-04-09 18:27:53.734235
 ...
 ```
 
-*`dim_customer` destination table after first run—inserted two records present in initial load and added validity columns:*
+*最初の実行後の `dim_customer` 宛先テーブル - 初期ロードに存在する 2 つのレコードを挿入し、有効性判定列を追加しました:*
 
 | `_dlt_valid_from` | `_dlt_valid_to` | `customer_key` | `c1` | `c2` |
 | -- | -- | -- | -- | -- |
@@ -273,7 +282,7 @@ def dim_customer():
 pipeline.run(dim_customer())  # second run — 2024-04-09 22:13:07.943703
 ```
 
-*`dim_customer` destination table after second run—inserted new record for `customer_key` 1 and retired old record by updating `_dlt_valid_to`:*
+*2 回目の実行後の `dim_customer` 宛先テーブル - `customer_key` 1 の新しいレコードが挿入され、`_dlt_valid_to` を更新することで古いレコードが削除されました。:*
 
 | `_dlt_valid_from` | `_dlt_valid_to` | `customer_key` | `c1` | `c2` |
 | -- | -- | -- | -- | -- |
@@ -292,7 +301,7 @@ def dim_customer():
 pipeline.run(dim_customer())  # third run — 2024-04-10 06:45:22.847403
 ```
 
-*`dim_customer` destination table after third run—retired deleted record by updating `_dlt_valid_to`:*
+*3 回目の実行後の `dim_customer` 宛先テーブル - `_dlt_valid_to` を更新することで削除されたレコードが廃止されました:*
 
 | `_dlt_valid_from` | `_dlt_valid_to` | `customer_key` | `c1` | `c2` |
 | -- | -- | -- | -- | -- |
@@ -300,12 +309,13 @@ pipeline.run(dim_customer())  # third run — 2024-04-10 06:45:22.847403
 | 2024-04-09 18:27:53.734235 | **2024-04-10 06:45:22.847403** | 2 | bar | 2 |
 | 2024-04-09 22:13:07.943703 | NULL | 1 | foo_updated | 1 |
 
-#### Example: incremental `scd2`
-A `merge_key` can be provided to work with incremental extracts instead of full extracts. The `merge_key` lets you define which absent rows are considered "deleted". Compound natural keys are allowed and can be specified by providing a list of column names as `merge_key`.
+#### 例: インクリメンタルな `scd2`
 
-*Case 1: do not retire absent records*
+`merge_key` は、完全抽出ではなくインクリメンタルな抽出で動作するように指定できます。`merge_key` を使用すると、存在しない行のうち「削除済み」と見なされるものを定義できます。複合自然キーが許可されており、`merge_key` として列名のリストを提供することで指定できます。
 
-You can set the natural key as `merge_key` to prevent retirement of absent rows. In this case you don't consider any absent row deleted. Records are not retired in the destination if their corresponding natural keys are not present in the source extract. This allows for incremental extracts that only contain updated records.
+*ケース1: 不在の記録を破棄しない*
+
+不在の行の廃止を防ぐために、自然キーを `merge_key` として設定できます。この場合、不在の行は削除されたとは見なされません。対応する自然キーがソース抽出に存在しない場合、レコードは宛先で廃止されません。これにより、更新されたレコードのみを含む増分抽出が可能になります。
 
 ```py
 @dlt.resource(
@@ -322,7 +332,8 @@ def dim_customer():
 pipeline.run(dim_customer())  # first run — 2024-04-09 18:27:53.734235
 ...
 ```
-*`dim_customer` destination table after first run:*
+
+*最初の実行後の `dim_customer` 宛先テーブル:*
 
 | `_dlt_valid_from` | `_dlt_valid_to` | `customer_key` | `c1` | `c2` |
 | -- | -- | -- | -- | -- |
@@ -340,7 +351,7 @@ def dim_customer():
 pipeline.run(dim_customer())  # second run — 2024-04-09 22:13:07.943703
 ```
 
-*`dim_customer` destination table after second run—customer key 2 was not retired:*
+*2 回目の実行後の `dim_customer` 宛先テーブル - 顧客キー 2 は廃止されませんでした:*
 
 | `_dlt_valid_from` | `_dlt_valid_to` | `customer_key` | `c1` | `c2` |
 | -- | -- | -- | -- | -- |
@@ -348,13 +359,13 @@ pipeline.run(dim_customer())  # second run — 2024-04-09 22:13:07.943703
 | 2024-04-09 18:27:53.734235 | NULL | 2 | bar | 2 |
 | **2024-04-09 22:13:07.943703** | **NULL** | **1** | **foo_updated** | **1** |
 
-*Case 2: only retire records for given partitions*
+*ケース2: 指定されたパーティションのレコードのみを破棄する*
 
 :::note
-Technically this is not SCD2 because the key used to merge records is not a natural key.
+技術的には、レコードをマージするために使用されるキーが自然キーではないため、これは SCD2 ではありません。
 :::
 
-You can set a "partition" column as `merge_key` to retire absent rows for given partitions. In this case you only consider absent rows deleted if their partition value is present in the extract. Physical partitioning of the table is not required—the word "partition" is used conceptually here.
+特定のパーティションの不在の行を削除するには、「パーティション」列を `merge_key` として設定します。この場合、パーティション値が抽出に存在する場合にのみ、不在の行が削除されたとみなされます。テーブルの物理的なパーティション分割は必要ありません。ここでは、「パーティション」という単語は概念的に使用されています。
 
 ```py
 @dlt.resource(
@@ -372,7 +383,7 @@ pipeline.run(some_data())  # first run — 2024-01-02 03:03:35.854305
 ...
 ```
 
-*`some_data` destination table after first run:*
+*最初の実行後の `some_data` 宛先テーブル:*
 
 | `_dlt_valid_from` | `_dlt_valid_to` | `date` | `name` |
 | -- | -- | -- | -- |
@@ -392,7 +403,7 @@ pipeline.run(some_data())  # second run — 2024-01-03 03:01:11.943703
 ...
 ```
 
-*`some_data` destination table after second run—added 2024-01-02 records, did not touch 2024-01-01 records:*
+*2 回目の実行後の `some_data` 宛先テーブル - 2024-01-02 レコードが追加され、2024-01-01 レコードには影響しませんでした:*
 
 | `_dlt_valid_from` | `_dlt_valid_to` | `date` | `name` |
 | -- | -- | -- | -- |
@@ -414,7 +425,7 @@ pipeline.run(some_data())  # third run — 2024-01-03 10:30:05.750356
 ...
 ```
 
-*`some_data` destination table after third run—retired b, added bb, did not touch 2024-01-02 partition:*
+*3 回目の実行後の `some_data` 宛先テーブル - b を廃止し、bb を追加し、2024-01-02 パーティションには触れなかった:*
 
 | `_dlt_valid_from` | `_dlt_valid_to` | `date` | `name` |
 | -- | -- | -- | -- |
@@ -425,8 +436,10 @@ pipeline.run(some_data())  # third run — 2024-01-03 10:30:05.750356
 | **2024-01-03 10:30:05.750356** | **NULL** | **2024-01-01** | **bb** |
 
 
-#### Example: configure validity column names
-`_dlt_valid_from` and `_dlt_valid_to` are used by default as validity column names. Other names can be configured as follows:
+#### 例: 有効な列名を構成する
+
+`_dlt_valid_from` と `_dlt_valid_to` は、有効性判定列名としてデフォルトで使用されます。他の名前は次のように設定できます:
+
 ```py
 @dlt.resource(
     write_disposition={
@@ -440,8 +453,10 @@ def dim_customer():
 ...
 ```
 
-#### Example: configure active record timestamp
-You can configure the literal used to indicate an active record with `active_record_timestamp`. The default literal `NULL` is used if `active_record_timestamp` is omitted or set to `None`. Provide a date value if you prefer to use a high timestamp instead.
+#### 例: アクティブレコードのタイムスタンプを設定する
+
+`active_record_timestamp` を使用して、アクティブ レコードを示すために使用されるリテラルを設定できます。`active_record_timestamp` が省略されているか、`None` に設定されている場合、デフォルトのリテラル `NULL` が使用されます。代わりに上限のタイムスタンプを使用する場合は、日付値を指定します。
+
 ```py
 @dlt.resource(
     write_disposition={
@@ -455,8 +470,10 @@ def dim_customer():
     ...
 ```
 
-#### Example: configure boundary timestamp
-You can configure the "boundary timestamp" used for record validity windows with `boundary_timestamp`. The provided date(time) value is used as "valid from" for new records and as "valid to" for retired records. The timestamp at which a load package is created is used if `boundary_timestamp` is omitted.
+#### 例: 境界タイムスタンプを構成する
+
+`boundary_timestamp` を使用して、レコードの有効期間ウィンドウに使用される「境界タイムスタンプ」を設定できます。指定された日付 (時刻) 値は、新しいレコードの「有効開始日」として、また廃止されたレコードの「有効終了日」として使用されます。`boundary_timestamp` が省略されている場合は、ロード パッケージが作成されたタイムスタンプが使用されます。
+
 ```py
 @dlt.resource(
     write_disposition={
@@ -470,8 +487,10 @@ def dim_customer():
     ...
 ```
 
-#### Example: Use your own row hash
-By default, `dlt` generates a row hash based on all columns provided by the resource and stores it in `_dlt_id`. You can use your own hash instead by specifying `row_version_column_name` in the `write_disposition` dictionary. You might already have a column present in your resource that can naturally serve as a row hash, in which case it's more efficient to use those pre-existing hash values than to generate new artificial ones. This option also allows you to use hashes based on a subset of columns, in case you want to ignore changes in some of the columns. When using your own hash, values for `_dlt_id` are randomly generated.
+#### 例: 独自の行ハッシュを使用する
+
+デフォルトでは、`dlt` はリソースによって提供されるすべての列に基づいて行ハッシュを生成し、それを `_dlt_id` に保存します。`write_disposition` ディクショナリで `row_version_column_name` を指定することで、代わりに独自のハッシュを使用できます。リソース内に行ハッシュとして自然に機能する列が既に存在する場合、新しいハッシュ値を生成するよりも、既存のハッシュ値を使用する方が効率的です。このオプションを使用すると、一部の列の変更を無視したい場合に、列のサブセットに基づくハッシュを使用することもできます。独自のハッシュを使用する場合、`_dlt_id` の値はランダムに生成されます。
+
 ```py
 @dlt.resource(
     write_disposition={
@@ -485,9 +504,11 @@ def dim_customer():
 ...
 ```
 
-#### 🧪 Use scd2 with Arrow tables and Panda frames
-`dlt` will not add a **row hash** column to the tabular data automatically (we are working on it).
-You need to do that yourself by adding a transform function to the `scd2` resource that computes row hashes (using pandas.util, should be fairly fast).
+#### 🧪 scd2 を Arrow テーブルと Panda フレームで使用する
+
+`dlt` は、**行ハッシュ** 列を表形式データに自動的に追加しません (現在作業中です)。
+行ハッシュを計算する変換関数を `scd2` リソースに追加して、自分でこれを行う必要があります (pandas.util を使用すれば、かなり高速になるはずです)。
+
 ```py
 import dlt
 from dlt.sources.helpers.transform import add_row_hash_to_table
@@ -502,51 +523,54 @@ scd2_r = dlt.resource(
           },
       ).add_map(add_row_hash_to_table("row_hash"))
 ```
-`add_row_hash_to_table` is the name of the transform function that will compute and create the `row_hash` column that is declared as holding the hash by `row_version_column_name`.
+
+`add_row_hash_to_table` は、`row_version_column_name` によってハッシュを保持すると宣言されている `row_hash` 列を計算して作成する変換関数の名前です。
 
 :::tip
-You can modify existing resources that yield data in tabular form by calling `apply_hints` and passing the `scd2` config in `write_disposition` and then by
-adding the transform with `add_map`.
+`apply_hints` を呼び出して `write_disposition` で `scd2` 構成を渡し、次に `add_map` を使用して変換を追加することで、表形式でデータを生成する既存のリソースを変更できます。
 :::
 
-#### Nested tables
-Nested tables, if any, do not contain validity columns. Validity columns are only added to the root table. Validity column values for records in nested tables can be obtained by joining the root table using `_dlt_root_id` (`root_key`).
+#### ネストされたテーブル
 
-#### Limitations
+ネストされたテーブルがある場合、そのテーブルには有効性判定列は含まれません。有効性判定列はルート テーブルにのみ追加されます。ネストされたテーブル内のレコードの有効性判定列の値は、`_dlt_root_id` (`root_key`) を使用してルート テーブルを結合することで取得できます。
 
-* You cannot use columns like `updated_at` or integer `version` of a record that are unique within a `primary_key` (even if it is defined). The hash column
-must be unique for a root table. We are working to allow `updated_at` style tracking.
-* We do not detect changes in nested tables (except new records) if the row hash of the corresponding parent row does not change. Use `updated_at` or a similar
-column in the root table to stamp changes in nested data.
+#### 制限事項
 
-### `upsert` strategy
+* `primary_key` 内で一意であるレコードの `updated_at` や整数 `version` などの列は使用できません (定義されている場合でも)。ハッシュ列はルート テーブルに対して一意である必要があります。`updated_at` スタイルの追跡を可能にするために取り組んでいます。
+* 対応する親行の行ハッシュが変更されていない場合、ネストされたテーブルの変更 (新しいレコードを除く) は検出されません。ネストされたデータの変更をスタンプするには、ルート テーブルで `updated_at` または同様の列を使用します。
+
+### `upsert` 戦略
 
 :::caution
-The `upsert` merge strategy is currently supported for these destinations:
+`upsert` マージ戦略は現在、これらの宛先でサポートされています:
+
 - `athena`
 - `bigquery`
 - `databricks`
 - `mssql`
 - `postgres`
 - `snowflake`
-- `filesystem` with `delta` table format (see limitations [here](../dlt-ecosystem/destinations/filesystem.md#known-limitations))
+- `delta` テーブル形式の `filesystem` (制限事項については [こちら](../dlt-ecosystem/destinations/filesystem.md#known-limitations)を参照)
 :::
 
-The `upsert` merge strategy does primary-key based *upserts*:
-- *update* a record if the key exists in the target table
-- *insert* a record if the key does not exist in the target table
+`upsert`マージ戦略は主キーベースの*upsert*を実行します:
 
-You can [delete records](#delete-records) with the `hard_delete` hint.
+- 対象テーブルにキーが存在する場合はレコードを*更新*する
+- キーがターゲットテーブルに存在しない場合はレコードを*挿入*します
 
-#### `upsert` versus `delete-insert`
+`hard_delete` ヒントを使用して[レコードを削除](#delete-records)できます。
 
-Unlike the default `delete-insert` merge strategy, the `upsert` strategy:
-1. needs a `primary_key`
-2. expects this `primary_key` to be unique (`dlt` does not deduplicate)
-3. does not support `merge_key`
-4. uses `MERGE` or `UPDATE` operations to process updates
+#### `upsert` と `delete-insert`
 
-#### Example: `upsert` merge strategy
+デフォルトの`delete-insert`マージ戦略とは異なり、`upsert`戦略は:
+
+1. `primary_key` が必要です
+2. この `primary_key` は一意であることが期待されます (`dlt` は重複を排除しません)
+3. `merge_key` をサポートしていません
+4. 更新を処理するために `MERGE` または `UPDATE` 操作を使用します
+
+#### 例: `upsert` マージ戦略
+
 ```py
 @dlt.resource(
     write_disposition={"disposition": "merge", "strategy": "upsert"},
@@ -557,16 +581,16 @@ def my_upsert_resource():
 ...
 ```
 
-## Incremental loading with a cursor field
+## カーソルフィールドによるインクリメンタルロード
 
-In most REST APIs (and other data sources, i.e., database tables), you can request new or updated data by passing a timestamp or ID of the "last" record to a query. The API/database returns just the new/updated records from which you take the maximum/minimum timestamp/ID for the next load.
+ほとんどの REST API (および他のデータ ソース、つまりデータベース テーブル) では、クエリに「最後の」レコードのタイムスタンプまたは ID を渡すことで、新しいデータまたは更新されたデータを要求できます。API/データベースは、次のロードの最大/最小のタイムスタンプ/ID を取得する新しい/更新されたレコードのみを返します。
 
-To do incremental loading this way, we need to:
+この方法でインクリメンタルローディングを行うには、:
 
-- Figure out which field is used to track changes (the so-called **cursor field**) (e.g., “inserted_at”, "updated_at”, etc.);
-- Determine how to pass the "last" (maximum/minimum) value of the cursor field to an API to get just new or modified data (how we do this depends on the source API).
+- 変更を追跡するために使用されるフィールド (いわゆる **カーソル フィールド**) を特定します (例: 「inserted_at」、「updated_at」など)。
+- 新しいデータまたは変更されたデータのみを取得するために、カーソル フィールドの「最後の」(最大/最小) 値を API に渡す方法を決定します (これを行う方法は、ソース API によって異なります)。
 
-Once you've figured that out, `dlt` takes care of finding maximum/minimum cursor field values, removing duplicates, and managing the state with the last values of the cursor. Take a look at the GitHub example below, where we request recently created issues.
+それを理解したら、`dlt` はカーソル フィールドの最大/最小値の検索、重複の削除、カーソルの最後の値による状態の管理を行います。最近作成された問題をリクエストする以下の GitHub の例をご覧ください。
 
 ```py
 @dlt.resource(primary_key="id")
@@ -582,19 +606,21 @@ def repo_issues(
         print(updated_at.last_value)
 ```
 
-Here we add an `updated_at` argument that will receive incremental state, initialized to `1970-01-01T00:00:00Z`. It is configured to track the `updated_at` field in issues yielded by the `repo_issues` resource. It will store the newest `updated_at` value in `dlt` [state](state.md) and make it available in `updated_at.start_value` on the next pipeline run. This value is inserted in the `_get_issues_page` function into the request query param **since** to the [GitHub API](https://docs.github.com/en/rest/issues/issues?#list-repository-issues).
+ここでは、`1970-01-01T00:00:00Z` に初期化された増分状態を受け取る `updated_at` 引数を追加します。これは、`repo_issues` リソースによって生成された問題の `updated_at` フィールドを追跡するように構成されています。最新の `updated_at` 値が `dlt` [state](state.md) に保存され、次のパイプライン実行時に `updated_at.start_value` で使用できるようになります。この値は、`_get_issues_page` 関数で、[GitHub API](https://docs.github.com/en/rest/issues/issues?#list-repository-issues) へのリクエスト クエリ パラメータ **since** に挿入されます。
 
-In essence, the `dlt.sources.incremental` instance above:
-* **updated_at.initial_value** which is always equal to "1970-01-01T00:00:00Z" passed in the constructor
-* **updated_at.start_value** a maximum `updated_at` value from the previous run or the **initial_value** on the first run
-* **updated_at.last_value** a "real-time" `updated_at` value updated with each yielded item or page. Before the first yield, it equals **start_value**
-* **updated_at.end_value** (here not used) [marking the end of the backfill range](#using-end_value-for-backfill)
+本質的には、上記の`dlt.sources.incremental`インスタンスは:
 
-When paginating, you probably need the **start_value** which does not change during the execution of the resource, however, most paginators will return a **next page** link which you should use.
+* **updated_at.initial_value** は常にコンストラクタで渡される「1970-01-01T00:00:00Z」に等しい
+* **updated_at.start_value** 前回の実行からの最大の `updated_at` 値、または最初の実行時の **initial_value**
+* **updated_at.last_value** は、各アイテムまたはページが yield されるたびに更新される「リアルタイム」の `updated_at` 値です。最初の yield の前は、**start_value** と同じです。
+* **updated_at.end_value** (ここでは使用されていません) [バックフィル範囲の終了をマーク](#using-end_value-for-backfill)
 
-Behind the scenes, dlt will deduplicate the results, i.e., in case the last issue is returned again (`updated_at` filter is inclusive) and skip already loaded ones.
+ページ区切りを行う場合、リソースの実行中に変更されない **start_value** が必要になる可能性がありますが、ほとんどのページ区切りは、使用すべき **次のページ** リンクを返します。
 
-In the example below, we incrementally load the GitHub events, where the API does not let us filter for the newest events - it always returns all of them. Nevertheless, `dlt` will load only the new items, filtering out all the duplicates and past issues.
+舞台裏では、dlt は結果の重複を排除します。つまり、最後の問題が再度返される場合 (`updated_at` フィルターが含まれます)、すでに読み込まれた問題をスキップします。
+
+以下の例では、GitHub イベントを段階的にロードします。API では最新のイベントをフィルタリングできず、常にすべてのイベントが返されます。ただし、`dlt` は新しい項目のみをロードし、重複と過去の問題をすべて除外します。
+
 ```py
 # Use naming function in table name to generate separate tables for each event
 @dlt.resource(primary_key="id", table_name=lambda i: i['type'])  # type: ignore
@@ -606,31 +632,26 @@ def repo_events(
         yield page
 ```
 
-We just yield all the events and `dlt` does the filtering (using the `id` column declared as `primary_key`).
+すべてのイベントを生成し、`dlt` がフィルタリングを実行します (`primary_key` として宣言された `id` 列を使用)。
 
-GitHub returns events ordered from newest to oldest. So we declare the `rows_order` as **descending** to [stop requesting more pages once the incremental value is out of range](#declare-row-order-to-not-request-unnecessary-data). We stop requesting more data from the API after finding the first event with `created_at` earlier than `initial_value`.
+GitHub は、新しいものから古いものの順にイベントを返します。そのため、`rows_order` を **descending** として宣言し、[増分値が範囲外になったらそれ以上のページをリクエストしないようにします](#declare-row-order-to-not-request-unnecessary-data)。`created_at` が `initial_value` より早い最初のイベントを見つけたら、API からそれ以上のデータをリクエストしないようにします。
 
 :::note
-`dlt.sources.incremental` is implemented as a [filter function](resource.md#filter-transform-and-pivot-data) that is executed **after** all other transforms you add with `add_map` or  `add_filter`. This means that you can manipulate the data item before the incremental filter sees it. For example:
-* You can create a surrogate primary key from other columns
-* You can modify the cursor value or create a new field composed of other fields
-* Dump Pydantic models to Python dicts to allow incremental to find custom values
+`dlt.sources.incremental` は [フィルタ関数](resource.md#filter-transform-and-pivot-data) として実装されており、`add_map` または `add_filter` で追加した他のすべての変換の **後** に実行されます。つまり、増分フィルタがデータ項目を認識する前に、データ項目を操作できるということです。たとえば:
+* 他の列から代理主キーを作成することができます
+* カーソル値を変更したり、他のフィールドで構成される新しいフィールドを作成したりできます。
+* Pydantic モデルを Python 辞書にダンプして、増分的にカスタム値を見つけられるようにする
 
-[Data validation with Pydantic](schema-contracts.md#use-pydantic-models-for-data-validation) happens **before** incremental filtering.
+[Pydantic によるデータ検証](schema-contracts.md#use-pydantic-models-for-data-validation) は、インクリメンタルフィルタリングの **前** に実行されます。
 :::
 
-### Max, min, or custom `last_value_func`
+### 最大値、最小値、またはカスタムの `last_value_func`
 
-`dlt.sources.incremental` allows you to choose a function that orders (compares) cursor values to the current `last_value`.
-* The default function is the built-in `max`, which returns the larger value of the two.
-* Another built-in, `min`, returns the smaller value.
+`dlt.sources.incremental` を使用すると、カーソル値を現在の `last_value` に順序付け (比較) する関数を選択できます。
+* デフォルトの関数は組み込みの `max` で、2 つの値のうち大きい方の値を返します。
+* 別の組み込み関数 `min` は、小さい方の値を返します。
 
-You can also pass your custom function. This lets you define
-`last_value` on nested types, i.e., dictionaries, and store indexes of last values, not just simple
-types. The `last_value` argument is a [JSON Path](https://github.com/json-path/JsonPath#operators)
-and lets you select nested data (including the whole data item when `$` is used).
-The example below creates a last value which is a dictionary holding a max `created_at` value for each
-created table name:
+カスタム関数を渡すこともできます。これにより、ネストされた型、つまり辞書に `last_value` を定義し、単純な型だけでなく最後の値のインデックスを保存できます。`last_value` 引数は [JSON パス](https://github.com/json-path/JsonPath#operators) であり、ネストされたデータ (`$` が使用されている場合はデータ項目全体を含む) を選択できます。以下の例では、作成されたテーブル名ごとに最大の `created_at` 値を保持する辞書である最後の値を作成します。
 
 ```py
 def by_event_type(event):
@@ -654,9 +675,10 @@ def get_events(last_created_at = dlt.sources.incremental("$", last_value_func=by
         yield json.load(f)
 ```
 
-### Using `end_value` for backfill
+### バックフィルに`end_value`を使用する
 
-You can specify both initial and end dates when defining incremental loading. Let's go back to our Github example:
+インクリメンタルローディングを定義するときに、開始日と終了日の両方を指定できます。Githubの例に戻りましょう:
+
 ```py
 @dlt.resource(primary_key="id")
 def repo_issues(
@@ -668,15 +690,15 @@ def repo_issues(
     for page in _get_issues_page(access_token, repository, since=created_at.start_value, until=created_at.end_value):
         yield page
 ```
-Above, we use the `initial_value` and `end_value` arguments of the `incremental` to define the range of issues that we want to retrieve
-and pass this range to the Github API (`since` and `until`). As in the examples above, `dlt` will make sure that only the issues from
-the defined range are returned.
 
-Please note that when `end_date` is specified, `dlt` **will not modify the existing incremental state**. The backfill is **stateless** and:
-1. You can run backfill and incremental load in parallel (i.e., in an Airflow DAG) in a single pipeline.
-2. You can partition your backfill into several smaller chunks and run them in parallel as well.
+上記では、`incremental` の `initial_value` 引数と `end_value` 引数を使用して、取得する問題の範囲を定義し、この範囲を Github API (`since` と `until`) に渡しています。上記の例と同様に、`dlt` は定義された範囲の問題のみが返されるようにします。
 
-To define specific ranges to load, you can simply override the incremental argument in the resource, for example:
+`end_date` が指定されている場合、`dlt` は **既存の増分状態を変更しません** ので注意してください。バックフィルは **ステートレス** であり、次のようになります:
+
+1. バックフィルと増分ロードを単一のパイプラインで並行して（つまり、Airflow DAG で）実行できます。
+2. バックフィルをいくつかの小さなチャンクに分割し、それらを並行して実行することもできます。
+
+ロードする特定の範囲を定義するには、リソース内の増分引数をオーバーライドするだけです。次に例を示します:
 
 ```py
 july_issues = repo_issues(
@@ -692,36 +714,34 @@ august_issues = repo_issues(
 ...
 ```
 
-Note that dlt's incremental filtering considers the ranges half-closed. `initial_value` is inclusive, `end_value` is exclusive, so chaining ranges like above works without overlaps. This behaviour can be changed with the `range_start` (default `"closed"`) and `range_end` (default `"open"`) arguments.
+dlt の増分フィルタリングでは、範囲が半分閉じているとみなされることに注意してください。`initial_value` は包括的で、`end_value` は排他的であるため、上記のような範囲の連鎖は重複せずに機能します。この動作は、`range_start` (デフォルトは `"closed"`) および `range_end` (デフォルトは `"open"`) 引数で変更できます。
 
-### Declare row order to not request unnecessary data
+### 不要なデータを要求しないように行順序を宣言する
 
-With the `row_order` argument set, dlt will stop retrieving data from the data source (e.g., GitHub API) if it detects that the values of the cursor field are out of the range of **start** and **end** values.
+`row_order` 引数を設定し、カーソル フィールドの値が **start** 値と **end** 値の範囲外であることを検出すると、dlt はデータソース (GitHub API など) からのデータの取得を停止します。
 
-In particular:
-* dlt stops processing when the resource yields any item with a cursor value _equal to or greater than_ the `end_value` and `row_order` is set to **asc**. (`end_value` is not included)
-* dlt stops processing when the resource yields any item with a cursor value _lower_ than the `last_value` and `row_order` is set to **desc**. (`last_value` is included)
+特に:
+
+* dlt は、リソースが `end_value` と等しいかそれより大きいカーソル値を持つ項目を生成し、`row_order` が **asc** に設定されている場合、処理を停止します。(`end_value` は含まれません)
+* dlt は、リソースが `last_value` より _低い_ カーソル値を持つ項目を生成し、`row_order` が **desc** に設定されている場合、処理を停止します。(`last_value` が含まれます)
 
 :::note
-"higher" and "lower" here refer to when the default `last_value_func` is used (`max()`),
-when using `min()` "higher" and "lower" are inverted.
+ここでの「higher」と「lower」は、デフォルトの `last_value_func` (`max()`) が使用される場合を指します。`min()` を使用する場合、「higher」と「lower」は逆になります。
 :::
 
 :::caution
-If you use `row_order`, **make sure that the data source returns ordered records** (ascending / descending) on the cursor field,
-e.g., if an API returns results both higher and lower
-than the given `end_value` in no particular order, data reading stops and you'll miss the data items that were out of order.
+`row_order` を使用する場合は、**データ ソースがカーソル フィールドで順序付けられたレコード (昇順 / 降順) を返すことを確認してください**。
+たとえば、API が特定の順序なしで指定された `end_value` よりも高い結果と低い結果の両方を返す場合、データの読み取りが停止し、順序が間違っているデータ項目が失われます。
 :::
 
-Row order is most useful when:
+行順は次のような場合に最も便利です:
 
-1. The data source does **not** offer start/end filtering of results (e.g., there is no `start_time/end_time` query parameter or similar).
-2. The source returns results **ordered by the cursor field**.
+1. データ ソースでは、結果の開始/終了フィルタリングは**提供されません** (例: `start_time/end_time` クエリ パラメータなどはありません)。
+2. ソースは**カーソル フィールドで順序付けられた**結果を返します。
 
-The GitHub events example is exactly such a case. The results are ordered on cursor value descending, but there's no way to tell the API to limit returned items to those created before a certain date. Without the `row_order` setting, we'd be getting all events, each time we extract the `github_events` resource.
+GitHub イベントの例はまさにそのようなケースです。結果はカーソル値の降順で並べられますが、返される項目を特定の日付より前に作成されたものに限定するように API に指示する方法はありません。`row_order` 設定がなければ、`github_events` リソースを抽出するたびにすべてのイベントが取得されます。
 
-In the same fashion, the `row_order` can be used to **optimize backfill** so we don't continue
-making unnecessary API requests after the end of the range is reached. For example:
+同様に、`row_order` を使って **バックフィルを最適化** し、範囲の終わりに達した後に不要な API リクエストを続行しないようにすることができます。たとえば:
 
 ```py
 @dlt.resource(primary_key="id")
@@ -740,22 +760,15 @@ def tickets(
         yield page
 ```
 
-In this example, we're loading tickets from Zendesk. The Zendesk API yields items paginated and ordered from oldest to newest,
-but only offers a `start_time` parameter for filtering, so we cannot tell it to
-stop retrieving data at `end_value`. Instead, we set `row_order` to `asc` and `dlt` will stop
-getting more pages from the API after the first page with a cursor value `updated_at` is found older
-than `end_value`.
+この例では、Zendesk からチケットを読み込んでいます。Zendesk API は、ページ分けされ、古いものから新しいものの順に並べられたアイテムを生成しますが、フィルタリング用に `start_time` パラメータしか提供していないため、`end_value` でデータの取得を停止するように指示することはできません。代わりに、`row_order` を `asc` に設定すると、`dlt` は、カーソル値 `updated_at` を持つ最初のページが `end_value` より古いことが検出された後、API からそれ以上ページを取得できなくなります。
 
 :::caution
-In rare cases when you use Incremental with a transformer, `dlt` will not be able to automatically close
-the generator associated with a row that is out of range. You can still call the `can_close()` method on
-incremental and exit the yield loop when true.
+まれに、Incremental をトランスフォーマーと共に使用すると、`dlt` は範囲外の行に関連付けられたジェネレーターを自動的に閉じることができません。それでも、incremental で `can_close()` メソッドを呼び出して、true の場合は yield ループを終了することができます。
 :::
 
 :::tip
-The `dlt.sources.incremental` instance provides `start_out_of_range` and `end_out_of_range`
-attributes which are set when the resource yields an element with a higher/lower cursor value than the
-initial or end values. If you do not want `dlt` to stop processing automatically and instead want to handle such events yourself, do not specify `row_order`:
+`dlt.sources.incremental` インスタンスは、`start_out_of_range` 属性と `end_out_of_range` 属性を提供します。これらの属性は、リソースが初期値または終了値よりも高い/低いカーソル値を持つ要素を生成するときに設定されます。`dlt` による処理を自動的に停止せず、代わりにこのようなイベントを自分で処理したい場合は、`row_order` を指定しないでください:
+
 ```py
 @dlt.transformer(primary_key="id")
 def tickets(
@@ -778,11 +791,11 @@ def tickets(
 ```
 :::
 
-### Deduplicate overlapping ranges with primary key
+### 主キーで重複範囲を重複排除する
 
-`Incremental` **does not** deduplicate datasets like the **merge** write disposition does. However, it ensures that when another portion of data is extracted, records that were previously loaded won't be included again. `dlt` assumes that you load a range of data, where the lower bound is inclusive (i.e., greater than or equal). This ensures that you never lose any data but will also re-acquire some rows. For example, if you have a database table with a cursor field on `updated_at` which has a day resolution, then there's a high chance that after you extract data on a given day, more records will still be added. When you extract on the next day, you should reacquire data from the last day to ensure all records are present; however, this will create overlap with data from the previous extract.
+`Incremental` は、**merge** 書き込み処理のようにデータセットの重複を排除**しません。** ただし、データの別の部分が抽出されるときに、以前にロードされたレコードが再び含まれないようにします。`dlt` は、下限が含まれる (つまり、より大きいか等しい) データの範囲をロードすることを前提としています。これにより、データが失われることがなくなり、一部の行が再取得されます。たとえば、日単位の `updated_at` カーソル フィールドを持つデータベース テーブルがある場合、特定の日にデータを抽出した後、さらにレコードが追加される可能性が高くなります。翌日に抽出するときは、すべてのレコードが存在するように、最終日からデータを再取得する必要があります。ただし、これにより、前回の抽出のデータとの重複が作成されます。
 
-By default, a content hash (a hash of the JSON representation of a row) will be used to deduplicate. This may be slow, so `dlt.sources.incremental` will inherit the primary key that is set on the resource. You can optionally set a `primary_key` that is used exclusively to deduplicate and which does not become a table hint. The same setting lets you disable the deduplication altogether when an empty tuple is passed. Below, we pass `primary_key` directly to `incremental` to disable deduplication. That overrides the `delta` primary_key set in the resource:
+デフォルトでは、重複排除にはコンテンツ ハッシュ (行の JSON 表現のハッシュ) が使用されます。これは遅い場合があるため、`dlt.sources.incremental` はリソースに設定されている主キーを継承します。オプションで、重複排除専用でテーブル ヒントにならない `primary_key` を設定できます。同じ設定で、空のタプルが渡されたときに重複排除を完全に無効にすることもできます。以下では、重複排除を無効にするために `primary_key` を `incremental` に直接渡します。これにより、リソースに設定されている `delta` primary_key が上書きされます。
 
 ```py
 @dlt.resource(primary_key="delta")
@@ -792,12 +805,12 @@ def some_data(last_timestamp=dlt.sources.incremental("item.ts", primary_key=()))
         yield {"delta": i, "item": {"ts": pendulum.now().timestamp()}}
 ```
 
-This deduplication process is always enabled when `range_start` is set to `"closed"` (default).
-When you pass `range_start="open"` no deduplication is done as it is not needed as rows with the previous cursor value are excluded. This can be a useful optimization to avoid the performance overhead of deduplication if the cursor field is guaranteed to be unique.
+この重複排除プロセスは、`range_start` が `"closed"` (デフォルト) に設定されている場合に常に有効になります。
+`range_start="open"` を渡すと、前のカーソル値を持つ行が除外されるため重複排除は不要となり、実行されません。カーソル フィールドが一意であることが保証されている場合、これは重複排除のパフォーマンス オーバーヘッドを回避するための便利な最適化になります。
 
-### Using `dlt.sources.incremental` with dynamically created resources
+### 動的に作成されたリソースで `dlt.sources.incremental` を使用する
 
-When resources are [created dynamically](source.md#create-resources-dynamically), it is possible to use the `dlt.sources.incremental` definition as well.
+リソースが[動的に作成される](source.md#create-resources-dynamically)場合は、`dlt.sources.incremental`定義も使用できます。
 
 ```py
 @dlt.source
@@ -819,19 +832,19 @@ def stripe():
         )(endpoint)
 ```
 
-Please note that in the example above, `get_resource` is passed as a function to `dlt.resource` to which we bind the endpoint: **dlt.resource(...)(endpoint)**.
+上記の例では、`get_resource` が、エンドポイントをバインドする `dlt.resource` に関数として渡されることに注意してください: **dlt.resource(...)(endpoint)**。
 
 :::caution
-The typical mistake is to pass a generator (not a function) as below:
+よくある間違いは、以下のようにジェネレータ（関数ではない）を渡すことです:
 
 `yield dlt.resource(get_resource(endpoint), name=endpoint.value, write_disposition="merge", primary_key="id")`.
 
-Here we call **get_resource(endpoint)** and that creates an un-evaluated generator on which the resource is created. That prevents `dlt` from controlling the **created** argument during runtime and will result in an `IncrementalUnboundError` exception.
+ここでは **get_resource(endpoint)** を呼び出し、リソースが作成される未評価のジェネレーターを作成します。これにより、実行時に `dlt` が **created** 引数を制御できなくなり、`IncrementalUnboundError` 例外が発生します。
 :::
 
-### Using Airflow schedule for backfill and incremental loading
+### バックフィルとインクリメンタルロードにエアフロースケジュールを使用する
 
-When [running an Airflow task](../walkthroughs/deploy-a-pipeline/deploy-with-airflow-composer.md#2-modify-dag-file), you can opt-in your resource to get the `initial_value`/`start_value` and `end_value` from the Airflow schedule associated with your DAG. Let's assume that the **Zendesk tickets** resource contains a year of data with thousands of tickets. We want to backfill the last year of data week by week and then continue with incremental loading daily.
+[Airflow タスクを実行する](../walkthroughs/deploy-a-pipeline/deploy-with-airflow-composer.md#2-modify-dag-file) ときに、DAG に関連付けられた Airflow スケジュールから `initial_value`/`start_value` および `end_value` を取得するようにリソースをオプトインできます。**Zendesk チケット** リソースに、何千ものチケットを含む 1 年分のデータが含まれていると仮定します。過去 1 年間のデータを週ごとにバックフィルし、その後は毎日増分読み込みを続行します。
 
 ```py
 @dlt.resource(primary_key="id")
@@ -848,11 +861,12 @@ def tickets(
         yield page
 ```
 
-We opt-in to the Airflow scheduler by setting `allow_external_schedulers` to `True`:
-1. When running on Airflow, the start and end values are controlled by Airflow and the dlt [state](state.md) is not used.
-2. In all other environments, the `incremental` behaves as usual, maintaining the dlt state.
+`allow_external_schedulers` を `True` に設定して、Airflow スケジューラにオプトインします:
 
-Let's generate a deployment with `dlt deploy zendesk_pipeline.py airflow-composer` and customize the DAG:
+1. Airflow 上で実行する場合、開始値と終了値は Airflow によって制御され、dlt [state](state.md) は使用されません。
+2. その他のすべての環境では、`incremental` は通常どおり動作し、dlt 状態を維持します。
+
+`dlt deploy zendesk_pipeline.py airflow-composer` を使用してデプロイメントを生成し、DAG をカスタマイズしましょう:
 
 ```py
 from dlt.helpers.airflow_helper import PipelineTasksGroup
@@ -885,14 +899,15 @@ def zendesk_backfill_bigquery():
 zendesk_backfill_bigquery()
 ```
 
-What got customized:
-1. We use a weekly schedule and want to get the data from February 2023 (`start_date`) until the end of July (`end_date`).
-2. We make Airflow generate all weekly runs (`catchup` is True).
-3. We create `zendesk_support` resources where we select only the incremental resources we want to backfill.
+何がカスタマイズできるか:
 
-When you enable the DAG in Airflow, it will generate several runs and start executing them, starting in February and ending in August. Your resource will receive subsequent weekly intervals starting with `2023-02-12, 00:00:00 UTC` to `2023-02-19, 00:00:00 UTC`.
+1. 週単位のスケジュールを使用し、2023 年 2 月 (`start_date`) から 7 月末 (`end_date`) までのデータを取得したいと考えています。
+2. Airflow で毎週の実行をすべて生成します (`catchup` は True)。
+3. バックフィルする増分リソースのみを選択する `zendesk_support` リソースを作成します。
 
-You can repurpose the DAG above to start loading new data incrementally after (or during) the backfill:
+Airflow で DAG を有効にすると、2 月から 8 月まで複数の実行が生成され、実行が開始されます。リソースには、`2023-02-12、00:00:00 UTC` から `2023-02-19、00:00:00 UTC` までの後続の週次間隔が送信されます。
+
+上記のDAGを再利用して、バックフィル後（またはバックフィル中）に新しいデータを段階的にロードすることができます:
 
 ```py
 @dag(
@@ -916,26 +931,28 @@ def zendesk_new_bigquery():
     tasks.add_run(pipeline, zendesk_support(), decompose="serialize", trigger_rule="all_done", retries=0, provide_context=True)
 ```
 
-Above, we switch to a daily schedule and disable catchup and end date. We also load all the support resources to the same dataset as backfill (`zendesk_support_data`).
-If you want to run this DAG parallel with the backfill DAG, change the pipeline name, for example, to `zendesk_support_new` as above.
+上記では、日次スケジュールに切り替え、キャッチアップと終了日を無効にしています。また、すべてのサポート リソースをバックフィルと同じデータセット (`zendesk_support_data`) にロードします。
+この DAG をバックフィル DAG と並行して実行する場合は、パイプライン名を上記のように `zendesk_support_new` などに変更します。
 
-**Under the hood**
+**フードの下**
 
-Before `dlt` starts executing incremental resources, it looks for `data_interval_start` and `data_interval_end` Airflow task context variables. These are mapped to `initial_value` and `end_value` of the `Incremental` class:
-1. `dlt` is smart enough to convert Airflow datetime to ISO strings or Unix timestamps if your resource is using them. In our example, we instantiate `updated_at=dlt.sources.incremental[int]`, where we declare the last value type to be **int**. `dlt` can also infer the type if you provide the `initial_value` argument.
-2. If `data_interval_end` is in the future or is None, `dlt` sets the `end_value` to **now**.
-3. If `data_interval_start` == `data_interval_end`, we have a manually triggered DAG run. In that case, `data_interval_end` will also be set to **now**.
+`dlt` が増分リソースの実行を開始する前に、`data_interval_start` および `data_interval_end` Airflow タスク コンテキスト変数を探します。これらは、`Incremental` クラスの `initial_value` および `end_value` にマッピングされます:
 
-**Manual runs**
+1. `dlt` は、リソースが使用している場合、Airflow の日時を ISO 文字列または Unix タイムスタンプに変換できるほどスマートです。例では、`updated_at=dlt.sources.incremental[int]` をインスタンス化し、最後の値の型を **int** として宣言します。`initial_value` 引数を指定した場合、`dlt` は型を推測することもできます。
+2. `data_interval_end` が将来の日付または None の場合、`dlt` は `end_value` を **now** に設定します。
+3. `data_interval_start` == `data_interval_end` の場合、DAG 実行は手動でトリガーされます。その場合、`data_interval_end` も **now** に設定されます。
 
-You can run DAGs manually, but you must remember to specify the Airflow logical date of the run in the past (use the Run with config option). For such a run, `dlt` will load all data from that past date until now.
-If you do not specify the past date, a run with a range (now, now) will happen, yielding no data.
+**手動実行**
 
-### Reading incremental loading parameters from configuration
+DAG を手動で実行することもできますが、過去の実行の Airflow 論理日付を指定することを忘れないでください (Run with config オプションを使用)。このような実行の場合、`dlt` はその過去の日付から現在までのすべてのデータをロードします。
+過去の日付を指定しないと、範囲 (現在、現在) での実行が行われ、データは生成されません。
 
-Consider the example below for reading incremental loading parameters from "config.toml". We create a `generate_incremental_records` resource that yields "id", "idAfter", and "name". This resource retrieves `cursor_path` and `initial_value` from "config.toml".
+### 構成からインクリメンタルローディングのパラメータを読み取る
 
-1. In "config.toml", define the `cursor_path` and `initial_value` as:
+「config.toml」からインクリメンタルローディングのパラメータを読み取る以下の例を考えてください。「id」、「idAfter」、および「name」を生成する `generate_incremental_records` リソースを作成します。このリソースは、「config.toml」から `cursor_path` と `initial_value` を取得します。
+
+1. 「config.toml」で、`cursor_path`と`initial_value`を次のように定義します:
+
    ```toml
    # Configuration snippet for an incremental resource
    [pipeline_with_incremental.sources.id_after]
@@ -943,9 +960,10 @@ Consider the example below for reading incremental loading parameters from "conf
    initial_value = 10
    ```
 
-   `cursor_path` is assigned the value "idAfter" with an initial value of 10.
+   `cursor_path` には、初期値 10 の "idAfter" という値が割り当てられます。
 
-1. Here's how the `generate_incremental_records` resource uses the `cursor_path` defined in "config.toml":
+1. `generate_incremental_records` リソースが "config.toml" で定義された `cursor_path` を使用する方法は次のとおりです:
+
    ```py
    @dlt.resource(table_name="incremental_records")
    def generate_incremental_records(id_after: dlt.sources.incremental = dlt.config.value):
@@ -959,17 +977,20 @@ Consider the example below for reading incremental loading parameters from "conf
 
    pipeline.run(generate_incremental_records)
    ```
-   `id_after` incrementally stores the latest `cursor_path` value for future pipeline runs.
 
-### Loading when incremental cursor path is missing or value is None/NULL
+   `id_after` は、将来のパイプライン実行のために最新の `cursor_path` 値を増分的に保存します。
 
-You can customize the incremental processing of dlt by setting the parameter `on_cursor_value_missing`.
+### 増分カーソル パスが見つからないか、値が None/NULL の場合のロード
 
-When loading incrementally with the default settings, there are two assumptions:
-1. Each row contains the cursor path.
-2. Each row is expected to contain a value at the cursor path that is not `None`.
+パラメータ `on_cursor_value_missing` を設定することで、dlt の増分処理をカスタマイズできます。
 
-For example, the two following source data will raise an error:
+デフォルト設定で段階的にロードする場合、2つの前提があります:
+
+1. 各行にはカーソルのパスが含まれます。
+2. 各行には、カーソル パスに `None`以外の値が含まれている必要があります。
+
+たとえば、次の2つのソースデータはエラーを発生させます:
+
 ```py
 @dlt.resource
 def some_data_without_cursor_path(updated_at=dlt.sources.incremental("updated_at")):
@@ -991,14 +1012,15 @@ list(some_data_without_cursor_value())
 ```
 
 
-To process a data set where some records do not include the incremental cursor path or where the values at the cursor path are `None`, there are the following four options:
+一部のレコードに増分カーソルパスが含まれていない、またはカーソルパスの値が `None` であるデータセットを処理するには、次の4つのオプションがあります。:
 
-1. Configure the incremental load to raise an exception in case there is a row where the cursor path is missing or has the value `None` using `incremental(..., on_cursor_value_missing="raise")`. This is the default behavior.
-2. Configure the incremental load to tolerate the missing cursor path and `None` values using `incremental(..., on_cursor_value_missing="include")`.
-3. Configure the incremental load to exclude the missing cursor path and `None` values using `incremental(..., on_cursor_value_missing="exclude")`.
-4. Before the incremental processing begins: Ensure that the incremental field is present and transform the values at the incremental cursor to a value different from `None`. [See docs below](#transform-records-before-incremental-processing)
+1. `incremental(..., on_cursor_value_missing="raise")` を使用して、カーソルパスが欠落しているか、値が `None` である行がある場合に例外を発生させるようにインクリメンタルロードを構成します。これがデフォルトの動作です。
+2. `incremental(..., on_cursor_value_missing="include")` を使用して、欠落しているカーソル パスと `None` 値を許容するようにインクリメンタルロードを構成します。
+3. `incremental(..., on_cursor_value_missing="exclude")` を使用して、欠落しているカーソル パスと `None` 値を除外するようにインクリメンタルロードを構成します。
+4. 増分処理を開始する前に、増分フィールドが存在することを確認し、増分カーソルの値を `None` 以外の値に変換します。[以下のドキュメントを参照](#transform-records-before-incremental-processing)
 
-Here is an example of including rows where the incremental cursor value is missing or `None`:
+増分カーソル値が欠落しているか `None` である行を含める例を次に示します。
+
 ```py
 @dlt.resource
 def some_data(updated_at=dlt.sources.incremental("updated_at", on_cursor_value_missing="include")):
@@ -1014,7 +1036,7 @@ assert result[1] == {"id": 2, "created_at": 2}
 assert result[2] == {"id": 3, "created_at": 4, "updated_at": None}
 ```
 
-If you do not want to import records without the cursor path or where the value at the cursor path is `None`, use the following incremental configuration:
+カーソルパスのないレコードやカーソルパスの値が `None` であるレコードをインポートしたくない場合は、次のインクリメンタル構成を使用します:
 
 ```py
 @dlt.resource
@@ -1029,16 +1051,17 @@ result = list(some_data())
 assert len(result) == 1
 ```
 
-### Transform records before incremental processing
-If you want to load data that includes `None` values, you can transform the records before the incremental processing.
-You can add steps to the pipeline that [filter, transform, or pivot your data](../general-usage/resource.md#filter-transform-and-pivot-data).
+### 増分処理の前にレコードを変換する
+
+`None` 値を含むデータをロードする場合は、増分処理の前にレコードを変換できます。
+[データをフィルター処理、変換、またはピボットする](../general-usage/resource.md#filter-transform-and-pivot-data) 手順をパイプラインに追加できます。
 
 :::caution
-It is important to set the `insert_at` parameter of the `add_map` function to control the order of execution and ensure that your custom steps are executed before the incremental processing starts.
-In the following example, the step of data yielding is at `index = 0`, the custom transformation at `index = 1`, and the incremental processing at `index = 2`.
+実行順序を制御し、増分処理の開始前にカスタム ステップが実行されるようにするには、`add_map` 関数の `insert_at` パラメータを設定することが重要です。
+次の例では、データ生成のステップは `index = 0`、カスタム変換は `index = 1`、増分処理は `index = 2` です。
 :::
 
-See below how you can modify rows before the incremental processing using `add_map()` and filter rows using `add_filter()`.
+`add_map()` を使用して増分処理の前に行を変更する方法と、`add_filter()` を使用して行をフィルター処理する方法については、以下を参照してください。
 
 ```py
 @dlt.resource
@@ -1067,27 +1090,27 @@ assert len(result_filtered) == 2
 ```
 
 ##  Lag / Attribution Window
-In many cases, certain data should be reacquired during incremental loading. For example, you may want to always capture the last 7 days of data when fetching daily analytics reports, or refresh Slack message replies with a moving window of 7 days. This is where the concept of "lag" or "attribution window" comes into play.
 
-The `lag` parameter is a float that supports several types of incremental cursors: `datetime`, `date`, `integer`, and `float`. It can only be used with `last_value_func` set to `min` or `max` (default is `max`).
+多くの場合、インクリメンタルローディング中に特定のデータを再取得する必要があります。たとえば、毎日の分析レポートを取得するときに常に過去 7 日間のデータを取得したり、7 日間の移動ウィンドウで Slack メッセージの返信を更新したりする必要がある場合があります。ここで、「lag」または「attribution window」の概念が役立ちます。
 
-### How `lag` Works
+`lag` パラメータは、`datetime`、`date`、`integer`、および `float` のいくつかのタイプの増分カーソルをサポートする float です。`last_value_func` が `min` または `max` (デフォルトは `max`) に設定されている場合にのみ使用できます。
 
-- **Datetime cursors**: `lag` is the number of seconds added or subtracted from the `last_value` loaded.
-- **Date cursors**: `lag` represents days.
-- **Numeric cursors (integer or float)**: `lag` respects the given unit of the cursor.
+### `lag` の仕組み
 
-This flexibility allows `lag` to adapt to different data contexts.
+- **Datetime cursors**: `lag` は、ロードされた `last_value` から加算または減算される秒数です。
+- **Date cursors**: `lag` は日数を表します。
+- **Numeric cursors (integer or float)**: `lag` はカーソルの指定された単位を尊重します。
 
+この柔軟性により、`lag` はさまざまなデータ コンテキストに適応できます。
 
-### Example using `datetime` incremental cursor with `merge` as `write_disposition`
+### `write_disposition` として `merge` を使用した `datetime` 増分カーソルの使用例
 
-This example demonstrates how to use a `datetime` cursor with a `lag` parameter, applying `merge` as the `write_disposition`. The setup runs twice, and during the second run, the `lag` parameter re-fetches recent entries to capture updates.
+この例では、`lag` パラメータを使用して `datetime` カーソルを使用し、`write_disposition` として `merge` を適用する方法を示します。セットアップは 2 回実行され、2 回目の実行中に、`lag` パラメータは最新のエントリを再取得して更新をキャプチャします。
 
-1. **First Run**: Loads `initial_entries`.
-2. **Second Run**: Loads `second_run_events` with the specified lag, refreshing previously loaded entries.
+1. **First Run**: `initial_entries` を読み込みます。
+2. **Second Run**: 指定されたラグで `second_run_events` をロードし、以前にロードされたエントリを更新します。
 
-This setup demonstrates how `lag` ensures that a defined period of data remains refreshed, capturing updates or changes within the attribution window.
+この設定は、`lag` によって定義された期間のデータが更新され、attribution window 内で更新または変更がキャプチャされる仕組みを示しています。
 
 ```py
 pipeline = dlt.pipeline(
@@ -1126,14 +1149,14 @@ pipeline.run(events_resource)
 ```
 
 
-## Doing a full refresh
+## 完全なリフレッシュを行う
 
-You may force a full refresh of `merge` and `append` pipelines:
+`merge` および `append` パイプラインの完全な更新を強制することができます:
 
-1. In the case of a `merge`, the data in the destination is deleted and loaded fresh. Currently, we do not deduplicate data during the full refresh.
-1. In the case of `dlt.sources.incremental`, the data is deleted and loaded from scratch. The state of the incremental is reset to the initial value.
+1. `merge` の場合、宛先のデータは削除され、新しくロードされます。現在、完全更新中にデータの重複排除は行われません。
+1. `dlt.sources.incremental` の場合、データは削除され、最初からロードされます。増分の状態は初期値にリセットされます。
 
-Example:
+例:
 
 ```py
 p = dlt.pipeline(destination="bigquery", dataset_name="dataset_name")
@@ -1145,24 +1168,20 @@ p.run(merge_source().with_resources("merge_table"), write_disposition="replace")
 p.run(merge_source())
 ```
 
-Passing write disposition to `replace` will change the write disposition on all the resources in
-`repo_events` during the run of the pipeline.
+書き込み処理を `replace` に渡すと、パイプラインの実行中に `repo_events` 内のすべてのリソースの書き込み処理が変更されます。
 
-## Custom incremental loading with pipeline state
+## パイプライン状態によるカスタムなインクリメンタルローディング
 
-The pipeline state is a Python dictionary that gets committed atomically with the data; you can set
-values in it in your resources and on the next pipeline run, request them back.
+パイプラインの状態は、データとともにアトミックにコミットされる Python 辞書です。リソース内でその値を設定し、次回のパイプライン実行時にその値を要求することが可能です。
 
-The pipeline state is, in principle, scoped to the resource - all values of the state set by a resource
-are private and isolated from any other resource. You can also access the source-scoped state, which
-can be shared across resources.
-[You can find more information on pipeline state here](state.md#pipeline-state).
+パイプラインの状態は、原則としてリソースにスコープが設定されます。リソースによって設定された状態のすべての値はプライベートであり、他のリソースから分離されています。ソース スコープの状態にアクセスすることもできます。これは、リソース間で共有できます。
+[パイプラインの状態の詳細については、こちらを参照してください](state.md#pipeline-state)。
 
-### Preserving the last value in resource state
+### リソース状態の最後の値を保持する
 
-For the purpose of preserving the "last value" or similar loading checkpoints, we can open a dlt state dictionary with a key and a default value as below. When the resource is executed and the data is loaded, the yielded resource data will be loaded at the same time with the update to the state.
+「最後の値」または同様の読み込みチェックポイントを保持する目的で、以下のようにキーとデフォルト値を持つ dlt 状態辞書を開くことができます。リソースが実行され、データがロードされると、生成されたリソース データは状態の更新と同時にロードされます。
 
-In the two examples below, you see how the `dlt.sources.incremental` is working under the hood.
+以下の 2 つの例では、`dlt.sources.incremental` が内部でどのように動作しているかがわかります。
 
 ```py
 @resource()
@@ -1176,7 +1195,7 @@ def tweets():
     dlt.current.resource_state()["last_updated"] = data["last_timestamp"]
 ```
 
-If we keep a list or a dictionary in the state, we can modify the underlying values in the objects, and thus we do not need to set the state back explicitly.
+リストまたは辞書を状態に保持すると、オブジェクト内の基礎となる値を変更できるため、状態を明示的に元に戻す必要がなくなります。
 
 ```py
 @resource()
@@ -1190,25 +1209,25 @@ def tweets():
     loaded_dates.append('2023-01-01')
 ```
 
-Step by step explanation of how to get or set the state:
+状態を取得または設定する方法のステップバイステップの説明:
 
-1. We can use the function `var = dlt.current.resource_state().setdefault("key", [])`. This allows us to retrieve the values of `key`. If `key` was not set yet, we will get the default value `[]` instead.
-2. We can now treat `var` as a Python list - We can append new values to it, or if applicable, we can read the values from previous loads.
-3. On pipeline run, the data will load, and the new `var`'s value will get saved in the state. The state is stored at the destination, so it will be available on subsequent runs.
+1. 関数 `var = dlt.current.resource_state().setdefault("key", [])` を使用できます。これにより、`key` の値を取得できます。`key` がまだ設定されていない場合は、代わりにデフォルト値 `[]` が取得されます。
+2. これで、`var` を Python リストとして扱うことができるようになりました。新しい値を追加したり、該当する場合は以前のロードから値を読み取ったりすることができます。
+3. パイプラインを実行すると、データが読み込まれ、新しい `var` の値が状態に保存されます。状態は宛先に保存されるため、後続の実行で使用できます。
 
-### Advanced state usage: storing a list of processed entities
+### 高度な状態の使用法: 処理されたエンティティのリストの保存
 
-Let's look at the `player_games` resource from the chess pipeline. The chess API has a method to request games archives for a given month. The task is to prevent the user from loading the same month data twice - even if the user makes a mistake and requests the same months range again:
+チェス パイプラインの `player_games` リソースを見てみましょう。チェス API には、特定の月のゲーム アーカイブを要求するメソッドがあります。そのタスクは、ユーザーが間違って同じ月の範囲を再度要求した場合でも、同じ月のデータを 2 回ロードしないようにすることです:
 
-- Our data is requested in 2 steps:
-  - Get all available archives URLs.
-  - Get the data from each URL.
-- We will add the "chess archives" URLs to this list we created.
-- This will allow us to track what data we have loaded.
-- When the data is loaded, the list of archives is loaded with it.
-- Later we can read this list and know what data has already been loaded.
+- データは 2 つのステップで要求されます:
+  - 利用可能なすべてのアーカイブ URL を取得します。
+  - 各 URL からデータを取得します。
+- 作成したこのリストに「チェス アーカイブ」の URL を追加します。
+- これにより、ロードしたデータを追跡できるようになります。
+- データがロードされると、アーカイブのリストも一緒にロードされます。
+- 後でこのリストを読み取って、どのデータがすでにロードされているかを知ることができます。
 
-In the following example, we initialize a variable with an empty list as a default:
+次の例では、空のリストをデフォルトとして変数を初期化します:
 
 ```py
 @dlt.resource(write_disposition="append")
@@ -1234,7 +1253,7 @@ def players_games(chess_url, players, start_month=None, end_month=None):
             print(f"Skipping archive {url}")
 ```
 
-### Advanced state usage: tracking the last value for all search terms in Twitter API
+### 高度な状態の使用: Twitter API のすべての検索用語の最後の値を追跡する
 
 ```py
 @dlt.resource(write_disposition="append")
@@ -1258,23 +1277,23 @@ def search_tweets(twitter_bearer_token=dlt.secrets.value, search_terms=None, sta
             yield page
 ```
 
-## Troubleshooting
+## トラブルシューティング
 
-If you see that the incremental loading is not working as expected and the incremental values are not modified between pipeline runs, check the following:
+インクリメンタルローディングが期待どおりに機能せず、パイプラインの実行間で増分値が変更されない場合は、次の点を確認してください。
 
-1. Make sure the `destination`, `pipeline_name`, and `dataset_name` are the same between pipeline runs.
+1. パイプラインの実行間で、`destination`、`pipeline_name`、および `dataset_name` が同じであることを確認します。
 
-2. Check if `dev_mode` is `False` in the pipeline configuration. Check if `refresh` for associated sources and resources is not enabled.
+2. パイプライン構成で `dev_mode` が `False` になっているかどうかを確認します。関連するソースとリソースの `refresh` が有効になっていないかどうかを確認します。
 
-3. Check the logs for the `Bind incremental on <resource_name> ...` message. This message indicates that the incremental value was bound to the resource and shows the state of the incremental value.
+3. ログで`Bind incremental on <resource_name> ...` メッセージを確認します。このメッセージは、増分値がリソースにバインドされたことを示し、増分値の状態を示します。
 
-4. After the pipeline run, check the state of the pipeline. You can do this by running the following command:
+4. パイプラインの実行後、パイプラインの状態を確認します。これは、次のコマンドを実行して実行できます:
 
 ```sh
 dlt pipeline -v <pipeline_name> info
 ```
 
-For example, if your pipeline is defined as follows:
+たとえば、パイプラインが次のように定義されているとします:
 
 ```py
 @dlt.resource
@@ -1291,7 +1310,7 @@ pipeline = dlt.pipeline(
 pipeline.run(my_resource)
 ```
 
-You'll see the following output:
+次の出力が表示されます:
 
 ```text
 Attaching to pipeline <pipeline_name>
@@ -1317,5 +1336,5 @@ sources:
 }
 ```
 
-Verify that the `last_value` is updated between pipeline runs.
+パイプラインの実行間で `last_value` が更新されていることを確認します。
 

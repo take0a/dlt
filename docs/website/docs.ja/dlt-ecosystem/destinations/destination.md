@@ -4,26 +4,27 @@ description: Custom `dlt` destination function for reverse ETL
 keywords: [reverse etl, sink, function, decorator, destination, custom destination]
 ---
 
-# Custom destination: Reverse ETL
+# カスタム宛先: リバース ETL
 
-The `dlt` destination decorator allows you to receive all data passing through your pipeline in a simple function. This can be extremely useful for reverse ETL, where you are pushing data back to an API.
+`dlt` 宛先デコレータを使用すると、パイプラインを通過するすべてのデータを単純な関数で受信できます。これは、データを API にプッシュバックするリバース ETL に非常に役立ちます。
 
-You can also use this for sending data to a queue or a simple database destination that is not yet supported by `dlt`, although be aware that you will have to manually handle your own migrations in this case.
+また、`dlt` でまだサポートされていないキューまたは単純なデータベースの宛先にデータを送信する場合にもこれを使用できますが、この場合は独自の移行を手動で処理する必要があることに注意してください。
 
-It will also allow you to simply get a path to the files of your normalized data. So, if you need direct access to parquet or jsonl files to copy them somewhere or push them to a database, you can do this here too.
+また、正規化されたデータのファイルへのパスを簡単に取得することもできます。したがって、parquet ファイルまたは jsonl ファイルに直接アクセスしてどこかにコピーしたり、データベースにプッシュしたりする必要がある場合は、ここでもこれを行うことができます。
 
-## Install `dlt` for reverse ETL
+## リバース ETL 用の `dlt` をインストールする
 
-To install `dlt` without additional dependencies:
+追加の依存関係なしで`dlt`をインストールするには:
+
 ```sh
 pip install dlt
 ```
 
-## Set up a destination function for your pipeline
+## パイプラインの宛先関数を設定する
 
-The custom destination decorator differs from other destinations in that you do not need to provide connection credentials, but rather you provide a function that gets called for all items loaded during a pipeline run or load operation. With the `@dlt.destination`, you can convert any function that takes two arguments into a `dlt` destination.
+カスタム宛先デコレータは、接続資格情報を提供する必要がなく、パイプラインの実行またはロード操作中にロードされるすべての項目に対して呼び出される関数を提供するという点で他の宛先とは異なります。`@dlt.destination` を使用すると、2 つの引数を取る任意の関数を `dlt` 宛先に変換できます。
 
-A very simple dlt pipeline that pushes a list of items into a destination function might look like this:
+アイテムのリストを宛先関数にプッシュする非常に単純な dlt パイプラインは次のようになります:
 
 ```py
 import dlt
@@ -40,13 +41,13 @@ pipeline.run([1, 2, 3], table_name="items")
 ```
 
 :::tip
-1. You can also remove the typing information (`TDataItems` and `TTableSchema`) from this example. Typing is generally useful to know the shape of the incoming objects, though.
-2. There are a few other ways to declare custom destination functions for your pipeline described below.
+1. この例から型指定情報 (`TDataItems` および `TTableSchema`) を削除することもできます。ただし、型指定は一般に、入力オブジェクトの形状を知るのに役立ちます。
+2. 以下に説明するように、パイプラインのカスタム宛先関数を宣言する方法は他にもいくつかあります。
 :::
 
-### `@dlt.destination`, custom destination function, and signature
+### `@dlt.destination`、カスタム宛先関数、および署名
 
-The full signature of the destination decorator plus its function is the following:
+宛先デコレータの完全なシグネチャとその機能は次のとおりです:
 
 ```py
 @dlt.destination(
@@ -63,30 +64,33 @@ def my_destination(items: TDataItems, table: TTableSchema) -> None:
     ...
 ```
 
-### Decorator arguments
-* The `batch_size` parameter on the destination decorator defines how many items per function call are batched together and sent as an array. If you set a batch size of `0`, instead of passing in actual data items, you will receive one call per load job with the path of the file as the items argument. You can then open and process that file in any way you like.
-* The `loader_file_format` parameter on the destination decorator defines the format in which files are stored in the load package before being sent to the destination function. This can be `jsonl` or `parquet`.
-* The `name` parameter on the destination decorator defines the name of the destination that gets created by the destination decorator.
-* The `naming_convention` parameter on the destination decorator defines the name of the destination that gets created by the destination decorator. This controls how table and column names are normalized. The default is `direct`, which will keep all names the same.
-* The `max_nesting_level` parameter on the destination decorator defines how deep the normalizer will go to normalize nested fields in your data to create subtables. This overwrites any settings on your `source` and is set to zero to not create any nested tables by default.
-* The `skip_dlt_columns_and_tables` parameter on the destination decorator defines whether internal tables and columns will be fed into the custom destination function. This is set to `True` by default.
-* The `max_parallel_load_jobs` parameter will define how many load jobs will run in parallel in threads. If you have a destination that only allows five connections at a time, you can set this value to 5, for example.
-* The `loader_parallelism_strategy` parameter will control how load jobs are parallelized. Set to `parallel`, the default, jobs will be parallelized no matter which table is being loaded to. `table-sequential` will parallelize loading but only ever have one load job per table at a time, `sequential` will run all load jobs sequentially on the main thread.
+### デコレータ引数
+
+* 宛先デコレータの `batch_size` パラメータは、関数呼び出しごとにいくつの項目がバッチ処理され、配列として送信されるかを定義します。バッチ サイズを `0` に設定すると、実際のデータ項目を渡す代わりに、ファイルのパスを項目引数として指定した読み込みジョブごとに 1 回の呼び出しを受け取ります。その後、そのファイルを任意の方法で開いて処理できます。
+* 宛先デコレータの `loader_file_format` パラメータは、宛先関数に送信される前にロード パッケージに保存されるファイルの形式を定義します。これは `jsonl` または `parquet` になります。
+* 宛先デコレータの `name` パラメータは、宛先デコレータによって作成される宛先の名前を定義します。
+* 宛先デコレータの `naming_convention` パラメータは、宛先デコレータによって作成される宛先の名前を定義します。これは、テーブル名と列名がどのように正規化されるかを制御します。デフォルトは `direct` で、すべての名前が同じままになります。
+* 宛先デコレータの `max_nesting_level` パラメータは、正規化ツールがデータ内のネストされたフィールドを正規化してサブテーブルを作成する深さを定義します。これにより、`source` の設定が上書きされ、デフォルトではネストされたテーブルを作成しないように 0 に設定されます。
+* 宛先デコレータの `skip_dlt_columns_and_tables` パラメータは、内部テーブルと列がカスタム宛先関数に供給されるかどうかを定義します。デフォルトでは、これは `True` に設定されています。
+* `max_parallel_load_jobs` パラメータは、スレッド内で並列に実行されるロードジョブの数を定義します。一度に 5 つの接続のみを許可する宛先がある場合は、この値を 5 などに設定できます。
+* `loader_parallelism_strategy` パラメータは、ロード ジョブの並列化方法を制御します。デフォルトの `parallel` に設定すると、どのテーブルにロードされるかに関係なく、ジョブは並列化されます。`table-sequential` はロードを並列化しますが、一度に 1 つのテーブルにつき 1 つのロード ジョブのみを実行します。`sequential` は、すべてのロード ジョブをメイン スレッドで順番に実行します。
 
 :::note
-Settings above ensure that the shape of the data you receive in the destination function is as close as possible to what you see in the data source.
+上記の設定により、宛先関数で受信するデータの形状が、データソースに表示されるものと可能な限り近くなります。
 
-* The custom destination sets the `max_nesting_level` to 0 by default, which means no sub-tables will be generated during the normalization phase.
-* The custom destination also skips all internal tables and columns by default. If you need these, set `skip_dlt_columns_and_tables` to False.
+* カスタム宛先では、デフォルトで `max_nesting_level` が 0 に設定されるため、正規化フェーズ中にサブテーブルは生成されません。
+* カスタム宛先では、デフォルトですべての内部テーブルと列もスキップされます。これらが必要な場合は、`skip_dlt_columns_and_tables` を False に設定します。
 :::
 
-### Custom destination function
-* The `items` parameter on the custom destination function contains the items being sent into the destination function.
-* The `table` parameter contains the schema table the current call belongs to, including all table hints and columns. For example, the table name can be accessed with `table["name"]`.
-* You can also add config values and secrets to the function arguments, see below!
+### カスタム宛先関数
 
-## Add configuration, credentials, and other secrets to the destination function
-The destination decorator supports settings and secrets variables. If you, for example, plan to connect to a service that requires an API secret or a login, you can do the following:
+* カスタム宛先関数の `items` パラメータには、宛先関数に送信される項目が含まれます。
+* `table` パラメータには、すべてのテーブルヒントと列を含む、現在の呼び出しが属するスキーマ テーブルが含まれます。たとえば、テーブル名には `table["name"]` でアクセスできます。
+* 関数の引数に設定値とシークレットを追加することもできます。以下を参照してください。
+
+## 宛先関数に設定、資格情報、その他の秘密情報を追加する
+
+宛先デコレータは設定とシークレット変数をサポートします。たとえば、APIシークレットまたはログインを必要とするサービスに接続する場合は、次のようにします:
 
 ```py
 @dlt.destination(batch_size=10, loader_file_format="jsonl", name="my_destination")
@@ -94,19 +98,20 @@ def my_destination(items: TDataItems, table: TTableSchema, api_key: str = dlt.se
     ...
 ```
 
-You can then set a config variable in your `.dlt/secrets.toml` like so:
+次に、`.dlt/secrets.toml` に次のように設定変数を設定します:
 
 ```toml
 [destination.my_destination]
 api_key="<my-api-key>"
 ```
 
-Custom destinations follow the same configuration rules as [regular named destinations](../../general-usage/destination.md#configure-a-destination)
+カスタム宛先は、[通常の名前付き宛先](../../general-usage/destination.md#configure-a-destination)と同じ構成ルールに従います。
 
-## Use the custom destination in `dlt` pipeline
+## `dlt` パイプラインでカスタム宛先を使用する
 
-There are multiple ways to pass the custom destination function to the `dlt` pipeline:
-- Directly reference the destination function
+カスタム宛先関数を`dlt`パイプラインに渡す方法は複数あります:
+
+- 宛先関数を直接参照する
 
   ```py
   @dlt.destination(batch_size=10)
@@ -117,8 +122,8 @@ There are multiple ways to pass the custom destination function to the `dlt` pip
   p = dlt.pipeline("my_pipe", destination=local_destination_func)
   ```
 
-  Like for [regular destinations](../../general-usage/destination.md#pass-explicit-credentials), you are allowed to pass configuration and credentials
-  explicitly to the destination function.
+  [通常の宛先](../../general-usage/destination.md#pass-explicit-credentials)と同様に、宛先関数に構成と資格情報を明示的に渡すことができます。
+  
   ```py
   @dlt.destination(batch_size=10, loader_file_format="jsonl", name="my_destination")
   def my_destination(items: TDataItems, table: TTableSchema, api_key: str = dlt.secrets.value) -> None:
@@ -127,7 +132,8 @@ There are multiple ways to pass the custom destination function to the `dlt` pip
   p = dlt.pipeline("my_pipe", destination=my_destination(api_key=os.getenv("API_KEY"))) # type: ignore[call-arg]
   ```
 
-- Directly via destination reference. In this case, don't use the decorator for the destination function.
+- 宛先への参照を介して直接。この場合、宛先関数のデコレータを使用しないでください。
+
   ```py
   # File my_destination.py
 
@@ -145,7 +151,9 @@ There are multiple ways to pass the custom destination function to the `dlt` pip
       )
   )
   ```
-- Via a fully qualified string to function location (this can be set in `config.toml` or through environment variables). The destination function should be located in another file.
+
+- 関数の場所への完全修飾文字列経由 (これは `config.toml` または環境変数を通じて設定できます)。宛先関数は別のファイルに配置する必要があります。
+
   ```py
   # File my_pipeline.py
 
@@ -160,46 +168,47 @@ There are multiple ways to pass the custom destination function to the `dlt` pip
   )
   ```
 
-## Adjust batch size and retry policy for atomic loads
-The destination keeps a local record of how many `DataItems` were processed, so if you, for example, use the custom destination to push `DataItems` to a remote API, and this
-API becomes unavailable during the load resulting in a failed `dlt` pipeline run, you can repeat the run of your pipeline at a later moment and the custom destination will **restart from the whole batch that failed**. We are preventing any data from being lost, but you can still get duplicated data if you committed half of the batch, for example, to a database and then failed.
-**Keeping the batch atomicity is on you**. For this reason, it makes sense to choose a batch size that you can process in one transaction (say one API request or one database transaction) so that if this request or transaction fails repeatedly, you can repeat it at the next run without pushing duplicate data to your remote location. For systems that
-are not transactional and do not tolerate duplicated data, you can use a batch of size 1.
+## アトミックロードのバッチサイズと再試行ポリシーを調整する
 
-Destination functions that raise exceptions are retried 5 times before giving up (`load.raise_on_max_retries` config option). If you run the pipeline again, it will resume loading before extracting new data.
+宛先には、処理された `DataItems` の数のローカル レコードが保持されるため、たとえば、カスタム宛先を使用して `DataItems` をリモート API にプッシュし、ロード中にこの API が使用できなくなり、`dlt` パイプラインの実行が失敗した場合、後でパイプラインの実行を繰り返すことができ、カスタム宛先は **失敗したバッチ全体から再開します**。データが失われないようにしていますが、たとえばバッチの半分をデータベースにコミットしてから失敗した場合は、データが重複する可能性があります。
+**バッチのアトミック性を維持するのはあなたの責任です**。このため、1 つのトランザクション (1 つの API 要求または 1 つのデータベース トランザクションなど) で処理できるバッチ サイズを選択するのが合理的です。そうすれば、この要求またはトランザクションが繰り返し失敗した場合でも、重複したデータをリモート ロケーションにプッシュせずに、次回の実行時に繰り返すことができます。トランザクションがなく、重複したデータを許容しないシステムの場合は、サイズ 1 のバッチを使用できます。
 
-If your exception derives from `DestinationTerminalException`, the whole load job will be marked as failed and not retried again.
+例外を発生させる宛先関数は、中止する前に 5 回再試行されます (`load.raise_on_max_retries` 構成オプション)。パイプラインを再度実行すると、新しいデータを抽出する前にロードが再開されます。
+
+例外が `DestinationTerminalException` から派生していた場合、ロードジョブ全体が失敗としてマークされ、再試行されません。
 
 :::caution
-If you wipe out the pipeline folder (where job files and destination state are saved), you will not be able to restart from the last failed batch.
-However, it is fairly easy to back up and restore the pipeline directory, [see details below](#manage-pipeline-state-for-incremental-loading).
+パイプラインフォルダー (ジョブファイルと宛先の状態が保存される場所) を消去すると、最後に失敗したバッチから再開できなくなります。
+ただし、パイプライン ディレクトリのバックアップと復元は非常に簡単です。[詳細は以下を参照](#manage-pipeline-state-for-incremental-loading)。
 :::
 
-## Increase or decrease loading parallelism
-Calls to the destination function by default will be executed on multiple threads, so you need to make sure you are not using any non-thread-safe nonlocal or global variables from outside your destination function. If you need to have all calls executed from the same thread, you can set the `workers` [config variable of the load step](../../reference/performance.md#load) to 1.
+## ロードの並列処理を増減する
+
+デフォルトでは、宛先関数の呼び出しは複数のスレッドで実行されるため、宛先関数の外部からスレッドセーフでない非ローカル変数またはグローバル変数を使用していないことを確認する必要があります。すべての呼び出しを同じスレッドから実行する必要がある場合は、`workers` [ロード ステップの構成変数](../../reference/performance.md#load) を 1 に設定できます。
 
 :::tip
-For performance reasons, we recommend keeping the multithreaded approach and making sure that you, for example, are using thread-safe connection pools to a remote database or queue.
+パフォーマンス上の理由から、マルチスレッドアプローチを維持し、たとえば、リモートデータベースまたはキューへのスレッドセーフな接続プールを使用することをお勧めします。
 :::
 
-## Write disposition
+## 書き込み処理
 
-`@dlt.destination` will forward all normalized `DataItems` encountered during a pipeline run to the custom destination function, so there is no notion of "write dispositions."
+`@dlt.destination` は、パイプラインの実行中に検出されたすべての正規化された `DataItems` をカスタム宛先関数に転送するため、「書き込み処理」という概念はありません。
 
-## Staging support
+## ステージングサポート
 
-`@dlt.destination` does not support staging files in remote locations before being called at this time. If you need this feature, please let us know.
+現時点では、`@dlt.destination` は呼び出される前にリモートの場所にあるファイルのステージングをサポートしていません。この機能が必要な場合は、お知らせください。
 
-## Manage pipeline state for incremental loading
-Custom destinations do not have a general mechanism to restore pipeline state. This will impact data sources that rely on the state being kept, i.e., all incremental resources.
-If you wipe the pipeline directory (i.e., by deleting a folder or running on AWS Lambda or GitHub Actions where you get a clean runner), the progress of the incremental loading is lost. On the next run, you will re-acquire the data from the beginning.
+## インクリメンタルローディングのパイプラインの状態を管理する
 
-While we are working on a pluggable state storage, you can fix the problem above by:
-1. Not wiping the pipeline directory. For example, if you run your pipeline on an EC instance periodically, the state will be preserved.
-2. By doing a restore/backup of the pipeline directory before/after it runs. This is way easier than it sounds, and [here's a script you can reuse](https://gist.github.com/rudolfix/ee6e16d8671f26ac4b9ffc915ad24b6e).
+カスタム宛先には、パイプラインの状態を復元するための一般的なメカニズムがありません。これは、保持されている状態に依存するデータソース (つまり、すべてのインクリメンタルなリソース) に影響します。
+パイプライン ディレクトリを消去すると (つまり、フォルダーを削除するか、クリーンなランナーを取得する AWS Lambda または GitHub Actions で実行すると)、インクリメンタルローディングの進行状況が失われます。次回の実行時に、データを最初から再取得します。
 
-## What's next
+プラグ可能な状態ストレージに取り組んでいるなら、上記の問題は次のように修正できます:
 
-* Check out our [Custom BigQuery Destination](../../examples/custom_destination_bigquery/) example.
-* Need help with building a custom destination? Ask your questions in our [Slack Community](https://dlthub.com/community) technical help channel.
+1. パイプライン ディレクトリを消去しない。たとえば、EC インスタンスでパイプラインを定期的に実行すると、状態は保持されます。
+2. パイプライン ディレクトリの実行前/実行後に、そのディレクトリの復元/バックアップを実行します。これは思ったよりずっと簡単です。[再利用できるスクリプトはこちら](https://gist.github.com/rudolfix/ee6e16d8671f26ac4b9ffc915ad24b6e)。
 
+## 次は？
+
+* [カスタム BigQuery 宛先](../../examples/custom_destination_bigquery/) の例をご覧ください。
+* カスタム宛先の構築についてサポートが必要ですか? [Slack コミュニティ](https://dlthub.com/community) のテクニカル サポート チャネルで質問してください。
