@@ -4,6 +4,7 @@ description: Learn how to set up and configure
 keywords: [readers source and filesystem, files, filesystem, readers source, cloud storage, object storage, local file system]
 ---
 import Header from '../_source-info-header.md';
+
 <Header/>
 
 ファイルシステムソースを使用すると、リモートの場所 (AWS S3、Google Cloud Storage、Google Drive、Azure Blob Storage、SFTP サーバー) またはローカルファイルシステムからファイルをシームレスに読み込むことができます。ファイルシステムソースは、[CSV](../../file-formats/csv.md)、[Parquet](../../file-formats/parquet.md)、[JSONL](../../file-formats/jsonl.md) ファイルをネイティブにサポートし、あらゆる種類の構造化ファイルを読み込むためのカスタマイズが可能です。
@@ -61,7 +62,7 @@ print(pipeline.last_trace.last_normalize_info)
 
 3. このコマンドを実行すると、開始するために必要なファイルと構成設定を含む新しいディレクトリが作成されます。
 
-## 構成
+## 構成 {#configuration}
 
 ### 資格情報の取得
 
@@ -257,7 +258,7 @@ dlt は、ID ベースやデフォルトの認証情報など、クラウドス�
 1. `filesystem` リソースは、glob パターンを使用して選択したバケット内のファイルを列挙し、カスタマイズ可能なページサイズなどの詳細を `FileItem` として返します。
 2. 特定の変換関数で各ファイルを処理し、レコードを生成するために使用できるトランスフォーマー リソースの 1 つ。
 
-### 1. `filesystem` リソースを初期化する
+### 1. `filesystem` リソースを初期化する {#1-initialize-a-filesystem-resource}
 
 :::note
 `filesystem` リソースだけの使用で、glob パラメータに基づいてストレージ内のファイルがリストされ、ファイルの[メタデータ](advanced#fileitem-fields)が生成されます。`filesystem` リソース自体はファイルを読み取ったりコピーしたりしません。
@@ -299,7 +300,7 @@ filesystem_source = filesystem(
 * `files_per_page` - 一度に処理されるファイルの数。デフォルト値は `100` です。
 * `extract_content` - true の場合、ファイルの内容が読み取られ、リソースに返されます。デフォルト値は `False` です。
 
-### 2. 適切なトランスフォーマーリソースの選択
+### 2. 適切なトランスフォーマーリソースの選択 {#2-choose-the-right-transformer-resource}
 
 ファイルシステムソースの現在の実装では、CSV、Parquet、JSONL の 3 つのファイルタイプがネイティブにサポートされています。上記のいずれかを適用するか、[独自のトランスフォーマーを作成する](advanced#create-your-own-transformer)ことができます。選択したトランスフォーマー リソースを適用するには、パイプ表記 `|` を使用します:
 
@@ -323,7 +324,7 @@ filesystem_pipe = filesystem(
 `pipeline.run` でロードする前に、各リソースに[特定の名前](../../../general-usage/resource#duplicate-and-rename-resources)を付けることをお勧めします。これにより、データが希望の名前のテーブルに送信され、各パイプラインが[インクリメンタルロードに個別の状態](../../../general-usage/state#read-and-write-pipeline-state-in-a-resource)を使用するようになります。
 :::
 
-### 3. パイプラインの作成と実行
+### 3. パイプラインの作成と実行 {}
 
 ```py
 import dlt
@@ -337,7 +338,7 @@ print(info)
 
 パイプラインを作成して実行する方法の詳細については、[ウォークスルー:パイプラインを実行する](../../../walkthroughs/run-a-pipeline)を参照してください。
 
-### 4. ヒントの適用
+### 4. ヒントの適用 {}
 
 ```py
 import dlt
@@ -353,7 +354,7 @@ load_info = pipeline.run(filesystem_pipe.with_name("table_name"))
 print(load_info)
 ```
 
-### 5. インクリメンタルローディング
+### 5. インクリメンタルローディング {#5-incremental-loading}
 
 データを段階的にロードする簡単な方法をいくつか紹介します:
 
@@ -361,7 +362,7 @@ print(load_info)
 2. [特定の列に基づいて新しいレコードをロードします](#load-new-records-based-on-a-specific-column)。 `updated_at` などの特定の列を調べることで、新しいレコードまたは更新されたレコードのみをロードできます。 最初の方法とは異なり、このアプローチでは毎回すべてのファイルを読み取り、更新されたレコードをフィルター処理します。
 3. [更新されたファイルと更新されたレコードのみの読み込みを組み合わせます](#combine-loading-only-updated-files-and-records)。最後に、両方の方法を組み合わせることができます。既存のファイルに新しいレコードを追加できる場合は便利なので、変更されたファイルだけでなく、変更されたレコードもフィルターする必要があります。
 
-#### 変更日に基づくファイルのロード
+#### 変更日に基づくファイルのロード {#load-files-based-on-modification-date}
 
 For example, to load only new CSV files with 例えば、[インクリメンタルローディング](../../../general-usage/incremental-loading)で新しい CSV ファイルだけをロードするには、`apply_hints` メソッドが使用できます。
 
@@ -379,7 +380,7 @@ load_info = pipeline.run((new_files | read_csv()).with_name("csv_files"))
 print(load_info)
 ```
 
-#### 特定カラムに戻づく新しいレコードのロード
+#### 特定カラムに戻づく新しいレコードのロード {#load-new-records-based-on-a-specific-column}
 
 この例では、`update_at` というフィールドに基づいて新しいレコードのみをロードします。この方法は、たとえば、新しいレコードが表示されるたびにすべてのファイルが変更されるため、変更日でファイルをフィルタリングできない場合に役立ちます。
 
@@ -398,7 +399,7 @@ load_info = pipeline.run(filesystem_pipe)
 print(load_info)
 ```
 
-#### 更新されたファイルの更新されたレコードだけを組み合わせたロード
+#### 更新されたファイルの更新されたレコードだけを組み合わせたロード {#combine-loading-only-updated-files-and-records}
 
 ```py
 import dlt
@@ -416,7 +417,7 @@ load_info = pipeline.run(filesystem_pipe)
 print(load_info)
 ```
 
-### 6. ファイルをフィルタする
+### 6. ファイルをフィルタする {#6-filter-files}
 
 メタデータに基づいてファイルをフィルタリングする必要がある場合は、`add_filter` メソッドを使用して簡単に行うことができます。フィルタリング関数内では、`FileItem` 表現の[任意のフィールド](advanced#fileitem-fields)にアクセスできます。
 

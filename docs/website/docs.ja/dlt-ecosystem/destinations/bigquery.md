@@ -14,7 +14,7 @@ keywords: [bigquery, destination, data warehouse]
 pip install "dlt[bigquery]"
 ```
 
-## セットアップガイド
+## セットアップガイド {#setup-guide}
 
 **1. 以下を実行して、BigQuery にロードするパイプラインでプロジェクトを初期化します:**
 
@@ -80,7 +80,7 @@ client_email = "client_email" # please set me up!
 
 データの場所を指定できます。つまり、デフォルトの `US` ではなく `EU` を指定できます。
 
-### OAuth 2.0 認証
+### OAuth 2.0 認証 {#oauth-20-authentication}
 
 OAuth 2.0認証を使用できます。適切なスコープで**リフレッシュトークン**を生成する必要があります（詳細についてはGPT-4アシスタントに問い合わせることをお勧めします）。次に、`secrets.toml` に次の情報を入力できます:
 
@@ -95,7 +95,7 @@ client_secret = "client_secret"  # please set me up!
 refresh_token = "refresh_token"  # please set me up!
 ```
 
-### デフォルトの資格情報の使用
+### デフォルトの資格情報の使用 {#using-default-credentials}
 
 Google は、`GOOGLE_APPLICATION_CREDENTIALS` 環境変数やメタデータ サービスなど、デフォルトの認証情報を取得する方法をいくつか提供しています。GCP で利用可能な VM (クラウド ファンクション、Composer ランナー、Colab ノートブック) には、関連付けられたサービス アカウントまたは認証済みユーザーがあります。シークレットに何も明示的に指定されていない場合、`dlt` はデフォルトの認証情報を使用しようとします。
 
@@ -130,7 +130,7 @@ project_id = "project_id_credentials"
 ローダーは、ジョブを再試行および終了するときに [Google の推奨事項](https://cloud.google.com/bigquery/docs/error-messages) に従います。
 Google BigQuery クライアントは、クエリとファイルのアップロードに対して精巧な再試行メカニズムとタイムアウトを実装しており、これらは宛先オプションで設定できます。
 
-BigQuery の宛先では、[ストリーミング挿入](https://cloud.google.com/bigquery/docs/streaming-data-into-bigquery) もサポートされています。このモードでは、小規模なバッチ (<500 レコード) でパフォーマンスが向上しますが、データがバッファリングされるため、更新/削除操作ができなくなります。このため、ストリーミング挿入は `write_disposition="append"` でのみ使用でき、挿入されたデータは最大 90 分間編集がブロックされます (ただし、読み取りはすぐに使用できます)。[詳細はこちら](https://cloud.google.com/bigquery/quotas#streaming_inserts)。
+BigQuery の宛先では、[ストリーミング挿入](https://cloud.google.com/bigquery/docs/streaming-data-into-bigquery) もサポートされています。このモードでは、小規模なバッチでパフォーマンスが向上しますが、データがバッファリングされるため、更新/削除操作ができなくなります。このため、ストリーミング挿入は `write_disposition="append"` でのみ使用でき、挿入されたデータは最大 90 分間編集がブロックされます (ただし、読み取りはすぐに使用できます)。[詳細はこちら](https://cloud.google.com/bigquery/quotas#streaming_inserts)。
 
 リソースをストリーミング挿入モードに切り替えるには、ヒントを使用します:
 
@@ -214,7 +214,7 @@ BigQueryにデータをロードするには、次のファイル形式を設定
 * スキーマを使用する [自動検出とネストされたフィールド](#use-bigquery-schema-autodetect-for-nested-fields)
 :::
 
-## サポートされている列のヒント
+## サポートされている列のヒント {#supported-column-hints}
 
 BigQuery は次の[列ヒント](../../general-usage/schema#tables-and-columns)をサポートしています:
 
@@ -297,7 +297,7 @@ retry_deadline=60.0
 
 この宛先は、[dlt state sync](../../general-usage/state#syncing-state-with-destination)を完全にサポートします。
 
-## BigQuery アダプタ
+## BigQuery アダプタ　{#bigquery-adapter}
 
 `bigquery_adapter` を使用すると、BigQuery 固有のヒントをリソースに追加できます。
 これらのヒントは、パーティション分割、クラスタリング、数値列の丸めモードの指定など、BigQuery テーブルへのデータのロード方法に影響します。
