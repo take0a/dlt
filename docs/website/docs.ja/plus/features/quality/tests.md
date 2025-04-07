@@ -4,10 +4,6 @@ description: dlt+ Test utils
 keywords: ["dlt+", "data tests", "test"]
 ---
 
-import Link from '../../../_plus_admonition.md';
-
-<Link/>
-
 ## Introduction
 
 dlt+ provides a `pytest` plugin with a set of powerful fixtures and utilities that simplify testing for dlt+ projects. These testing utilities are packaged separately in `dlt-plus-tests`, making it easy to install them as a development dependency. Check the [installation guide](#installation) for instructions on how to install the package.
@@ -146,8 +142,8 @@ from dlt_plus_tests.utils import assert_load_info, load_table_counts
 def test_events_to_data_lake(dpt_project_config: Project) -> None:
     """Make sure we dispatch the events to tables properly"""
     factory = EntityFactory(dpt_project_config)
-    github_events = factory.create_source_factory("events")
-    events_to_lake = factory.create_pipeline("events_to_lake")
+    github_events = factory.get_source("events")
+    events_to_lake = factory.get_pipeline("events_to_lake")
     info = events_to_lake.run(github_events())
     assert_load_info(info)
 

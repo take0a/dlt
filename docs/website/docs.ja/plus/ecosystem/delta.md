@@ -4,10 +4,6 @@ description: Delta destination
 keywords: [delta, delta lake]
 ---
 
-import Link from '../../_plus_admonition.md';
-
-<Link/>
-
 # Delta
 
 The Delta destination is based on the [filesystem destination](../../dlt-ecosystem/destinations/filesystem.md) in dlt. All configuration options from the filesystem destination can be configured as well.
@@ -115,7 +111,7 @@ pipeline = dlt.pipeline("loads_delta", destination="delta")
 The Delta destination handles the write dispositions as follows:
 - `append` - files belonging to such tables are added to the dataset folder.
 - `replace` - all files that belong to such tables are deleted from the dataset folder, and then the current set of files is added.
-- `merge` - can be used only with the `upsert` [merge strategy](../../general-usage/incremental-loading#upsert).
+- `merge` - can be used only with the `upsert` [merge strategy](../../general-usage/incremental-loading#upsert-strategy).
 
 :::caution
 The `upsert` merge strategy for the Delta destination is **experimental**.
@@ -238,7 +234,7 @@ You can pass storage options by configuring `destination.delta.deltalake_storage
 deltalake_storage_options = '{"AWS_S3_LOCKING_PROVIDER": "dynamodb", "DELTA_DYNAMO_TABLE_NAME": "custom_table_name"}'
 ```
 
-`dlt` passes these options to the `storage_options` argument of the `write_deltalake` method in the `deltalake` library. Look at their [documentation](https://delta-io.github.io/delta-rs/api/delta_writer/#deltalake.write_deltalake) to see which options can be used.
+dlt passes these options to the `storage_options` argument of the `write_deltalake` method in the `deltalake` library. See the [Delta Lake `write_deltalake` API documentation](https://delta-io.github.io/delta-rs/api/delta_writer/#deltalake.write_deltalake) for available storage options.
 
 You don't need to specify credentials here. dlt merges the required credentials with the options you provided before passing them as `storage_options`.
 
