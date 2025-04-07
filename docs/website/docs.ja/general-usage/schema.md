@@ -208,9 +208,86 @@ data = [
 
 `merge` 書き込み処理には、**ネストされた** テーブルから **ルート** テーブルまで、その間にあるすべての親テーブルをスキップする追加のネストされた参照が必要です。この参照は、`root_key` (デフォルトでは `_dlt_root_id` という名前) [ヒントを含む列](incremental-loading.md#forcing-root-key-propagation)をネストされたテーブルに追加することによって作成されます。
 
+### Generate custom linking for nested tables
+Using `nested_hints` in `@dlt.resource` you can model your own relations between root and nested tables. You do that by specifying `primary_key` or `merge_key` on
+a nested table.
+<!--@@@DLT_SNIPPET ./snippets/schema-snippets.py::nested_hints_primary_key-->
+
+In the above example we effectively convert `customers__purchases` table into a top level table that is linked to `customers` table `id` column with `customer_id` foreign key.
+1. we declare compound primary key on `purchases` on (customer_id, id) columns
+2. we add a mapping function that will push the customer `id` to `purchases` as `customer_id`
+3. we declare table reference from `purchases` to `customers` (this is optional)
+4. we set `merge` write disposition on `purchases`.
+
+Here's resulting schema. Note that regular linking for nested tables was not generated. Instead `customer__purchases` table has compound
+primary key, write disposition, load id but still receives data from `purchases` nested list.
+
+```yaml
+tables:
+  customers:
+    columns:
+      id:
+        nullable: false
+        primary_key: true
+        data_type: bigint
+      name:
+        data_type: text
+        nullable: true
+      city:
+        data_type: text
+        nullable: true
+      _dlt_id:
+        data_type: text
+        nullable: false
+        unique: true
+        row_key: true
+      _dlt_load_id:
+        data_type: text
+        nullable: false
+    write_disposition: merge
+    resource: customers
+  customers__purchases:
+    columns:
+      customer_id:
+        data_type: bigint
+        primary_key: true
+        nullable: false
+      id:
+        nullable: false
+        primary_key: true
+        data_type: bigint
+      name:
+        data_type: text
+        nullable: true
+      price:
+        data_type: decimal
+        nullable: true
+      _dlt_root_id:
+        data_type: text
+        nullable: false
+        root_key: true
+      _dlt_id:
+        data_type: text
+        nullable: false
+        unique: true
+        row_key: true
+      _dlt_load_id:
+        data_type: text
+        nullable: false
+    references:
+    - referenced_table: customers
+      columns:
+      - customer_id
+      referenced_columns:
+      - id
+    write_disposition: merge
+    resource: customers
+```
+
 ### テーブル参照
 
-テーブル参照を使用してテーブルに注釈を付けることができます。この機能は近日中にリリースされる予定です。
+テーブル参照を使用してテーブルに注釈を付けることができます。`@dlt.resource` implements `references` argument that declares table references. Those references
+are not enforced by `dlt`. See [example](#generate-custom-linking-for-nested-tables) above.
 
 ## スキーマ設定
 

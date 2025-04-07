@@ -92,6 +92,12 @@ Athenaワークグループは次のように提供できます。:
 athena_work_group="my_workgroup"
 ```
 
+You can force all tables to be in iceberg format:
+```toml
+[destination.athena]
+force_iceberg = true
+`
+
 ## 書き込み処理
 
 `athena` 宛先は書き込み処理を次のように処理します。:
@@ -148,6 +154,14 @@ def data() -> Iterable[TDataItem]:
 ```
 
 Iceberg テーブルとして作成されたすべてのテーブルについて、Athena 宛先は、ファイルシステムと Athena グルー カタログの両方のステージング データセットに通常の Athena テーブルを作成し、ファイルシステムとグルー カタログの両方の同じデータセット内の非 Iceberg テーブルとともに存在する最終的な Iceberg テーブルにすべてのデータをコピーします。Iceberg テーブルから通常のテーブルへの切り替え、またはその逆の切り替えはサポートされていません。
+
+See [athena adapter](#athena-adapter) for partitioning and other options.
+
+You can also force all tables to be in iceberg format:
+```toml
+[destination.athena]
+force_iceberg = true
+```
 
 #### `merge` サポート
 

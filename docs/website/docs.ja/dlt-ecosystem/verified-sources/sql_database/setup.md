@@ -56,6 +56,14 @@ import Header from '../_source-info-header.md';
     pip install -r requirements.txt
     ```
 
+    :::note
+    To [load data more efficiently using pyarrow](./configuration#pyarrow), you'll also need to install `pyarrow`, `numpy`, and `pandas`. 
+
+    ```sh
+    pip install pyarrow numpy pandas
+    ```
+    :::
+
 5. パイプラインを実行する
 
     ```sh

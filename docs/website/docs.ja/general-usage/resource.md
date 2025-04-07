@@ -62,13 +62,78 @@ for row in source_name().resources.get('table_name'):
 データ項目を入力として受け取り、ヒント値を返す関数である動的ヒントを渡すことができます。これにより、データに応じてテーブルと列のスキーマを作成できます。[こちらの例](#adjust-schema-when-you-yield-data)を参照してください。
 :::
 
-:::tip
+<!-- :::tip
 一部のリソース引数を [構成と資格情報](credentials) 値としてマークして、`dlt` がそれらを関数に自動的に渡すことができるようにすることができます。
-:::
+::: -->
 
 ### テーブル、列、データに制約を付与する
 
 `schema_contract` 引数を使用して、dlt に [新しいテーブル、データ型、不正なデータ型の処理方法](schema-contracts.md)を指示します。たとえば、これを **freeze** に設定すると、`dlt` は新しいテーブル、列、またはデータ型をスキーマに導入することを許可せず、例外を発生させます。使用可能な契約モードの詳細については、[こちら](schema-contracts.md#setting-up-the-contract)を参照してください。
+
+### Define schema of nested tables
+
+`dlt` creates [nested tables](schema.md#nested-references-root-and-nested-tables) to store [list of objects](destination-tables.md#nested-tables) if present in your data.
+You can define the schema of such tables with `nested_hints` argument to `@dlt.resource`:
+```py
+import dlt
+
+@dlt.resource(
+    nested_hints={
+        "purchases": dlt.mark.make_nested_hints(
+            columns=[{"name": "price", "data_type": "decimal"}],
+            schema_contract={"columns": "freeze"},
+        )
+    },
+)
+def customers():
+    """Load customer data from a simple python list."""
+    yield [
+        {
+            "id": 1,
+            "name": "simon",
+            "city": "berlin",
+            "purchases": [{"id": 1, "name": "apple", "price": "1.50"}],
+        },
+    ]
+```
+Here we convert the `price` field in list of `purchases` to decimal type and set the schema contract to lock the list
+of columns in it. We use convenience function `dlt.mark.make_nested_hints` to generate nested hints dictionary. You are
+free to use it directly.
+
+Mind that `purchases` list will be stored as table with name `customers__purchases`. When declaring nested hints you just need
+to specify nested field(s) name(s). In case of deeper nesting ie. let's say each `purchase` has a list of `coupons` applied,
+you can apply hints to coupons and define `customers__purchases__coupons` table schema:
+```py
+import dlt
+
+@dlt.resource(
+    nested_hints={
+        "purchases": {},
+        ("purchases", "coupons"): {
+            "columns": {"registered_at": {"data_type": "timestamp"}}
+        }
+    },
+)
+def customers():
+    ...
+```
+Here we use `("purchases", "coupons")` to locate list at the depth of 2 and set the data type on `registered_at` column
+to `timestamp`. We do that by directly using nested hints dict.
+Note that we specified `purchases` with an empty list of hints. **You are required to specify all parent hints, even if they 
+are empty. Currently we are not adding missing path elements automatically**.
+
+You can use `nested_hints` primarily to set column hints and schema contract, those work exactly as in case of root tables.
+* `file_format` has no effect (not implemented yet)
+* `write_disposition` works as expected but leads to unintended consequences (ie. you can set nested table to `replace`) while root table is `append`.
+* `references` will create [table references](schema.md#table-references-1) (annotations) as expected.
+* `primary_key` and `merge_key`: **setting those will convert nested table into a regular table, with a separate write disposition, file format etc.**
+[It allows you to create custom table relationships ie. using natural primary and foreign keys present in the data.](schema.md#generate-custom-linking-for-nested-tables)
+
+:::tip
+[REST API Source](../dlt-ecosystem/verified-sources/rest_api/basic.md) accepts `nested_hints` argument as well.
+
+You can apply nested hints after the resource was created by using [apply_hints](#set-table-name-and-adjust-schema).
+:::
 
 ### Pydanticでスキーマを定義する
 
@@ -165,7 +230,9 @@ for row in generate_rows(20):
     print(row)
 ```
 
+:::tip
 一部のリソース引数を [構成と資格情報](credentials)の値としてマークして、`dlt` がそれらを関数に自動的に渡すことができるようにすることができます。
+:::
 
 ### `dlt.transformer` でリソースを処理する
 

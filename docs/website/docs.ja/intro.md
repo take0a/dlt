@@ -19,7 +19,7 @@ dlt は使いやすく、柔軟性と拡張性があるように設計されて�
 - dlt は、[スキーマ](./general-usage/schema) と[データ型](./general-usage/schema/#data-types)を推論し、[データを正規化して](./general-usage/schema/#data-normalizer), ネストしたデータ構造を扱います。
 - dlt は、様々な[人気のある宛先](./dlt-ecosystem/destinations/)をサポートします。また、リバースETLパイプラインを作るための[カスタマイズした宛先](./dlt-ecosystem/destinations/destination)を追加するインターフェースがあります。
 - dlt は、Python が実行される、どんな場所にもデプロイできますから、[Airflow](./walkthroughs/deploy-a-pipeline/deploy-with-airflow-composer) 上にも、[serverless functions](./walkthroughs/deploy-a-pipeline/deploy-with-google-cloud-functions) にも、その他の任意のクラウド上にもデプロイできます。
-- dlt は、[スキーマの進化](./general-usage/schema-evolution)と[スキーマとデータの制約](./general-usage/schema-contracts)によって、パイプラインのメンテナンスを自動化します。
+- dlt は、[インクリメンタルローディング](./general-usage/incremental-loading)、[スキーマの進化](./general-usage/schema-evolution)と[スキーマとデータの制約](./general-usage/schema-contracts)によって、パイプラインのメンテナンスを自動化します。
 
 dlt を使い始めるには、pip を使ってライブラリをインストールします:
 

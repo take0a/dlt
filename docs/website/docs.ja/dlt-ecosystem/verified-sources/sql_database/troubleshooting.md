@@ -107,3 +107,9 @@ DB2 のセットアップとベンチマークに関する情報とコードに�
 #### UUID  
 
 UUID は、デフォルトでは文字列として表されます。`table_adapter_callback` を使用して特定の列の UUID タイプのプロパティを変更することで、この動作を切り替えることができます。(特定の列のデータ型プロパティを変更する方法については、[こちら](./configuration#pyarrow) のコード例を参照してください。)
+
+### Notes on data loading
+
+#### Arrow loading
+
+Using the configuration `sql_database(backend="pyarrow")` improves performance by pivoting all records (row-major) into a arrow table (column-major). The library `pyarrow` doesn't have a utility for this pivot operation, which is why `numpy` or `pandas` is necessary. Either library is required for this pivot operation only, then `pyarrow` handles the rest of type conversion and applying dlt constraints. 

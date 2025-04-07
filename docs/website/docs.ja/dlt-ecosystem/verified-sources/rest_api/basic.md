@@ -423,7 +423,7 @@ from dlt.sources.helpers.rest_client.paginators import JSONLinkPaginator
 | `header_link` | [HeaderLinkPaginator](../../../general-usage/http/rest-client.md#headerlinkpaginator) | 次のページへのリンクは、レスポンス ヘッダーにあります。<br/>*パラメーター:*<ul><li>`links_next_key` (str) - リンクを含むヘッダーの名前。デフォルトは "next" です。</li></ul> |
 | `offset` | [OffsetPaginator](../../../general-usage/http/rest-client.md#offsetpaginator) | ページ区切りはオフセット パラメータに基づいており、合計アイテム数はレスポンス本文内または明示的に提供されます。<br/>*パラメータ:*<ul><li>`limit` (int) - 各リクエストで取得するアイテムの最大数</li><li>`offset` (int) - 最初のリクエストの初期オフセット。デフォルトは `0` です</li><li>`offset_param` (str) - オフセットを指定するために使用されるクエリ パラメータの名前。デフォルトは "offset" です</li><li>`limit_param` (str) - 制限を指定するために使用されるクエリ パラメータの名前。デフォルトは "limit" です</li><li>`total_path` (str) - アイテムの合計数の JSONPath 式。指定されていない場合、ページ区切りは `maximum_offset` と `stop_after_empty_page` によって制御されます</li><li>`maximum_offset` (int) - オプションの最大オフセット値。合計数がなくてもページ区切りを制限します</li><li>`stop_after_empty_page` (bool) - ページに結果項目が含まれていない場合にページ区切りを停止するかどうか。デフォルトは `True` です</li></ul> |
 | `page_number` | [PageNumberPaginator](../../../general-usage/http/rest-client.md#pagenumberpaginator) | ページ区切りはページ番号パラメータに基づいており、総ページ数はレスポンス本文内または明示的に提供されます。<br/>*パラメータ:*<ul><li>`base_page` (int) - 開始ページ番号。デフォルトは `0` です。</li><li>`page_param` (str) - ページ番号のクエリパラメータ名。デフォルトは "page" です。</li><li>`total_path` (str) - 総ページ数の JSONPath 式。指定されていない場合、ページ区切りは `maximum_page` と `stop_after_empty_page` によって制御されます。</li><li>`maximum_page` (int) - オプションの最大ページ番号。このページに到達するとページ区切りが停止します。</li><li>`stop_after_empty_page` (bool) - ページに結果項目が含まれていない場合にページ区切りを停止するかどうか。デフォルトは `True` です。</li></ul> |
-| `cursor` | [JSONResponseCursorPaginator](../../../general-usage/http/rest-client.md#jsonresponsecursorpaginator) | ページネーションはカーソル パラメータに基づいており、カーソルの値はレスポンス本文 (JSON) に含まれています。<br/>*パラメータ:*<ul><li>`cursor_path` (str) - カーソル値への JSONPath。デフォルトは "cursors.next" です。</li><li>`cursor_param` (str) - カーソルのクエリ パラメータ名。デフォルトは "after" です。</li></ul> |
+| `cursor` | [JSONResponseCursorPaginator](../../../general-usage/http/rest-client.md#jsonresponsecursorpaginator) | ページネーションはカーソル パラメータに基づいており、カーソルの値はレスポンス本文 (JSON) に含まれています。<br/>*パラメータ:*<ul><li>`cursor_path` (str) - カーソル値への JSONPath。デフォルトは "cursors.next" です。</li><li>`cursor_param` (str) - カーソルのクエリ パラメータ名。Defaults to "cursor" if neither `cursor_param` nor `cursor_body_path` is provided.</li><li>`cursor_body_path` (str, optional) - the JSONPath to place the cursor in the request body.</li></ul>Note: You must provide either `cursor_param` or `cursor_body_path`, but not both. If neither is provided, `cursor_param` will default to "cursor". |
 | `single_page` | SinglePagePaginator | 応答は、ページ区切りのメタデータを無視して、単一ページの応答として解釈されます。 |
 | `auto` | `None` | ソースがページ区切り方法を自動的に検出するように明示的に指定します。 |
 
@@ -551,7 +551,7 @@ config = {
 }
 ```
 
-:::warning
+<!-- :::warning
 アクセス トークンやその他の機密情報は必ず `secrets.toml` ファイルに保存し、バージョン管理システムにコミットしないでください。
 :::
 
@@ -562,7 +562,7 @@ config = {
 | [BearerTokenAuth](../../../general-usage/http/rest-client.md#bearer-token-authentication) | `bearer` | Bearer トークン認証 |
 | [HTTPBasicAuth](../../../general-usage/http/rest-client.md#http-basic-authentication) | `http_basic` | HTTP ベーシック認証 |
 | [APIKeyAuth](../../../general-usage/http/rest-client.md#api-key-authentication) | `api_key` | クエリパラメータまたはヘッダーで定義されたキーを使用した API キー認証。 |
-| [OAuth2ClientCredentials](../../../general-usage/http/rest-client.md#oauth20-authorization) | `oauth2_client_credentials` | 認可サーバーから取得した一時アクセス トークンを使用した OAuth 2.0 認可。 |
+| [OAuth2ClientCredentials](../../../general-usage/http/rest-client.md#oauth20-authorization) | `oauth2_client_credentials` | 認可サーバーから取得した一時アクセス トークンを使用した OAuth 2.0 認可。 | -->
 
 
 :::warning
