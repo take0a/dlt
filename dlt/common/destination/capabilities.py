@@ -11,12 +11,11 @@ from typing import (
     Set,
     Protocol,
     Type,
-    get_args,
 )
 from dlt.common.data_types import TDataType
 from dlt.common.exceptions import TerminalValueError
 from dlt.common.normalizers.typing import TNamingConventionReferenceArg
-from dlt.common.typing import TLoaderFileFormat
+from dlt.common.typing import TLoaderFileFormat, get_args
 from dlt.common.configuration.utils import serialize_value
 from dlt.common.configuration import configspec
 from dlt.common.configuration.specs import ContainerInjectableContext
@@ -183,6 +182,9 @@ class DestinationCapabilitiesContext(ContainerInjectableContext):
 
     supports_native_boolean: bool = True
     """The destination supports a native boolean type, otherwise bool columns are usually stored as integers"""
+
+    sqlglot_dialect: Optional[str] = None
+    """The SQL dialect used by sqlglot to transpile a query to match the destination syntax."""
 
     def generates_case_sensitive_identifiers(self) -> bool:
         """Tells if capabilities as currently adjusted, will generate case sensitive identifiers"""

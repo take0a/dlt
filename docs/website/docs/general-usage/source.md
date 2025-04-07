@@ -120,13 +120,13 @@ pipeline.run(pipedrive_source().add_limit(max_items=10, max_time=10))
 ```
 
 :::note
-Note that `add_limit` **does not limit the number of records** but rather the "number of yields". `dlt` will close the iterator/generator that produces data after the limit is reached. Please read in more detail about the `add_limit` on the resource page.
+Note that `add_limit` **does not limit the number of records** but rather the "number of yields". dlt will close the iterator/generator that produces data after the limit is reached. Please read in more detail about the `add_limit` on the resource page.
 :::
 
 Find more on sampling data [here](resource.md#sample-from-large-data).
 
 ### Rename the source
-`dlt` allows you to rename the source ie. to place the source configuration into custom section or to have many instances
+dlt allows you to rename the source i.e. to place the source configuration into custom section or to have many instances
 of the source created side by side. For example:
 ```py
 from dlt.sources.sql_database import sql_database
@@ -134,8 +134,7 @@ from dlt.sources.sql_database import sql_database
 my_db = sql_database.clone(name="my_db", section="my_db")(table_names=["table_1"])
 print(my_db.name)
 ```
-Here we create a renamed version of the `sql_database` and then instantiate it. Such source will read
-credentials from:
+Here we create a renamed version of the `sql_database` and then instantiate it. Such source will read credentials from:
 ```toml
 [sources.my_db.my_db.credentials]
 password="..."
@@ -143,7 +142,7 @@ password="..."
 
 ### Add more resources to existing source
 
-You can add a custom resource to a source after it was created. Imagine that you want to score all the deals with a keras model that will tell you if the deal is a fraud or not. In order to do that, you declare a new [transformer that takes the data from](resource.md#feeding-data-from-one-resource-into-another) `deals` resource and add it to the source.
+You can add a custom resource to a source after it was created. Imagine that you want to score all the deals with a keras model that will tell you if the deal is a fraud or not. In order to do that, you declare a new [transformer that takes the data from](resource.md#process-resources-with-dlttransformer) `deals` resource and add it to the source.
 
 ```py
 import dlt
@@ -172,12 +171,12 @@ or
 source.resources["deal_scores"] = source.deals | deal_scores
 ```
 :::note
-When adding a resource to the source, `dlt` clones the resource so your existing instance is not affected.
+When adding a resource to the source, dlt clones the resource so your existing instance is not affected.
 :::
 
 ### Reduce the nesting level of generated tables
 
-You can limit how deep `dlt` goes when generating nested tables and flattening dicts into columns. By default, the library will descend and generate nested tables for all nested lists and columns from dicts, without limit.
+You can limit how deep dlt goes when generating nested tables and flattening dicts into columns. By default, the library will descend and generate nested tables for all nested lists and columns from dicts, without limit.
 
 ```py
 @dlt.source(max_table_nesting=1)

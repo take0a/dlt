@@ -82,6 +82,13 @@ You can provide an Athena workgroup like so:
 athena_work_group="my_workgroup"
 ```
 
+You can force all tables to be in iceberg format:
+```toml
+[destination.athena]
+force_iceberg = true
+```
+
+
 ## Write disposition
 
 The `athena` destination handles the write dispositions as follows:
@@ -116,7 +123,7 @@ Under the hood, Athena uses different SQL engines for DDL (catalog) and DML/Quer
 
 Using a staging destination is mandatory when using the Athena destination. If you do not set staging to `filesystem`, `dlt` will automatically do this for you.
 
-If you decide to change the [filename layout](./filesystem#data-loading) from the default value, keep the following in mind so that Athena can reliably build your tables:
+If you decide to change the [filename layout](./filesystem#files-layout) from the default value, keep the following in mind so that Athena can reliably build your tables:
  - You need to provide the `{table_name}` placeholder, and this placeholder needs to be followed by a forward slash.
  - You need to provide the `{file_id}` placeholder, and it needs to be somewhere after the `{table_name}` placeholder.
  - `{table_name}` must be the first placeholder in the layout.
@@ -134,6 +141,15 @@ def data() -> Iterable[TDataItem]:
 ```
 
 For every table created as an Iceberg table, the Athena destination will create a regular Athena table in the staging dataset of both the filesystem and the Athena glue catalog, and then copy all data into the final Iceberg table that lives with the non-Iceberg tables in the same dataset on both the filesystem and the glue catalog. Switching from Iceberg to regular table or vice versa is not supported.
+
+See [athena adapter](#athena-adapter) for partitioning and other options.
+
+You can also force all tables to be in iceberg format:
+```toml
+[destination.athena]
+force_iceberg = true
+```
+
 
 #### `merge` support
 

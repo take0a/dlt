@@ -76,6 +76,13 @@ def is_nested_table(table: TTableSchema) -> bool:
     return bool(table.get("parent"))
 
 
+def may_be_nested(table: TTableSchema) -> bool:
+    """Table may be nested if it does not define any primary/merge keys"""
+    pks = get_columns_names_with_prop(table, "primary_key", include_incomplete=True)
+    mks = get_columns_names_with_prop(table, "merge_key", include_incomplete=True)
+    return not pks and not mks
+
+
 def normalize_schema_name(name: str) -> str:
     """Normalizes schema name by using snake case naming convention. The maximum length is 64 characters"""
     snake_case = SnakeCase(InvalidSchemaName.MAXIMUM_SCHEMA_NAME_LENGTH)
@@ -148,7 +155,7 @@ def remove_column_defaults(column_schema: TColumnSchema) -> TColumnSchema:
     return column_schema
 
 
-def bump_version_if_modified(stored_schema: TStoredSchema) -> Tuple[int, str, str, Sequence[str]]:
+def bump_version_if_modified(stored_schema: TStoredSchema) -> Tuple[int, str, str, List[str]]:
     """Bumps the `stored_schema` version and version hash if content modified, returns (new version, new hash, old hash, 10 last hashes) tuple"""
     hash_ = generate_version_hash(stored_schema)
     previous_hash = stored_schema.get("version_hash")
@@ -169,9 +176,12 @@ def store_prev_hash(
     stored_schema: TStoredSchema, previous_hash: str, max_history_len: int = 10
 ) -> None:
     # unshift previous hash to previous_hashes and limit array to 10 entries
-    if previous_hash not in stored_schema["previous_hashes"]:
-        stored_schema["previous_hashes"].insert(0, previous_hash)
-        stored_schema["previous_hashes"] = stored_schema["previous_hashes"][:max_history_len]
+    previous_hashes = stored_schema["previous_hashes"]
+    if previous_hash not in previous_hashes:
+        previous_hashes.insert(0, previous_hash)
+        if (sur := len(previous_hashes) - max_history_len) > 0:
+            del previous_hashes[-sur:]
+        # stored_schema["previous_hashes"] = stored_schema["previous_hashes"][:max_history_len]
 
 
 def generate_version_hash(stored_schema: TStoredSchema) -> str:
@@ -753,9 +763,8 @@ def get_inherited_table_hint(
     tables: TSchemaTables, table_name: str, table_hint_name: str, allow_none: bool = False
 ) -> Any:
     table = tables.get(table_name, {})
-    hint = table.get(table_hint_name)
-    if hint:
-        return hint
+    if table_hint_name in table:
+        return table[table_hint_name]  # type: ignore[literal-required]
 
     if is_nested_table(table):
         return get_inherited_table_hint(tables, table.get("parent"), table_hint_name, allow_none)
@@ -998,8 +1007,6 @@ def new_table(
 
     if write_disposition:
         table["write_disposition"] = write_disposition
-    if resource:
-        table["resource"] = resource
     if schema_contract is not None:
         table["schema_contract"] = schema_contract
     if table_format:
@@ -1008,6 +1015,8 @@ def new_table(
         table["file_format"] = file_format
     if references:
         table["references"] = references
+    if resource:
+        table["resource"] = resource
     if parent_table_name:
         table["parent"] = parent_table_name
     else:
@@ -1015,8 +1024,7 @@ def new_table(
         if not write_disposition:
             # set write disposition only for root tables
             table["write_disposition"] = DEFAULT_WRITE_DISPOSITION
-        if not resource:
-            table["resource"] = table_name
+        table["resource"] = resource or table_name
 
     # migrate complex types to json
     migrate_complex_types(table, warn=True)

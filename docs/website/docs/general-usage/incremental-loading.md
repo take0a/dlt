@@ -226,7 +226,7 @@ In the example above, we enforce the root key propagation with `fb_ads.root_key 
 `dlt` can create [Slowly Changing Dimension Type 2](https://en.wikipedia.org/wiki/Slowly_changing_dimension#Type_2:_add_new_row) (SCD2) destination tables for dimension tables that change in the source. By default, the resource is expected to provide a full extract of the source table each run, but [incremental extracts](#example-incremental-scd2) are also possible. A row hash is stored in `_dlt_id` and used as surrogate key to identify source records that have been inserted, updated, or deleted. A `NULL` value is used by default to indicate an active record, but it's possible to use a configurable high timestamp (e.g. 9999-12-31 00:00:00.000000) instead.
 
 :::note
-The `unique` hint for `_dlt_id` in the root table is set to `false` when using `scd2`. This differs from [default behavior](./destination-tables.md#child-and-parent-tables). The reason is that the surrogate key stored in `_dlt_id` contains duplicates after an _insert-delete-reinsert_ pattern:
+The `unique` hint for `_dlt_id` in the root table is set to `false` when using `scd2`. This differs from [default behavior](./destination-tables.md#nested-tables). The reason is that the surrogate key stored in `_dlt_id` contains duplicates after an _insert-delete-reinsert_ pattern:
 1. A record with surrogate key X is inserted in a load at `t1`.
 2. The record with surrogate key X is deleted in a later load at `t2`.
 3. The record with surrogate key X is reinserted in an even later load at `t3`.
@@ -347,6 +347,21 @@ pipeline.run(dim_customer())  # second run — 2024-04-09 22:13:07.943703
 | 2024-04-09 18:27:53.734235 | **2024-04-09 22:13:07.943703** | 1 | foo | 1 |
 | 2024-04-09 18:27:53.734235 | NULL | 2 | bar | 2 |
 | **2024-04-09 22:13:07.943703** | **NULL** | **1** | **foo_updated** | **1** |
+
+:::tip
+If you decide to undo the previous configuration that prevented retiring absent records for an existing pipeline,
+and want to start retiring them again,
+you must explicitly unset the `merge_key`:
+```py
+@dlt.resource(
+    columns={"customer_key": {"merge_key": False}},
+    write_disposition={"disposition": "merge", "strategy": "scd2"}
+)
+def dim_customer():
+    ...
+```
+Simply omitting `merge_key` from the decorator will not disable the behavior. Aternatively, you can disable the `merge_key` hint for the affected column in the import schema.
+:::
 
 *Case 2: only retire records for given partitions*
 
@@ -529,7 +544,7 @@ The `upsert` merge strategy is currently supported for these destinations:
 - `mssql`
 - `postgres`
 - `snowflake`
-- `filesystem` with `delta` table format (see limitations [here](../dlt-ecosystem/destinations/filesystem.md#known-limitations))
+- `filesystem` with `delta` table format (see limitations [here](../dlt-ecosystem/destinations/delta-iceberg#known-limitations))
 :::
 
 The `upsert` merge strategy does primary-key based *upserts*:
@@ -1156,7 +1171,7 @@ values in it in your resources and on the next pipeline run, request them back.
 The pipeline state is, in principle, scoped to the resource - all values of the state set by a resource
 are private and isolated from any other resource. You can also access the source-scoped state, which
 can be shared across resources.
-[You can find more information on pipeline state here](state.md#pipeline-state).
+[You can find more information on pipeline state here](./state.md#when-to-use-pipeline-state).
 
 ### Preserving the last value in resource state
 
