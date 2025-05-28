@@ -4,9 +4,9 @@ description: Pseudonymizing (or anonymizing) columns by replacing the special ch
 keywords: [pseudonymize, anonymize, columns, special characters]
 ---
 
-# Pseudonymizing columns
+# 列の仮名化
 
-Pseudonymization is a deterministic way to hide personally identifiable information (PII), enabling us to consistently achieve the same mapping. If instead you wish to anonymize, you can delete the data or replace it with a constant. In the example below, we create a dummy source with a PII column called "name", which we replace with deterministic hashes (i.e., replacing the German umlaut).
+仮名化は、個人を特定できる情報（PII）を確定的に隠蔽する方法であり、常に同じマッピングを実現できます。仮名化ではなく匿名化を希望する場合は、データを削除するか、定数に置き換えることができます。以下の例では、「name」というPII列を持つダミーソースを作成し、これを確定的なハッシュ（つまり、ドイツ語のウムラウトを置き換え）に置き換えています。
 
 ```py
 import dlt

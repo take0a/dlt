@@ -5,14 +5,14 @@ keywords: [datasets, data, access]
 ---
 import DocCardList from '@theme/DocCardList';
 
-# Accessing loaded data
+# ロードされたデータへのアクセス
 
-After one or more successful runs of your pipeline, you can inspect or access the loaded data in various ways:
+パイプラインの実行が1回以上成功すると、ロードされたデータを様々な方法で確認したりアクセスしたりできます。
 
-* We have a simple [`streamlit` app](./streamlit.md) that you can use to view your data locally in your webapp.
-* We have a [Python interface](./dataset.md) that allows you to access your data in Python as Python tuples, `arrow` tables, or `pandas` dataframes with a simple dataset object or an SQL interface. You can even run SQL commands on the filesystem destination via `DuckDB` or forward data from any table into another pipeline.
-* We have an [`ibis` interface](./ibis-backend.md) that allows you to hand over your loaded data to the powerful [ibis-framework](https://ibis-project.org/) library.
-* Lastly, we have some advice for [monitoring and ensuring the quality of your data](./data-quality-dashboard.md).
+* シンプルな [`streamlit` アプリ](./streamlit.md) を使用すると、Web アプリでローカルにデータを表示できます。
+* [Python インターフェース](./dataset.md) を使用すると、シンプルなデータセットオブジェクトまたは SQL インターフェースを使用して、Python タプル、`arrow` テーブル、または `pandas` データフレームとして Python でデータにアクセスできます。`DuckDB` を介してファイルシステムの宛先で SQL コマンドを実行したり、任意のテーブルから別のパイプラインにデータを転送したりすることもできます。
+* [`ibis` インターフェース](./ibis-backend.md) を使用すると、ロードされたデータを強力な [ibis-framework](https://ibis-project.org/) ライブラリに渡すことができます。
+* 最後に、[データの品質を監視し、確保するための](./data-quality-dashboard.md) アドバイスをいくつか紹介します。
 
 # Learn more
 <DocCardList />

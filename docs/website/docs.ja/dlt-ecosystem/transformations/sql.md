@@ -4,25 +4,23 @@ description: Transforming the data loaded by a dlt pipeline with the dlt SQL cli
 keywords: [transform, sql]
 ---
 
-# Transforming data using the `dlt` SQL client
+# `dlt` SQL クライアントを使用したデータ変換
 
-A simple alternative to dbt is to query the data using the `dlt` SQL client and then perform the
-transformations using SQL statements in Python. The `execute_sql` method allows you to execute any SQL statement,
-including statements that change the database schema or data in the tables. In the example below, we
-insert a row into the `customers` table. Note that the syntax is the same as for any standard `dbapi`
-connection.
+dbt のシンプルな代替方法として、`dlt` SQL クライアントを使用してデータをクエリし、Python の SQL 文を使用して変換を実行する方法があります。
+`execute_sql` メソッドを使用すると、データベース スキーマやテーブル内のデータを変更する文も含め、任意の SQL 文を実行できます。
+以下の例では、`customers` テーブルに行を挿入します。
+構文は標準的な `dbapi` 接続と同じであることに注意してください。
 
 :::info
-* This method will work for all SQL destinations supported by `dlt`, but not for the filesystem destination.
-* Read the [SQL client docs](../../ general-usage/dataset-access/dataset) for more information on how to access data with the SQL client.
-* If you are simply trying to read data, you should use the powerful [dataset interface](../../general-usage/dataset-access/dataset) instead.
+* この方法は、`dlt` でサポートされているすべての SQL 出力先で機能しますが、ファイルシステム出力先では機能しません。
+* SQL クライアントを使用してデータにアクセスする方法の詳細については、[SQL クライアントのドキュメント](../../ general-usage/dataset-access/dataset) を参照してください。
+* 単にデータを読み取るだけの場合は、代わりに強力な [データセット インターフェース](../../general-usage/dataset-access/dataset) を使用する必要があります。
 :::
 
 
-Typically you will use this type of transformation if you can create or update tables directly from existing tables
-without any need to insert data from your Python environment. 
+通常、このタイプの変換は、Python 環境からデータを挿入することなく、既存のテーブルから直接テーブルを作成または更新できる場合に使用します。
 
-The example below creates a new table `aggregated_sales` that contains the total and average sales for each category and region
+以下の例では、カテゴリと地域ごとに合計売上と平均売上を含む新しいテーブル `aggregated_sales` を作成します。
 
 
 ```py
@@ -45,8 +43,9 @@ with pipeline.sql_client() as client:
     """)
 ```
 
-You can also use the `execute_sql` method to run select queries. The data is returned as a list of rows, with the elements of a row
-corresponding to selected columns. A more convenient way to extract data is to use dlt datasets. 
+`execute_sql` メソッドを使用して選択クエリを実行することもできます。
+データは行のリストとして返され、行の要素は選択された列に対応します。
+より便利なデータ抽出方法は、DLTデータセットを使用することです。
 
 ```py
 try:
@@ -61,10 +60,10 @@ except Exception:
     ...
 ```
 
-## Other transforming tools
+## その他の変換ツール
 
-If you want to transform your data before loading, you can use Python. If you want to transform the
-data after loading, you can use SQL or one of the following:
+ロード前にデータを変換する場合は、Python を使用できます。
+ロード後にデータを変換する場合は、SQL または次のいずれかを使用できます。
 
 1. [dbt](dbt/dbt.md) (recommended).
 2. [Python with DataFrames or Arrow tables](python.md).

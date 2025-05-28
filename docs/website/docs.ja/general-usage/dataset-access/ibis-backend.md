@@ -6,25 +6,25 @@ keywords: [data, dataset, ibis]
 
 # Ibis
 
-Ibis is a powerful portable Python dataframe library. Learn more about what it is and how to use it in the [official documentation](https://ibis-project.org/).
+Ibis は、強力なポータブル Python データフレームライブラリです。[公式ドキュメント](https://ibis-project.org/) で、Ibis の概要と使用方法について詳しく学んでください。
 
-`dlt` provides an easy way to hand over your loaded dataset to an Ibis backend connection.
+`dlt` を使用すると、読み込んだデータセットを Ibis バックエンド接続に簡単に渡すことができます。
 
 :::tip
-Not all destinations supported by `dlt` have an equivalent Ibis backend. Natively supported destinations include DuckDB (including Motherduck), Postgres (Redshift is supported via the Postgres backend for Ibis versions lower than 10.4.0), Snowflake, Clickhouse, MSSQL (including Synapse), and BigQuery. The filesystem destination is supported via the [Filesystem SQL client](./sql-client#the-filesystem-sql-client); please install the DuckDB backend for Ibis to use it. Mutating data with Ibis on the filesystem will not result in any actual changes to the persisted files.
+`dlt` でサポートされているすべての出力先に、同等の Ibis バックエンドがあるわけではありません。ネイティブでサポートされている出力先としては、DuckDB（Motherduck を含む）、Postgres（Redshift は Ibis バージョン 10.4.0 未満では Postgres バックエンド経由でサポートされます）、Snowflake、Clickhouse、MSSQL（Synapse を含む）、BigQuery などがあります。ファイルシステムの出力先は、[ファイルシステム SQL クライアント](./sql-client#the-filesystem-sql-client) 経由でサポートされます。Ibis を使用するには、DuckDB バックエンドをインストールしてください。ファイルシステム上のデータを Ibis で変更しても、永続化されたファイルに実際の変更は反映されません。
 :::
 
-## Prerequisites
+## 前提条件
 
-To use the Ibis backend, you will need to have the `ibis-framework` package with the correct Ibis extra installed. The following example will install the DuckDB backend:
+Ibis バックエンドを使用するには、適切な Ibis エクストラがインストールされている `ibis-framework` パッケージが必要です。以下の例では、DuckDB バックエンドをインストールします。
 
 ```sh
 pip install ibis-framework[duckdb]
 ```
 
-## Get an Ibis connection from your dataset
+## データセットからIbis接続を取得します
 
-`dlt` datasets have a helper method to return an Ibis connection to the destination they live on. The returned object is a native Ibis connection to the destination, which you can use to read and even transform data. Please consult the [Ibis documentation](https://ibis-project.org) to learn more about what you can do with Ibis.
+`dlt`データセットには、データセットが存在する宛先へのIbis接続を返すヘルパーメソッドがあります。返されるオブジェクトは、宛先へのネイティブIbis接続であり、データの読み取りや変換に使用できます。Ibisでできることについて詳しくは、[Ibisドキュメント](https://ibis-project.org)をご覧ください。
 
 ```py
 # get the dataset from the pipeline

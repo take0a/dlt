@@ -4,11 +4,11 @@ description: Renaming columns by replacing the special characters
 keywords: [renaming, columns, special characters]
 ---
 
-# Renaming columns
+# 列名の変更
 
-## Renaming columns by replacing the special characters
+## 特殊文字を置き換えて列名を変更する
 
-In the example below, we create a dummy source with special characters in the name. We then write a function that we intend to apply to the resource to modify its output (i.e., replacing the German umlaut): `replace_umlauts_in_dict_keys`.
+以下の例では、名前に特殊文字を含むダミーソースを作成します。次に、リソースの出力を変更する（つまり、ドイツ語のウムラウトを置き換える）関数「replace_umlauts_in_dict_keys」を記述します。
 
 ```py
 import dlt

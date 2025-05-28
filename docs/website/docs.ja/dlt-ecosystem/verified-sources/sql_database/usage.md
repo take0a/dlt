@@ -75,9 +75,11 @@ def add_new_columns(table) -> None:
         if col_name not in table.c:
             table.append_column(sa.Column(col_name, col_type, **col_kwargs))
 ```
-Otherwise `dlt` will attempt to infer the types from the extracted data.
 
-Here's how you call `sql_table` with those adapters:
+そうでない場合、`dlt` は抽出されたデータから型を推測しようとします。
+
+これらのアダプタを使用して `sql_table` を呼び出す方法は次のとおりです。
+
 ```py
 import dlt
 from dlt.sources.sql_database import sql_table

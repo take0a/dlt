@@ -4,36 +4,36 @@ description: Monitoring and testing data quality
 keywords: [destination, schema, data, monitoring, testing, quality]
 ---
 
-# Data quality dashboards
+# データ品質ダッシュボード
 
-After deploying a `dlt` pipeline, you might ask yourself: How can we know if the data is and remains high quality?
+`dlt` パイプラインをデプロイした後、次のような疑問が湧くかもしれません。「データの品質が維持されているか、どうすれば確認できるだろうか？」
 
-There are two ways to catch errors:
+エラーを検知する方法は2つあります。
 
-1. Tests.
-1. People [monitoring.](../../running-in-production/monitoring.md)
+1. テスト
+1. 担当者による [監視](../../running-in-production/monitoring.md)
 
-## Tests
+## テスト
 
-The first time you load data from a pipeline you have built, you will likely want to test it. Plot the data on time series line charts and look for any interruptions or spikes, which will highlight any gaps or loading issues.
+構築したパイプラインから初めてデータを読み込む際は、テストが必要になるでしょう。時系列の折れ線グラフにデータをプロットし、中断や急上昇がないか確認しましょう。そうすることで、ギャップや読み込みに関する問題が明らかになります。
 
-### Data usage as monitoring
+### データ使用量をモニタリングとして活用
 
-Setting up monitoring is a good idea. However, in practice, often by the time you notice something is wrong through reviewing charts, someone in the business has likely already noticed something is wrong. That is, if there is usage of the data, then that usage will act as a sort of monitoring.
+モニタリングを設定することは良い考えです。しかし実際には、チャートを確認して何かがおかしいことに気付いた時には、社内の誰かが既にそのことに気づいていることがよくあります。つまり、データが使用されている場合、その使用量は一種のモニタリングとして機能するということです。
 
-### Plotting main metrics on line charts
+### 主要な指標を折れ線グラフにプロットする
 
-In cases where data is not being used much (e.g., only one marketing analyst is using some data alone), then it is a good idea to have them plot their main metrics on "last 7 days" line charts, so it's visible to them that something may be off when they check their metrics.
+データがあまり使用されていない場合（例えば、マーケティングアナリストの1人だけが一部のデータを単独で使用している場合など）、主要な指標を「過去7日間」の折れ線グラフにプロットしてもらうことをお勧めします。こうすることで、指標を確認した際に、何かが間違っている可能性があるかどうかを視覚的に把握できます。
 
-It's important to think about granularity here. A daily line chart, for example, would not catch hourly issues well. Typically, you will want to match the granularity of the time dimension (day/hour/etc.) of the line chart with the things that could go wrong, either in the loading process or in the tracked process.
+ここでは粒度について考えることが重要です。例えば、日単位の折れ線グラフでは、時間単位の問題をうまく捉えることができません。通常、折れ線グラフの時間軸（日／時間など）の粒度は、読み込みプロセスまたは追跡対象プロセスで発生する可能性のある問題と一致させる必要があります。
 
-If a dashboard is the main product of an analyst, they will generally watch it closely. Therefore, it's probably not necessary for a data engineer to include monitoring in their daily activities in these situations.
+ダッシュボードがアナリストの主な成果物である場合、彼らは通常それを注意深く監視します。したがって、このような状況では、データエンジニアが日常業務に監視を含める必要はないでしょう。
 
-## Tools to create dashboards
+## ダッシュボード作成ツール
 
-[Metabase](https://www.metabase.com/), [Looker Studio](https://lookerstudio.google.com/u/0/), and [Streamlit](https://streamlit.io/) are some common tools that you might use to set up dashboards to explore data. It's worth noting that while many tools are suitable for exploration, different tools enable your organization to achieve different things. Some organizations use multiple tools for different scopes:
+[Metabase](https://www.metabase.com/)、[Looker Studio](https://lookerstudio.google.com/u/0/)、[Streamlit](https://streamlit.io/) などは、データ探索用のダッシュボードを設定する際によく使用されるツールです。多くのツールが探索に適していますが、組織が達成できる成果はツールによって異なることに注意してください。組織によっては、スコープごとに複数のツールを使用しているところもあります。
 
-- Tools like [Metabase](https://www.metabase.com/) are intended for data democratization, where the business user can change the dimension or granularity to answer follow-up questions.
-- Tools like [Looker Studio](https://lookerstudio.google.com/u/0/) and [Tableau](https://www.tableau.com/) are intended for minimal interaction curated dashboards that business users can filter and read as-is with limited training.
-- Tools like [Streamlit](https://streamlit.io/) enable powerful customizations and the building of complex apps by Python-first developers, but they generally do not support self-service out of the box.
+- [Metabase](https://www.metabase.com/) などのツールは、データ民主化を目的としており、ビジネスユーザーはディメンションや粒度を変更して、追加の質問に答えることができます。
+- [Looker Studio](https://lookerstudio.google.com/u/0/) や [Tableau](https://www.tableau.com/) などのツールは、最小限の操作でキュレーションされたダッシュボードを作成し、ビジネスユーザーが簡単なトレーニングでフィルタリングしてそのまま閲覧できるようにすることを目的として設計されています。
+- [Streamlit](https://streamlit.io/) のようなツールを使用すると、Python を第一に考える開発者が強力なカスタマイズや複雑なアプリを構築できるようになりますが、通常はすぐに使用できるセルフサービスはサポートされていません。
 

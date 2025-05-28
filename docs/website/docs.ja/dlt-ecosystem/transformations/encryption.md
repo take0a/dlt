@@ -4,42 +4,39 @@ description: Transforming the data for encryption in transit, client-side encryp
 keywords: [transform, data security, encryption]
 ---
 
-# Data security and encryption
+# データセキュリティと暗号化
 
-The modern data landscape requires robust security measures to protect sensitive information throughout its lifecycle. Organizations must implement comprehensive encryption strategies to safeguard data against increasingly sophisticated threats
+現代のデータ環境では、機密情報をライフサイクル全体にわたって保護するための強力なセキュリティ対策が求められます。組織は、ますます巧妙化する脅威からデータを保護するために、包括的な暗号化戦略を導入する必要があります。
 
-### Encryption throughout the lifecycle
+### ライフサイクル全体にわたる暗号化
 
-Data is vulnerable both while moving between systems (in transit) and when stored at rest. dlt addresses both needs:
+データは、システム間を移動中（転送中）と保存中の両方で脆弱です。DLTは両方のニーズに対応します。
 
-- **Data in transit**:
+- **転送中のデータ**:
 
+    転送中にデータが傍受または改ざんされる可能性があります。安全なプロトコル（SSL/TLSなど）や暗号化された接続文字列を使用することで、不正アクセスを防ぎ、機密性を確保できます。
     
-    During transfers, data can be intercepted or tampered with. Employing secure protocols (e.g., SSL/TLS) or encrypted connection strings prevents unauthorized access and ensures confidentiality.
-    
-- **Client-side encryption**:
+- **クライアント側暗号化**:
 
+    送信前にクライアント側でデータを暗号化することで、セキュリティがさらに強化されます。AWS Encryption SDK、Google Tink、Azure Key Vault などのライブラリを使用することで、組織はデータが送信元から送信される前に暗号化され、暗号化キーの管理を維持し、送信経路全体にわたって機密情報を保護できます。
     
-    Encrypting data on the client side before transmission adds an extra layer of security. By using libraries like AWS Encryption SDK, Google Tink, or Azure Key Vault, organizations can ensure that data is encrypted before it leaves the source, maintaining control over encryption keys and safeguarding sensitive information throughout its journey.
-    
-- **Data at rest / Server-side encryption**:
+- **保存データ / サーバーサイド暗号化**:
 
-    
-    Even if a storage system is compromised, encryption at rest prevents unauthorized access. dlt can leverage disk encryption (e.g., BitLocker, FileVault, dm-crypt/LUKS) or the destination’s server-side encryption to keep data safe on the local machine and in the cloud.
+    ストレージシステムが侵害された場合でも、保存データの暗号化により不正アクセスを防止します。dltは、ディスク暗号化（BitLocker、FileVault、dm-crypt/LUKSなど）または保存先のサーバーサイド暗号化を活用して、ローカルマシンとクラウドの両方でデータを安全に保ちます。
     
 
-This layered approach ensures comprehensive protection, covering every stage of data’s journey from extraction to storage.
+この階層型アプローチにより、抽出から保存までのデータの移動のあらゆる段階を網羅した包括的な保護が保証されます。
 
-## Client-side encryption
+## クライアント側暗号化
 
-### Why client-side encryption?
+### なぜクライアント側暗号化が必要なのでしょうか?
 
-Client-side encryption empowers you to encrypt data before it ever leaves your environment. This ensures that:
+クライアントサイド暗号化により、データが環境から送信される前に暗号化できます。これにより、以下のことが可能になります:
 
-- **You maintain full control of encryption keys** (often managed through KMS solutions like AWS KMS, Google Cloud KMS, or Azure Key Vault).
-- **Data remains protected** during transit and while stored at the destination, even if the destination’s security is compromised.
+- **暗号化キーの完全な制御を維持** (多くの場合、AWS KMS、Google Cloud KMS、Azure Key Vault などの KMS ソリューションを通じて管理されます)。
+- **データは転送中および送信先での保存中、送信先のセキュリティが侵害された場合でも保護された状態を維持** します。
 
-### Common client-side encryption tools
+### 一般的なクライアント側暗号化ツール
 
 - AWS Encryption SDK
 - Tink by Google
@@ -47,43 +44,43 @@ Client-side encryption empowers you to encrypt data before it ever leaves your e
 - OpenSSL
 
 
-## Encryption in transit and server-side encryption
+## 転送中の暗号化とサーバー側の暗号化
 
-### Encrypted partitions for dlt’s working directory
+### dlt の作業ディレクトリの暗号化パーティション
 
-Because dlt extracts and processes data locally before loading it to a destination, the files on your local disk contain sensitive data. Encrypting the partition where these files reside ensures your data is protected at rest on the local system. You can use the following systems to safeguard your data at rest.
+dlt はデータをローカルで抽出・処理してから出力先にロードするため、ローカルディスク上のファイルには機密データが含まれています。これらのファイルが存在するパーティションを暗号化することで、ローカルシステム上で保存されているデータが確実に保護されます。保存されているデータを保護するために、以下のシステムをご利用いただけます。
 
 - **Windows**: BitLocker
 - **macOS**: FileVault
 - **Linux**: dm-crypt/LUKS, Loop-AES
 
-### Encryption in transit
+### 転送中の暗号化
 
-Encrypting data while it travels to the destination is equally important. With dlt, you can configure your connection string to enforce encryption. Depending on the target database or storage, options might include:
+データが宛先へ転送される際に暗号化することも同様に重要です。dlt を使用すると、接続文字列を設定して暗号化を強制できます。ターゲットのデータベースまたはストレージに応じて、次のようなオプションがあります。
 
-- Adding `Encrypt=yes` and `encrypt=true` to your **connection string** to ensure TLS/SSL is used for all communication.
-- Using secure protocols such as HTTPS for cloud-based destinations.
+- すべての通信で TLS/SSL が使用されるように、**接続文字列** に `Encrypt=yes` と `encrypt=true` を追加する。
+- クラウドベースの宛先には、HTTPS などの安全なプロトコルを使用する。
 
-### Server-side encryption
+### サーバーサイド暗号化
 
-Server-side encryption (SSE) complements your client-side encryption measures by encrypting data once it arrives at the destination. Popular services include:
+サーバーサイド暗号化 (SSE) は、データが送信先に到着した時点で暗号化することで、クライアントサイド暗号化を補完します。人気のサービスには以下が含まれます。
 
-- **Amazon S3 SSE**: Offers SSE-S3 (using AWS-managed keys) or SSE-KMS (using customer-managed keys in AWS KMS).
-- **BigQuery**: Provides options for customer-managed encryption keys (CMEK), allowing for more granular key management.
+- **Amazon S3 SSE**: SSE-S3 (AWS 管理のキーを使用) または SSE-KMS (AWS KMS のカスタマー管理のキーを使用) を提供します。
+- **BigQuery**: カスタマー管理の暗号化キー (CMEK) のオプションを提供し、よりきめ細かなキー管理を可能にします。
 
-## Managing encryption in dlt
+## DLTにおける暗号化の管理
 
-### Steps for setting up encrypted pipelines
+### 暗号化パイプラインの設定手順
 
-1. **Provision encryption keys**: Use your preferred cloud KMS or on-prem solution to create and manage cryptographic keys.
-2. **Integrate with Client-Side Libraries**: Install and configure the relevant encryption SDK (e.g., AWS Encryption SDK) in your environment.
-3. **Incorporate encryption logic**: Modify your dlt resource functions to encrypt sensitive fields before they are loaded to the destination.
-4. **Test and validate**: Ensure that your data is encrypted and can be decrypted correctly using your keys.
+1. **暗号化キーのプロビジョニング**: お好みのクラウドKMSまたはオンプレミスソリューションを使用して、暗号化キーを作成および管理します。
+2. **クライアント側ライブラリとの統合**: 適切な暗号化SDK（例：AWS Encryption SDK）を環境にインストールして設定します。
+3. **暗号化ロジックの組み込み**: dltリソース関数を変更し、機密フィールドを宛先にロードする前に暗号化します。
+4. **テストと検証**: データが暗号化され、キーを使用して正しく復号できることを確認します。
 
-Below is an example showing how to encrypt specific fields in a nested data structure using AWS KMS before loading data with dlt. The same principle can be applied to other encryption libraries, such as Google Tink or Azure Key Vault.
+以下は、dltでデータをロードする前に、AWS KMSを使用してネストされたデータ構造内の特定のフィールドを暗号化する方法を示した例です。同じ原則は、Google TinkやAzure Key Vaultなどの他の暗号化ライブラリにも適用できます。
 
 :::note
-For demonstration purposes, we have included "KMS_KEY_ARN", "aws_access_key_id", and "aws_secret_access_key" in the script. However, it is best practice to store these in dlt `secrets.toml` or a secure vault.
+デモ用に、スクリプトには「KMS_KEY_ARN」、「aws_access_key_id」、「aws_secret_access_key」が含まれています。ただし、これらを dlt `secrets.toml` または安全な保管庫に保存するのがベストプラクティスです。
 :::
 
 ```py
@@ -176,30 +173,30 @@ if __name__ == "__main__":
     print(load_info)
 ```
 
-In this code:
+このコードでは、次の処理が行われます。
 
-- The AWS Encryption SDK is used to encrypt the `security_key` field before loading the data with dlt.
-- You can adapt this pattern to encrypt other sensitive fields or integrate different encryption libraries.
-- Various encryption methods can be employed for client-side encryption.
+- AWS Encryption SDK を使用して、dlt でデータをロードする前に `security_key` フィールドを暗号化します。
+- このパターンを適用して、他の機密フィールドを暗号化したり、異なる暗号化ライブラリを統合したりできます。
+- クライアント側の暗号化には、さまざまな暗号化方式を使用できます。
 
-## Security best practices
+## セキュリティのベストプラクティス
 
-**1. Combine client-side and server-side encryption**
+**1. クライアント側とサーバー側の暗号化を組み合わせる**
 
-For maximum security, encrypt data on the client side and also enable server-side encryption at the destination. This ensures data remains secure, even if one layer of security fails or is misconfigured.
+セキュリティを最大限に高めるには、クライアント側でデータを暗号化し、送信先でもサーバー側の暗号化を有効にします。これにより、セキュリティレイヤーの1つが機能しなくなったり、構成が誤っていたりしても、データのセキュリティが確保されます。
 
-**2. Key management and rotation**
+**2. 鍵の管理とローテーション**
 
-Use a dedicated Key Management Service (KMS) such as AWS KMS, Google Cloud KMS, or Azure Key Vault to store and manage your encryption keys. Rotate keys regularly and enforce strict access controls.
+AWS KMS、Google Cloud KMS、Azure Key Vault などの専用の鍵管理サービス (KMS) を使用して、暗号化鍵を保存および管理します。鍵は定期的にローテーションし、厳格なアクセス制御を実施します。
 
-**3. Secure your infrastructure**
+**3. インフラストラクチャのセキュリティ保護**
 
-Encrypt the local disk or partition where dlt extracts and processes data to ensure the data at rest on your system is protected (e.g., BitLocker, FileVault, dm-crypt/LUKS).
+dlt がデータを抽出および処理するローカルディスクまたはパーティションを暗号化し、システムに保存されているデータが保護されるようにします (例: BitLocker、FileVault、dm-crypt/LUKS)。
 
-**4. Monitor and audit**
+**4. 監視と監査**
 
-Implement monitoring for unusual access patterns, and maintain detailed logs for auditing. Services like AWS CloudTrail or Azure Monitor can provide insights into who accessed your keys and when.
+異常なアクセスパターンを監視する機能を実装し、監査用に詳細なログを保持します。AWS CloudTrail や Azure Monitor などのサービスを利用すれば、誰がいつ鍵にアクセスしたかに関する分析情報を得ることができます。
 
-**5. Validate and test**
+**5.検証とテスト**
 
-Regularly test your encryption and decryption workflows in a staging or QA environment. Confirm that you can restore data from backups and that your encryption processes don’t introduce bottlenecks or errors.
+ステージング環境またはQA環境で、暗号化および復号化ワークフローを定期的にテストしてください。バックアップからデータを復元できること、暗号化プロセスによってボトルネックやエラーが発生しないことを確認してください。

@@ -3,13 +3,15 @@ title: Full loading
 description: Full loading with dlt
 keywords: [full loading, loading methods, replace]
 ---
-# Full loading
+# フルロード
 
-Full loading is the act of fully reloading the data of your tables. All existing data will be removed and replaced by whatever the source produced on this run. Resources that are not selected while performing a full load will not replace any data in the destination.
+フルロードとは、テーブルのデータを完全に再ロードする操作です。
+既存のデータはすべて削除され、今回の実行でソースが生成したデータに置き換えられます。
+フルロードの実行中に選択されていないリソースは、宛先のデータを置き換えません。
 
-## Performing a full load
+## フルロードの実行
 
-To perform a full load on one or more of your resources, choose the `write_disposition='replace'` for this resource:
+1 つ以上のリソースに対してフルロードを実行するには、そのリソースに対して `write_disposition='replace'` を選択します:
 
 ```py
 p = dlt.pipeline(destination="bigquery", dataset_name="github")
@@ -23,11 +25,13 @@ for reaction in reactions:
 p.run(issues, write_disposition="replace", primary_key="id", table_name="issues")
 ```
 
-## Choosing the correct replace strategy for your full load
+## フルロードに適した置換戦略の選択
 
-dlt implements three different strategies for doing a full load on your table: `truncate-and-insert`, `insert-from-staging`, and `staging-optimized`. The exact behavior of these strategies can also vary between the available destinations.
+dlt は、テーブルへのフルロードを実行するために、`truncate-and-insert`、`insert-from-staging`、`staging-optimized` という 3 つの異なる戦略を実装しています。
+これらの戦略の具体的な動作は、利用可能な保存先によって異なります。
 
-You can select a strategy with a setting in your `config.toml` file. If you do not select a strategy, dlt will default to `truncate-and-insert`.
+`config.toml` ファイルの設定で戦略を選択できます。
+戦略を選択しない場合、dlt はデフォルトで `truncate-and-insert` を使用します。
 
 ```toml
 [destination]
@@ -35,24 +39,35 @@ You can select a strategy with a setting in your `config.toml` file. If you do n
 replace_strategy = "staging-optimized"
 ```
 
-### The `truncate-and-insert` strategy
+### `truncate-and-insert` 戦略
 
-The `truncate-and-insert` replace strategy is the default and the fastest of all three strategies. If you load data with this setting, then the destination tables will be truncated at the beginning of the load, and the new data will be inserted consecutively but not within the same transaction.
-The downside of this strategy is that your tables will have no data for a while until the load is completed. You may end up with new data in some tables and no data in other tables if the load fails during the run. Such an incomplete load may be detected by checking if the [_dlt_loads table contains a load id](destination-tables.md#load-packages-and-load-ids) from _dlt_load_id of the replaced tables. If you prefer to have no data downtime, please use one of the other strategies.
+`truncate-and-insert` 置換戦略はデフォルトであり、3 つの戦略の中で最も高速です。
+この設定でデータをロードすると、ロード開始時に宛先テーブルが切り捨てられ、新しいデータが連続して挿入されますが、同じトランザクション内ではありません。
+この戦略の欠点は、ロードが完了するまでしばらくの間、テーブルにデータが存在しないことです。
+ロード実行中にロードが失敗すると、一部のテーブルには新しいデータが追加され、他のテーブルにはデータがない状態になる可能性があります。
+このような不完全なロードは、[_dlt_loads テーブル](destination-tables.md#load-packages-and-load-ids) で、置換されたテーブルの _dlt_load_id のロード ID が含まれているかどうかを確認することで検出できます。
+データのダウンタイムを回避したい場合は、他の戦略のいずれかを使用してください。
 
-### The `insert-from-staging` strategy
+### `insert-from-staging` 戦略
 
-The `insert-from-staging` strategy is the slowest of all three strategies. It will load all new data into staging tables away from your final destination tables and will then truncate and insert the new data in one transaction.
-It also maintains a consistent state between nested and root tables at all times. Use this strategy if you have the requirement for consistent destination datasets with zero downtime and the `optimized` strategy does not work for you.
-This strategy behaves the same way across all destinations.
+`insert-from-staging` 戦略は、3 つの戦略の中で最も低速です。
+この戦略では、すべての新しいデータが最終的な宛先テーブルとは別のステージングテーブルにロードされ、その後、1 回のトランザクションで新しいデータの切り捨てと挿入が行われます。
+また、ネストされたテーブルとルートテーブル間の一貫性が常に維持されます。
+ダウンタイムなしで宛先データセットの一貫性が求められる場合で、`optimized` 戦略が適さない場合は、この戦略を使用してください。
+この戦略は、すべての宛先で同じように動作します。
 
-### The `staging-optimized` strategy
+### `staging-optimized` 戦略
 
-The `staging-optimized` strategy has all the upsides of the `insert-from-staging` but implements certain optimizations for faster loading on some destinations. This comes at the cost of destination tables being dropped and recreated in some cases, which means that any views or other constraints you have placed on those tables will be dropped with the table. If you have a setup where you need to retain your destination tables, do not use the `staging-optimized` strategy. If you do not care about tables being dropped but need the upsides of the `insert-from-staging` with some performance (and cost) saving opportunities, you should use this strategy. The `staging-optimized` strategy behaves differently across destinations:
+`staging-optimized` 戦略は `insert-from-staging` のすべての利点を備えていますが、一部の出力先で読み込みを高速化するために、特定の最適化を実装しています。
+この戦略には、場合によっては出力先テーブルが削除され、再作成されるというデメリットがあります。つまり、これらのテーブルに設定したビューやその他の制約もテーブルとともに削除されます。
+出力先テーブルを保持する必要がある設定の場合は、`staging-optimized` 戦略を使用しないでください。
+テーブルの削除は問題にならないものの、`insert-from-staging` の利点とパフォーマンス（およびコスト）の削減が必要な場合は、この戦略を使用する必要があります。
+`staging-optimized` 戦略は、出力先によって動作が異なります。
 
-* Postgres: After loading the new data into the staging tables, the destination tables will be dropped and replaced by the staging tables. No data needs to be moved, so this strategy is almost as fast as `truncate-and-insert`.
-* BigQuery: After loading the new data into the staging tables, the destination tables will be dropped and recreated with a [clone command](https://cloud.google.com/bigquery/docs/table-clones-create) from the staging tables. This is a low-cost and fast way to create a second independent table from the data of another. Learn more about [table cloning on BigQuery](https://cloud.google.com/bigquery/docs/table-clones-intro).
-* Snowflake: After loading the new data into the staging tables, the destination tables will be dropped and recreated with a [clone command](https://docs.snowflake.com/en/sql-reference/sql/create-clone) from the staging tables. This is a low-cost and fast way to create a second independent table from the data of another. Learn more about [table cloning on Snowflake](https://docs.snowflake.com/en/user-guide/object-clone).
+* Postgres: 新しいデータがステージングテーブルに読み込まれた後、出力先テーブルは削除され、ステージングテーブルに置き換えられます。データを移動する必要がないため、この戦略は `truncate-and-insert` とほぼ同程度の速度です。
+* BigQuery: 新しいデータをステージングテーブルにロードした後、宛先テーブルは削除され、ステージングテーブルから [clone コマンド](https://cloud.google.com/bigquery/docs/table-clones-create) を使用して再作成されます。これは、別のテーブルのデータから独立した 2 番目のテーブルを低コストで高速に作成する方法です。詳しくは、[BigQuery でのテーブルのクローン作成](https://cloud.google.com/bigquery/docs/table-clones-intro) をご覧ください。
+* Snowflake: 新しいデータをステージングテーブルにロードした後、宛先テーブルは削除され、ステージングテーブルから [clone コマンド](https://docs.snowflake.com/en/sql-reference/sql/create-clone) を使用して再作成されます。これは、別のテーブルのデータから独立した 2 番目のテーブルを低コストで高速に作成する方法です。 [Snowflakeでのテーブルクローン作成](https://docs.snowflake.com/en/user-guide/object-clone)の詳細については、こちらをご覧ください。
 
-For all other [destinations](../dlt-ecosystem/destinations/index.md), please look at their respective documentation pages to see if and how the `staging-optimized` strategy is implemented. If it is not implemented, `dlt` will fall back to the `insert-from-staging` strategy.
+その他のすべての[destinations](../dlt-ecosystem/destinations/index.md)については、それぞれのドキュメントページを参照して、`staging-optimized`戦略が実装されているかどうか、またどのように実装されているかを確認してください。
+実装されていない場合、`dlt`は`insert-from-staging`戦略にフォールバックします。
 

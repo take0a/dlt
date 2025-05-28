@@ -4,19 +4,17 @@ description: How to adjust a schema
 keywords: [how to, adjust a schema]
 ---
 
-# Adjust a schema
+# スキーマの調整
 
-When you [create](create-a-pipeline.md) and then [run](run-a-pipeline.md) a pipeline, you may want
-to manually inspect and change the [schema](../general-usage/schema.md) that `dlt` generated for
-you. Here's how you do it.
+パイプラインを[作成](create-a-pipeline.md)して[実行](run-a-pipeline.md)する際に、`dlt` によって生成された[スキーマ](../general-usage/schema.md)を手動で確認して変更する必要がある場合があります。
+手順は次のとおりです。
 
-## 1. Export your schemas on each run
+## 1. 実行ごとにスキーマをエクスポートします。
 
-Set up an export folder by providing the `export_schema_path` argument to `dlt.pipeline` to save the
-schema. Set up an import folder from which `dlt` will read your modifications by providing
-the `import_schema_path` argument.
+`dlt.pipeline` に `export_schema_path` 引数を指定して、スキーマを保存するエクスポートフォルダを設定します。
+`dlt` が変更内容を読み取るインポートフォルダを設定するには、`import_schema_path` 引数を指定します。
 
-Following our example in [run a pipeline](run-a-pipeline.md):
+[パイプラインの実行](run-a-pipeline.md) の例に従って、以下の手順を実行します。
 
 ```py
 dlt.pipeline(
@@ -28,7 +26,7 @@ dlt.pipeline(
 )
 ```
 
-The following folder structure in the project root folder will be created:
+プロジェクト ルート フォルダーに次のフォルダー構造が作成されます。
 
 ```text
 schemas
@@ -36,49 +34,41 @@ schemas
     |---export/
 ```
 
-Rather than providing the paths in the `dlt.pipeline` function, you can also set them at 
-the beginning of the `config.toml` file:
+`dlt.pipeline` 関数でパスを指定する代わりに、`config.toml` ファイルの先頭でパスを設定することもできます。
 
 ```toml
 export_schema_path="schemas/export"
 import_schema_path="schemas/import"
 ```
 
-## 2. Run the pipeline to see the schemas
+## 2. パイプラインを実行してスキーマを確認します。
 
-To see the schemas, you must run your pipeline again. The `schemas` and `import`/`export`
-directories will be created. In each directory, you'll see a YAML file (e.g., `chess.schema.yaml`).
+スキーマを確認するには、パイプラインを再度実行する必要があります。`schemas` ディレクトリと `import`/`export` ディレクトリが作成されます。
+各ディレクトリには、YAML ファイル（例：`chess.schema.yaml`）があります。
 
-Look at the export schema (in the export folder): this is the schema that got inferred from the data
-and was used to load it into the destination (e.g., `duckdb`).
+エクスポート フォルダ内のエクスポート スキーマを確認します。これは、データから推論され、出力先（例：`duckdb`）にロードするために使用されたスキーマです。
 
-## 3. Make changes in import schema
+## 3. インポートスキーマを変更する
 
-Now look at the import schema (in the import folder): it contains only the tables, columns, and
-hints that were explicitly declared in the `chess` source. You'll use this schema to make
-modifications, typically by pasting relevant snippets from your export schema and modifying them.
-You should keep the import schema as simple as possible and let `dlt` do the rest.
+次に、インポートフォルダ内のインポートスキーマを確認します。このスキーマには、`chess` ソースで明示的に宣言されたテーブル、列、ヒントのみが含まれています。
+このスキーマを使用して変更を加えます。通常は、エクスポートスキーマから関連するスニペットを貼り付けて変更します。
+インポートスキーマは可能な限りシンプルに保ち、残りの処理は `dlt` に任せましょう。
 
-💡 How importing a schema works:
+💡 スキーマのインポートの仕組み
 
-1. When a new pipeline is created and the source function is extracted for the first time, a new
-   schema is added to the pipeline. This schema is created out of global hints and resource hints
-   present in the source extractor function.
-2. Every such new schema will be saved to the `import` folder (if it does not exist there already)
-   and used as the initial version for all future pipeline runs.
-3. Once a schema is present in the `import` folder, **it is writable by the user only**.
-4. Any changes to the schemas in that folder are detected and propagated to the pipeline
-   automatically on the next run. It means that after a user update, the schema in the `import`
-   folder reverts all the automatic updates from the data.
+1. 新しいパイプラインが作成され、ソース関数が初めて抽出されると、新しいスキーマがパイプラインに追加されます。
+  このスキーマは、ソース抽出関数内のグローバルヒントとリソースヒントから作成されます。
+2. 新しいスキーマはすべて、`import` フォルダに保存され（まだ存在しない場合）、今後のすべてのパイプライン実行の初期バージョンとして使用されます。
+3. `import` フォルダにスキーマが追加されると、**ユーザーのみが書き込み可能** になります。
+4. そのフォルダ内のスキーマへの変更は、次回の実行時に自動的に検出され、パイプラインに反映されます。
+  つまり、ユーザーが更新すると、`import` フォルダ内のスキーマは、データからのすべての自動更新を元に戻します。
 
-In the next steps, we'll experiment a lot; you will be warned to set `dev_mode=True` until we are done experimenting.
+次の手順では、さまざまな実験を行います。実験が完了するまでは、`dev_mode=True` を設定するように警告されます。
 
 :::caution
-dlt does **not modify** existing columns in a table after creation. While new columns can be added, changes to existing 
-columns (such as altering data types or adding hints) will not take effect automatically.
+dlt は、テーブル作成後に既存の列を**変更しません**。新しい列を追加することはできますが、既存の列への変更（データ型の変更やヒントの追加など）は自動的には反映されません。
 
-If you modify a YAML schema file, you must either delete the dataset, enable `dev_mode=True`, or use one of the Pipeline 
-[Refresh options](../general-usage/pipeline#refresh-pipeline-data-and-state) to apply the changes.
+YAML スキーマファイルを変更する場合は、データセットを削除するか、`dev_mode=True` を有効にするか、Pipeline の [更新オプション](../general-usage/pipeline#refresh-pipeline-data-and-state) のいずれかを使用して変更を適用する必要があります。
 ```py
 dlt.pipeline(
     import_schema_path="schemas/import",
@@ -91,11 +81,11 @@ dlt.pipeline(
 ```
 :::
 
-### Change the data type
+### データ型を変更する
 
-In the export schema, we see that the `end_time` column in `players_games` has a `text` data type, while we know that it is a timestamp. Let's change it and see if it works.
+エクスポートスキーマを見ると、`p​​layers_games` の `end_time` 列のデータ型が `text` になっているのがわかりますが、実際にはタイムスタンプであることが分かっています。これを変更して、正常に動作するか確認してみましょう。
 
-Copy the column:
+列をコピーします:
 
 ```yaml
 end_time:
@@ -103,7 +93,7 @@ end_time:
   data_type: text
 ```
 
-from export to import schema and change the data type to get:
+エクスポートからインポートスキーマに変更し、データ型を変更します:
 
 ```yaml
 players_games:
@@ -113,26 +103,27 @@ players_games:
       data_type: timestamp
 ```
 
-Run the pipeline script again and make sure that the change is visible in the export schema. Then,
-[launch the Streamlit app](../general-usage/dataset-access/streamlit) to see the changed data.
+パイプラインスクリプトを再度実行し、エクスポートスキーマに変更が反映されていることを確認します。
+次に、[Streamlitアプリを起動](../general-usage/dataset-access/streamlit)して、変更されたデータを確認します。
 
 :::note
-Do not rename the tables or columns in the YAML file. `dlt` infers those from the data, so the schema will be recreated.
-You can [adjust the schema](../general-usage/resource.md#set-table-name-and-adjust-schema) in Python before the resource is loaded.
+YAML ファイル内のテーブルや列の名前を変更しないでください。`dlt` はデータからそれらを推測するため、スキーマが再作成されます。
+リソースがロードされる前に、Python で [スキーマを調整](../general-usage/resource.md#set-table-name-and-adjust-schema) できます。
 :::
 
-### Reorder columns
-To reorder the columns in your dataset, follow these steps:
+### 列の順序変更
 
-1. Initial Run: Execute the pipeline to obtain the import and export schemas.
-1. Modify Export Schema: Adjust the column order as desired in the export schema.
-1. Sync Import Schema: Ensure that these changes are mirrored in the import schema to maintain consistency.
-1. Delete Dataset: Remove the existing dataset to prepare for the reload.
-1. Reload Data: Reload the data. The dataset should now reflect the new column order as specified in the import YAML.
+データセット内の列の順序を変更するには、以下の手順に従います。
 
-These steps ensure that the column order in your dataset matches your specifications.
+1. 初回実行: パイプラインを実行して、インポートスキーマとエクスポートスキーマを取得します。
+1. エクスポートスキーマの変更: エクスポートスキーマの列の順序を必要に応じて調整します。
+1. インポートスキーマの同期: 一貫性を保つために、これらの変更がインポートスキーマに反映されていることを確認します。
+1. データセットの削除: 再ロードの準備として、既存のデータセットを削除します。
+1. データの再ロード: データを再ロードします。これで、インポートYAMLで指定された新しい列の順序がデータセットに反映されるはずです。
 
-**Another approach** to reorder columns is to use the `add_map` function. For instance, to rearrange ‘column1’, ‘column2’, and ‘column3’, you can proceed as follows:
+これらの手順により、データセット内の列の順序が仕様と一致します。
+
+**列の順序を変更する別の方法** は、`add_map` 関数を使用することです。たとえば、「column1」、「column2」、「column3」を並べ替えるには、次の手順に従います。
 
 ```py
 # Define the data source and reorder columns using add_map
@@ -146,11 +137,13 @@ my_resource = resource().add_map(lambda row: {
 load_info = pipeline.run(my_resource)
 ```
 
-In this example, the `add_map` function reorders columns by defining a new mapping. The lambda function specifies the desired order by rearranging the key-value pairs. When the pipeline runs, the data will load with the columns in the new order.
+この例では、`add_map` 関数は新しいマッピングを定義して列の順序を変更します。
+Lambda 関数は、キーと値のペアを並べ替えることで、目的の順序を指定します。
+パイプラインが実行されると、列が新しい順序でデータが読み込まれます。
 
-### Load data as JSON instead of generating nested tables or columns from flattened dicts
+### フラット化された辞書からネストされたテーブルや列を生成する代わりに、JSON としてデータをロードします。
 
-In the export schema, you can see that the properties of white and black players got flattened into:
+エクスポートスキーマでは、白と黒のプレイヤーのプロパティが次のようにフラット化されていることがわかります。
 
 ```yaml
 white__rating:
@@ -164,9 +157,7 @@ white__aid:
   data_type: text
 ```
 
-For some reason, you'd rather deal with a single JSON (or struct) column. Just declare the `white`
-column as `json`, which will instruct `dlt` not to flatten it (or not convert into a nested table in
-case of a list). Do the same with the `black` column:
+何らかの理由で、単一のJSON（または構造体）列を扱いたい場合、`white`列を`json`として宣言するだけで、`dlt`はそれをフラット化しない（リストの場合はネストされたテーブルに変換しない）ように指示します。`black`列についても同様にします。
 
 ```yaml
 players_games:
@@ -182,14 +173,13 @@ players_games:
       data_type: json
 ```
 
-Run the pipeline script again, and now you can query the `black` and `white` columns with JSON
-expressions.
+パイプライン スクリプトを再度実行すると、JSON 式を使用して `black` 列と `white` 列をクエリできるようになります。
 
-### Add performance hints
+### パフォーマンスに関するヒントを追加する
 
-Let's say you are done with local experimentation and want to load your data to `BigQuery` instead
-of `duckdb`. You'd like to partition your data to save on query costs. The `end_time` column we just
-fixed looks like a good candidate.
+ローカルでの実験が終了し、データを `duckdb` ではなく `BigQuery` にロードしたいとします。
+クエリコストを削減するために、データをパーティション分割したいと考えています。
+先ほど修正した `end_time` 列が適切な候補のようです。
 
 ```yaml
 players_games:
@@ -206,8 +196,8 @@ players_games:
       data_type: json
 ```
 
-## 4. Keep your import schema
+## 4. インポートスキーマはそのままにしておいてください。
 
-Just add and push the import folder to git. It will be used automatically when cloned. Alternatively,
-[bundle such schema with your source](../general-usage/schema.md#attaching-schemas-to-sources).
+インポートフォルダをgitに追加してプッシュするだけです。クローン時に自動的に使用されます。
+または、[インポートスキーマをソースにバンドル](../general-usage/schema.md#attaching-schemas-to-sources)することもできます。
 

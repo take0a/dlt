@@ -4,11 +4,10 @@ description: Controlling schema evolution and validating data
 keywords: [data contracts, schema, dlt schema, pydantic]
 ---
 
-`dlt` will evolve the schema at the destination by following the structure and data types of the extracted data. There are several modes
-that you can use to control this automatic schema evolution, from the default modes where all changes to the schema are accepted to
-a frozen schema that does not change at all.
+`dlt` は、抽出されたデータの構造とデータ型に従って、出力先のスキーマを進化させます。
+この自動スキーマ進化を制御するために使用できるモードはいくつかあります。スキーマへのすべての変更が受け入れられるデフォルトモードから、まったく変更されない固定スキーマまであります。
 
-Consider this example:
+次の例を考えてみましょう:
 
 ```py
 @dlt.resource(schema_contract={"tables": "evolve", "columns": "freeze"})
@@ -16,54 +15,60 @@ def items():
     ...
 ```
 
-This resource will allow new tables (both nested tables and [tables with dynamic names](resource.md#dispatch-data-to-many-tables)) to be created, but will throw an exception if data is extracted for an existing table which contains a new column.
+このリソースを使用すると、新しいテーブル (ネストされたテーブルと [動的な名前を持つテーブル](resource.md#dispatch-data-to-many-tables) の両方) を作成できますが、新しい列を含む既存のテーブルのデータが抽出されると例外がスローされます。
 
-### Setting up the contract
-You can control the following **schema entities**:
-* `tables` - the contract is applied when a new table is created
-* `columns` - the contract is applied when a new column is created on an existing table
-* `data_type` - the contract is applied when data cannot be coerced into a data type associated with an existing column.
+### コントラクトの設定
 
-You can use **contract modes** to tell `dlt` how to apply the contract for a particular entity:
-* `evolve`: No constraints on schema changes.
-* `freeze`: This will raise an exception if data is encountered that does not fit the existing schema, so no data will be loaded to the destination.
-* `discard_row`: This will discard any extracted row if it does not adhere to the existing schema, and this row will not be loaded to the destination.
-* `discard_value`: This will discard data in an extracted row that does not adhere to the existing schema, and the row will be loaded without this data.
+以下の**スキーマエンティティ**を制御できます:
+* `tables` - 新しいテーブルが作成されるときにコントラクトが適用されます。
+* `columns` - 既存のテーブルに新しい列が作成されるときにコントラクトが適用されます。
+* `data_type` - 既存の列に関連付けられたデータ型にデータを強制変換できない場合にコントラクトが適用されます。
+
+**コントラクトモード** を使用して、`dlt` に特定のエンティティに対するコントラクトの適用方法を指定できます:
+* `evolve`: スキーマ変更に制約はありません。
+* `freeze`: 既存のスキーマに適合しないデータが見つかった場合に例外が発生し、出力先にデータがロードされません。
+* `discard_row`: 抽出された行が既存のスキーマに準拠していない場合は破棄され、その行は出力先にロードされません。
+* `discard_value`: 抽出された行のうち、既存のスキーマに準拠していないデータを破棄し、そのデータなしで行がロードされます。
 
 :::note
-The default mode (**evolve**) works as follows:
-1. New tables may always be created.
-2. New columns may always be appended to the existing table.
-3. Data that do not coerce to the existing data type of a particular column will be sent to a [variant column](schema.md#variant-columns) created for this particular type.
+デフォルトモード (**evolve**) は次のように動作します。
+1. 新しいテーブルは常に作成できます。
+2. 新しい列は常に既存のテーブルに追加できます。
+3. 特定の列の既存のデータ型に強制変換されないデータは、この特定の型用に作成された [バリアント列](schema.md#variant-columns) に送信されます。
 :::
 
-#### Passing the schema_contract argument
-The `schema_contract` exists on the [dlt.source](source.md) decorator as a default for all resources in that source and on the
-[dlt.resource](source.md) decorator as a directive for the individual resource - and as a consequence - on all tables created by this resource.
-Additionally, it exists on the `pipeline.run()` method, which will override all existing settings.
+#### schema_contract 引数の渡し方
 
-The `schema_contract` argument accepts two forms:
-1. **full**: a mapping of schema entities to contract modes
-2. **shorthand**: a contract mode (string) that will be applied to all schema entities.
+`schema_contract` は、[dlt.source](source.md) デコレータに、そのソース内のすべてのリソースのデフォルトとして存在します。また、[dlt.resource](source.md) デコレータには、個々のリソースのディレクティブとして、そして結果として、このリソースによって作成されるすべてのテーブルに適用されます。
+さらに、`pipeline.run()` メソッドにも存在し、既存のすべての設定をオーバーライドします。
 
-For example, setting `schema_contract` to *freeze* will expand to the full form:
+`schema_contract` 引数には、次の 2 つの形式があります。
+1. **full**: スキーマエンティティとコントラクトモードのマッピング
+2. **shorthand**: すべてのスキーマエンティティに適用されるコントラクトモード (文字列)
+
+例えば、`schema_contract` を *freeze* に設定すると、次の完全形式に展開されます:
+
 ```py
 {"tables": "freeze", "columns": "freeze", "data_type": "freeze"}
 ```
 
-You can change the contract on the **source** instance via the `schema_contract` property. For **resource**, you can use [apply_hints](resource#set-table-name-and-adjust-schema).
+`schema_contract` プロパティを介して、**ソース** インスタンスのコントラクトを変更できます。
+**リソース** の場合は、[apply_hints](resource#set-table-name-and-adjust-schema) を使用できます。
 
 
-#### Nuances of contract modes
-1. Contracts are applied **after names of tables and columns are normalized**.
-2. A contract defined on a resource is applied to all root tables and nested tables created by that resource.
-3. `discard_row` works on the table level. For example, if you have two tables in a nested relationship, i.e., *users* and *users__addresses*, and the contract is violated in the *users__addresses* table, the row of that table is discarded while the parent row in the *users* table will be loaded.
+#### コントラクトモードのニュアンス
 
-### Use Pydantic models for data validation
+1. コントラクトは、**テーブル名と列名が正規化された後**に適用されます。
+2. リソースに定義されたコントラクトは、そのリソースによって作成されたすべてのルートテーブルとネストされたテーブルに適用されます。
+3. `discard_row` はテーブルレベルで機能します。例えば、ネストされたリレーションシップにある2つのテーブル、つまり *users* と *users__addresses* があり、*users__addresses* テーブルでコントラクト違反が発生した場合、そのテーブルの行は破棄され、*users* テーブルの親行がロードされます。
 
-Pydantic models can be used to [define table schemas and validate incoming data](resource.md#define-a-schema-with-pydantic). You can use any model you already have. `dlt` will internally synthesize (if necessary) new models that conform to the **schema contract** on the resource.
+### Pydantic モデルを使用したデータ検証
 
-Just passing a model in the `column` argument of the [dlt.resource](resource.md#define-a-schema-with-pydantic) sets a schema contract that conforms to the default Pydantic behavior:
+Pydantic モデルは、[テーブルスキーマの定義と入力データの検証](resource.md#define-a-schema-with-pydantic) に使用できます。既存のモデルを自由に使用できます。
+`dlt` は、必要に応じて、リソースの **スキーマコントラクト** に準拠した新しいモデルを内部的に合成します。
+
+[dlt.resource](resource.md#define-a-schema-with-pydantic) の `column` 引数にモデルを渡すだけで、Pydantic のデフォルトの動作に準拠したスキーマコントラクトが設定されます。
+
 ```py
 {
   "tables": "evolve",
@@ -71,18 +76,22 @@ Just passing a model in the `column` argument of the [dlt.resource](resource.md#
   "data_type": "freeze"
 }
 ```
-New tables are allowed, extra fields are ignored, and invalid data raises an exception.
 
-If you pass a schema contract explicitly, the following happens to schema entities:
-1. **tables** do not impact the Pydantic models.
-2. **columns** modes are mapped into the **extra** modes of Pydantic (see below). `dlt` will apply this setting recursively if models contain other models.
-3. **data_type** supports the following modes for Pydantic: **evolve** will synthesize a lenient model that allows for any data type. This may result in variant columns upstream.
-**freeze** will re-raise `ValidationException`. **discard_row** will remove the non-validating data items.
-**discard_value** is not currently supported. We may eventually do that in Pydantic v2.
+新しいテーブルは許可され、追加フィールドは無視され、無効なデータは例外を発生させます。
 
-`dlt` maps column contract modes into the extra fields settings as follows.
+スキーマコントラクトを明示的に渡すと、スキーマエンティティに対して以下の処理が行われます。
+1. **tables** は Pydantic モデルに影響を与えません。
+2. **columns** モードは Pydantic の **extra** モードにマッピングされます (下記参照)。`dlt` は、モデルに他のモデルが含まれている場合、この設定を再帰的に適用します。
+3. **data_type** は Pydantic に対して以下のモードをサポートします。**evolve** は、あらゆるデータ型に対応する柔軟なモデルを合成します。
+これにより、上流にバリアント列が発生する可能性があります。
+**freeze** は `ValidationException` を再度発生させます。**discard_row** は、検証対象外のデータ項目を削除します。
+**discard_value** は現在サポートされていません。Pydantic v2 で将来サポートされる可能性があります。
 
-Note that this works in two directions. If you use a model with such a setting explicitly configured, `dlt` sets the column contract mode accordingly. This also avoids synthesizing modified models.
+`dlt` は、列コントラクトモードを以下のように追加フィールド設定にマッピングします。
+
+これは双方向に機能することに注意してください。
+このような設定が明示的に構成されたモデルを使用する場合、`dlt` はそれに応じて列コントラクトモードを設定します。
+これにより、変更されたモデルの合成も回避されます。
 
 | column mode   | pydantic extra |
 | ------------- | -------------- |
@@ -91,34 +100,40 @@ Note that this works in two directions. If you use a model with such a setting e
 | discard_value | ignore         |
 | discard_row   | forbid         |
 
-`discard_row` requires additional handling when a ValidationError is raised.
+`discard_row` では、ValidationError が発生した場合に追加の処理が必要です。
 
 :::tip
-Model validation is added as a [transform step](resource.md#filter-transform-and-pivot-data) to the resource. This step will convert the incoming data items into instances of validating models. You could easily convert them back to dictionaries by using `add_map(lambda item: item.dict())` on a resource.
+モデル検証は、リソースに[変換ステップ](resource.md#filter-transform-and-pivot-data)として追加されます。
+このステップでは、入力データ項目を検証モデルのインスタンスに変換します。
+リソースに対して `add_map(lambda item: item.dict())` を使用することで、簡単に辞書に戻すことができます。
 :::
 
 :::note
-Pydantic models work on the **extracted** data **before names are normalized or nested tables are created**. Make sure to name model fields as in your input data and handle nested data with nested models.
+Pydantic モデルは、**名前が正規化される前、またはネストされたテーブルが作成される前の** **抽出された** データに対して動作します。
+モデルフィールドには入力データと同じ名前を付け、ネストされたデータはネストされたモデルで処理するようにしてください。
 
-As a consequence, `discard_row` will drop the whole data item - even if a nested model was affected.
+結果として、ネストされたモデルが影響を受けた場合でも、`discard_row` はデータ項目全体を削除します。
 :::
 
-### Set contracts on Arrow tables and Pandas
+### Arrow テーブルと Pandas のコントラクト設定
 
-All contract settings apply to [Arrow tables and pandas frames](../dlt-ecosystem/verified-sources/arrow-pandas.md) as well.
-1. **tables** mode is the same - no matter what the data item type is.
-2. **columns** will allow new columns, raise an exception, or modify tables/frames still in the extract step to avoid rewriting Parquet files.
-3. **data_type** changes to data types in tables/frames are not allowed and will result in a data type schema clash. We could allow for more modes (evolving data types in Arrow tables sounds weird but ping us on Slack if you need it.)
+すべてのコントラクト設定は [Arrow テーブルと Pandas フレーム](../dlt-ecosystem/verified-sources/arrow-pandas.md) にも適用されます。
+1. **tables** モードは、データ項目の種類に関係なく同じです。
+2. **columns** モードでは、新しい列の追加が許可されるか、例外が発生するか、抽出ステップ中のテーブル/フレームが変更され、Parquet ファイルの書き換えが回避されます。
+3. **data_type** モードでは、テーブル/フレーム内のデータ型の変更は許可されておらず、データ型スキーマの衝突が発生します。
+さらに多くのモードに対応できます（Arrow テーブルでデータ型を進化させるのは奇妙に聞こえるかもしれませんが、必要な場合は Slack でご連絡ください）。
 
-Here's how `dlt` deals with column modes:
-1. **evolve** new columns are allowed (the table may be reordered to put them at the end).
-2. **discard_value** the column will be deleted.
-3. **discard_row** rows with the column present will be deleted and then the column will be deleted.
-4. **freeze** an exception on a new column.
+`dlt` が列モードを処理する方法は次のとおりです。
+1. **evolve** ：新しい列が許可されます（テーブルの順序が変更され、列が最後に配置される場合があります）。
+2. **discard_value** ：列が削除されます。
+3. **discard_row** ：列が存在する行が削除され、その後列が削除されます。
+4. **freeze** ：新しい列で例外が発生します。
 
-### Get context from DataValidationError in freeze mode
-When a contract is violated in freeze mode, `dlt` raises a `DataValidationError` exception. This exception provides access to the full context and passes the evidence to the caller.
-As with any other exception coming from a pipeline run, it will be re-raised via a `PipelineStepFailed` exception, which you should catch in an except block:
+### フリーズモードで DataValidationError からコンテキストを取得する
+
+フリーズモードでコントラクト違反が発生すると、`dlt` は `DataValidationError` 例外を発生させます。
+この例外は完全なコンテキストへのアクセスを提供し、その証拠を呼び出し元に渡します。
+パイプライン実行から発生する他の例外と同様に、`PipelineStepFailed` 例外によって再度発生し、except ブロックでキャッチする必要があります。
 
 ```py
 try:
@@ -132,22 +147,24 @@ except PipelineStepFailed as pip_ex:
       ...
 ```
 
-`DataValidationError` provides the following context:
-1. `schema_name`, `table_name`, and `column_name` provide the logical "location" at which the contract was violated.
-2. `schema_entity` and `contract_mode` indicate which contract was violated.
-3. `table_schema` contains the schema against which the contract was validated. It may be a Pydantic model or a dlt `TTableSchema` instance.
-4. `schema_contract` is the full, expanded schema contract.
-5. `data_item` is the causing data item (Python dict, arrow table, Pydantic model, or list thereof).
+`DataValidationError` は以下のコンテキストを提供します。
+1. `schema_name`、`table_name`、`column_name` は、コントラクト違反が発生した論理的な「位置」を示します。
+2. `schema_entity` と `contract_mode` は、違反が発生したコントラクトを示します。
+3. `table_schema` には、コントラクトの検証に使用されたスキーマが含まれます。これは、Pydantic モデルまたは dlt `TTableSchema` インスタンスのいずれかです。
+4. `schema_contract` は、完全な展開済みスキーマ コントラクトです。
+5. `data_item` は、原因となったデータ項目です（Python 辞書、アローテーブル、Pydantic モデル、またはそれらのリスト）。
 
-### Contracts on new tables
-If a table is a **new table** that has not been created on the destination yet, dlt will allow the creation of new columns. For a single pipeline run, the column mode is changed (internally) to **evolve** and then reverted back to the original mode. This allows for initial schema inference to happen, and then on subsequent runs, the inferred contract will be applied to the new data.
+### 新しいテーブルにおけるコントラクト
 
-The following tables are considered new:
-1. Child tables inferred from nested data.
-2. Dynamic tables created from the data during extraction.
-3. Tables containing **incomplete** columns - columns without a data type bound to them.
+テーブルが宛先にまだ作成されていない**新しいテーブル**である場合、DLTは新しい列の作成を許可します。パイプラインを1回実行すると、列モードは（内部的に）**evolve**に変更され、その後元のモードに戻ります。これにより、最初のスキーマ推論が行われ、その後の実行では、推論されたコントラクトが新しいデータに適用されます。
 
-For example, such a table is considered new because the column **number** is incomplete (defined as primary key and NOT null but no data type):
+以下のテーブルは新規テーブルとみなされます。
+1. ネストされたデータから推論された子テーブル。
+2. 抽出中にデータから作成された動的テーブル。
+3. **不完全な**列（データ型がバインドされていない列）を含むテーブル。
+
+たとえば、次のようなテーブルは、列 **number** が不完全 (主キーとして定義され、NULL ではないがデータ型がない) であるため、新規であるとみなされます:
+
 ```yaml
 blocks:
   description: Ethereum blocks
@@ -159,18 +176,18 @@ blocks:
       name: number
 ```
 
-Tables that are not considered new:
-1. Those with columns defined by Pydantic models.
+新規とみなされないテーブル:
+1. Pydantic モデルによって定義された列を持つテーブル。
 
-### Working with datasets that have manually added tables and columns on the first load
+### 初回ロード時に手動でテーブルと列を追加したデータセットの操作
 
-In some cases, you might be working with datasets that have tables or columns created outside of dlt. If you are loading to a table not created by dlt for the first time, dlt will not know about this table while enforcing schema contracts. This means that if you do a load where the `tables` are set to `evolve`, all will work as planned. If you have `tables` set to `freeze`, dlt will raise an exception because it thinks you are creating a new table (which you are from dlt's perspective). You can allow `evolve` for one load and then switch back to `freeze`.
+場合によっては、dlt の外部で作成されたテーブルまたは列を含むデータセットを操作することがあります。dlt によって作成されていないテーブルに初めてロードする場合、dlt はスキーマ規約を適用する際にこのテーブルを認識しません。つまり、`tables` を `evolve` に設定してロードを実行すると、すべて計画どおりに動作します。`tables` を `freeze` に設定している場合、dlt は新しいテーブルを作成していると認識するため（dlt の観点からは新しいテーブルを作成していると認識されるため）、例外が発生します。1 回のロードで `evolve` を許可し、その後 `freeze` に戻すことができます。
 
-The same thing will happen if `dlt` knows your table, but you have manually added a column to your destination and you have `columns` set to `freeze`.
+`dlt` がテーブルを認識しているものの、ロード先に手動で列を追加し、`columns` を `freeze` に設定している場合も、同じことが起こります。
 
-### Code examples
+### コード例
 
-The below code will silently ignore new subtables, allow new columns to be added to existing tables, and raise an error if a variant of a column is discovered.
+以下のコードは、新しいサブテーブルを暗黙的に無視し、既存のテーブルへの新しい列の追加を許可し、列のバリアントが検出された場合にエラーを発生させます。
 
 ```py
 @dlt.resource(schema_contract={"tables": "discard_row", "columns": "evolve", "data_type": "freeze"})
@@ -178,15 +195,15 @@ def items():
     ...
 ```
 
-The below code will raise an error on any encountered schema change. Note: You can always set a string which will be interpreted as though all keys are set to these values.
+以下のコードは、スキーマ変更が発生するたびにエラーを発生させます。注: すべてのキーがこれらの値に設定されているかのように解釈される文字列をいつでも設定できます。
 
 ```py
 pipeline.run(my_source, schema_contract="freeze")
 ```
 
-The below code defines some settings on the source which can be overwritten on the resource, which in turn can be overwritten by the global override on the `run` method.
-Here, for all resources, variant columns are frozen and raise an error if encountered. On `items`, new columns are allowed, but `other_items` inherits the `freeze` setting from
-the source, thus new columns are frozen there. New tables are allowed.
+以下のコードは、ソース上で上書き可能な設定を定義しています。これらの設定はリソース上で上書き可能で、さらに `run` メソッドのグローバルオーバーライドによって上書き可能です。
+ここでは、すべてのリソースにおいてバリアント列が固定され、検出された場合はエラーが発生します。
+`items` では新しい列が許可されますが、`other_items` はソースから `freeze` 設定を継承するため、そこで新しい列が固定されます。新しいテーブルは許可されます。
 
 ```py
 @dlt.resource(schema_contract={"columns": "evolve"})

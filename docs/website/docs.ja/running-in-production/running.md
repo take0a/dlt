@@ -4,9 +4,9 @@ description: Running a dlt pipeline in production
 keywords: [running, production, tips]
 ---
 
-# Running
+# 実行
 
-When running the pipeline in production, you may consider a few additions to your script. We'll use the script below as a starting point.
+本番環境でパイプラインを実行する際は、スクリプトにいくつか追加することを検討してください。ここでは、以下のスクリプトを出発点として使用します。
 
 ```py
 import dlt
@@ -18,9 +18,11 @@ if __name__ == "__main__":
     load_info = pipeline.run(data)
 ```
 
-## Inspect and save the load info and trace
+## ロード情報とトレースを確認し、保存します。
 
-The `load_info` contains plenty of useful information on the recently loaded data. It contains the pipeline and dataset name, the destination information (without secrets), and a list of loaded packages. Package information contains its state (`COMPLETED/PROCESSED`) and a list of all jobs with their statuses, file sizes, types, and in case of failed jobs, the error messages from the destination.
+`load_info` には、最近ロードされたデータに関する有用な情報が多数含まれています。
+パイプラインとデータセット名、出力先情報（シークレットなし）、ロードされたパッケージのリストが含まれます。
+パッケージ情報には、状態（`COMPLETED/PROCESSED`）、すべてのジョブのリスト（ステータス、ファイルサイズ、タイプを含む）、そして失敗したジョブの場合は出力先からのエラーメッセージが含まれます。
 
 ```py
     # see when load was started
@@ -31,14 +33,16 @@ The `load_info` contains plenty of useful information on the recently loaded dat
     print(load_info.load_packages[0].jobs["completed_jobs"][0])
 ```
 
-`load_info` may also be loaded into the destinations as below:
+`load_info` は以下のように宛先にロードされる場合もあります:
 
 ```py
     # we reuse the pipeline instance below and load to the same dataset as data
     pipeline.run([load_info], table_name="_load_info")
 ```
 
-You can also get the runtime trace from the pipeline. It contains timing information on `extract`, `normalize`, and `load` steps and also all the config and secret values with full information from where they were obtained. You can display and load trace info as shown below. Use your code editor to explore the `trace` object further. The `normalize` step information contains the counts of rows per table of data that was normalized and then loaded.
+パイプラインからランタイムトレースを取得することもできます。これには、`extract`、`normalize`、`load` ステップのタイミング情報に加え、すべての設定値とシークレット値とその取得元に関する詳細情報が含まれます。
+以下のようにトレース情報を表示およびロードできます。コードエディタを使用して、`trace` オブジェクトをさらに詳しく調べてください。
+`normalize` ステップ情報には、正規化されてロードされたデータのテーブルごとの行数が含まれます。
 
 ```py
     # print human-friendly trace information
@@ -60,11 +64,13 @@ You can also access the last `extract`, `normalize`, and `load` infos directly:
     print(pipeline.last_trace.last_load_info)
 ```
 
-Please note that you can inspect the pipeline using [command line](../reference/command-line-interface.md#dlt-pipeline).
+[コマンドライン](../reference/command-line-interface.md#dlt-pipeline)を使用してパイプラインを検査できることに注意してください。
 
-### Inspect, save, and alert on schema changes
+### スキーマの変更を検査、保存、アラートする
 
-In the package information, you can also see the list of all tables and columns created at the destination during the loading of that package. The code below displays all tables and schemas. Note that those objects are Typed Dictionaries; use your code editor to explore.
+パッケージ情報では、パッケージのロード中に宛先に作成されたすべてのテーブルと列のリストも確認できます。
+以下のコードは、すべてのテーブルとスキーマを表示します。
+これらのオブジェクトは型付き辞書であることに注意してください。コードエディタを使用して詳細を確認してください。
 
 ```py
     # print all the new tables/columns in
@@ -75,7 +81,8 @@ In the package information, you can also see the list of all tables and columns 
                 print(f"\tcolumn {column_name}: {column['data_type']}")
 ```
 
-You can save only the new tables and column schemas to the destination. Note that the code above that saves `load_info` saves this data as well.
+新しいテーブルと列スキーマのみを出力先に保存できます。
+上記の `load_info` を保存するコードは、このデータも保存することに注意してください。
 
 ```py
     # save just the new tables
@@ -83,25 +90,29 @@ You can save only the new tables and column schemas to the destination. Note tha
     pipeline.run(table_updates, table_name="_new_tables")
 ```
 
-## Data left behind
+## 残されるデータ
 
-By default, `dlt` leaves the loaded packages intact so they may be fully queried and inspected after loading. This behavior may be changed so that the successfully completed jobs are deleted from the loaded package. In that case, for a correctly behaving pipeline, only a minimum amount of data will be left behind. In `config.toml`:
+デフォルトでは、`dlt` はロードされたパッケージをそのまま残します。これにより、ロード後に完全にクエリと検査を実行できます。
+この動作は、正常に完了したジョブがロードされたパッケージから削除されるように変更できます。
+その場合、パイプラインが正常に動作するために、最小限のデータのみが残されます。
+`config.toml` では次のようになります:
 
 ```toml
 [load]
 delete_completed_jobs=true
 ```
 
-Also, by default, `dlt` leaves data in the [staging dataset](../dlt-ecosystem/staging.md#staging-dataset), used during merge and replace load for deduplication. In order to clear it, put the following line in `config.toml`:
+また、デフォルトでは、`dlt` は [ステージングデータセット](../dlt-ecosystem/staging.md#staging-dataset) にデータを残します。これは、マージロードと置換ロードで重複排除に使用されます。これをクリアするには、`config.toml` に次の行を追加します。
 
 ```toml
 [load]
 truncate_staging_dataset=true
 ```
 
-## Using Slack to send messages
+## Slack を使ったメッセージ送信
 
-`dlt` provides basic support for sending Slack messages. You can configure the Slack incoming hook via [secrets.toml or environment variables](../general-usage/credentials/setup). Please note that **the Slack incoming hook is considered a secret and will be immediately blocked when pushed to a GitHub repository**. In `secrets.toml`:
+`dlt` は、Slack メッセージの送信に関する基本的なサポートを提供します。Slack の受信フックは、[secrets.toml または環境変数](../general-usage/credentials/setup) で設定できます。
+**Slack の受信フックはシークレットとして扱われ、GitHub リポジトリにプッシュされるとすぐにブロックされます** のでご注意ください。`secrets.toml` では、次のようになります。
 
 ```toml
 [runtime]
@@ -114,7 +125,8 @@ or
 RUNTIME__SLACK_INCOMING_HOOK="https://hooks.slack.com/services/T04DHMAF13Q/B04E7B1MQ1H/TDHEI123WUEE"
 ```
 
-Then, the configured hook is available via the pipeline object. We also provide a convenience method to send Slack messages:
+その後、設定されたフックはパイプラインオブジェクトを介して利用できるようになります。
+Slackメッセージを送信するための便利なメソッドも提供しています:
 
 ```py
 from dlt.common.runtime.slack import send_slack_message
@@ -123,13 +135,13 @@ send_slack_message(pipeline.runtime_config.slack_incoming_hook, message)
 
 ```
 
-## Enable Sentry tracing
+## Sentry トレースを有効にする
 
-You can enable exception and runtime [tracing via Sentry](../running-in-production/tracing.md).
+例外とランタイムのトレースを Sentry 経由で有効にできます (../running-in-production/tracing.md)。
 
-## Set the log level and format
+## ログレベルと形式を設定する
 
-You can set the log level and switch logging to JSON format.
+ログレベルを設定し、ログをJSON形式に切り替えることができます。
 
 ```toml
 [runtime]
@@ -137,26 +149,27 @@ log_level="INFO"
 log_format="JSON"
 ```
 
-`log_level` accepts the [Python standard logging level names](https://docs.python.org/3/library/logging.html#logging-levels).
+`log_level` は [Python 標準のログレベル名](https://docs.python.org/3/library/logging.html#logging-levels) を受け入れます。
 
-- The default log level is `WARNING`.
-- The `INFO` log level is useful when diagnosing problems in production.
-- `CRITICAL` will disable logging.
-- `DEBUG` should not be used in production.
+- デフォルトのログレベルは `WARNING` です。
+- `INFO` ログレベルは、本番環境での問題を診断する際に役立ちます。
+- `CRITICAL` はログを無効にします。
+- `DEBUG` は本番環境では使用しないでください。
 
-`log_format` accepts:
+`log_format` は以下を受け入れます。
 
-- `json` to get the log in JSON format.
-- [Python standard log format specifier](https://docs.python.org/3/library/logging.html#logrecord-attributes).
+- `json` は JSON 形式でログを取得します。
+- [Python 標準のログ形式指定子](https://docs.python.org/3/library/logging.html#logrecord-attributes)。
 
-As with any other configuration, you can use environment variables instead of the TOML file.
+他の設定と同様に、TOML ファイルの代わりに環境変数を使用できます。
 
-- `RUNTIME__LOG_LEVEL` to set the log level.
-- `LOG_FORMAT` to set the log format.
+- `RUNTIME__LOG_LEVEL` はログレベルを設定します。
+- `LOG_FORMAT` はログ形式を設定します。
 
-`dlt` logs to a logger named **dlt**. `dlt` logger uses a regular Python logger, so you can configure the handlers as per your requirement.
+`dlt` は **dlt** という名前のロガーにログを記録します。`dlt` ロガーは通常の Python ロガーを使用するため、必要に応じてハンドラーを設定できます。
 
-For example, to put logs to the file:
+例えば、ファイルにログを出力するには、次のようにします。
+
 ```py
 import logging
 
@@ -206,25 +219,19 @@ logger_dlt.addHandler(InterceptHandler())
 loguru_logger.add("dlt_loguru.log")
 ```
 
-## Handle exceptions, failed jobs, and retry the pipeline
+## 例外、失敗したジョブを処理し、パイプラインを再試行します。
 
-When any of the steps of the pipeline fails, an exception of type `PipelineStepFailed` is raised.
-Such an exception contains the pipeline step name, the pipeline object itself, and the step info, i.e.,
-`LoadInfo`. It provides general information about where the problem occurred. In most cases,
-you can and should obtain the causing exception using the standard Python exception chaining
-(`__context__`).
+パイプラインのいずれかのステップが失敗すると、`PipelineStepFailed` 型の例外が発生します。
+この例外には、パイプラインのステップ名、パイプラインオブジェクト自体、およびステップ情報（`LoadInfo`）が含まれます。これは、問題が発生した場所に関する一般的な情報を提供します。
+ほとんどの場合、標準的な Python 例外チェーン (`__context__`) を使用して、原因となっている例外を取得できます。また、そうすべきです。
 
-There are two different types of exceptions in `__context__`:
+`__context__` には 2 種類の例外があります。
 
-1. **Terminal exceptions** are exceptions that **should not be retried** because the error
-   situation will never recover without intervention. Examples include missing config and secret
-   values, most of the `40x` HTTP errors, and several database errors (i.e., missing relations like
-   tables). Each destination has its own set of terminal exceptions that `dlt` tries to
-   preserve.
-2. **Transient exceptions** are exceptions that may be retried.
+1. **ターミナル例外** は、介入なしにはエラー状態が回復しないため、**再試行すべきではない** 例外です。
+例としては、設定値やシークレット値の不足、ほとんどの `40x` HTTP エラー、いくつかのデータベースエラー（テーブルなどのリレーションの不足など）などが挙げられます。各出力先には、`dlt` が保持しようとするターミナル例外のセットが独自に存在します。
+2. **一時例外** は、再試行される可能性のある例外です。
 
-The code below tells one exception type from another. Note that we provide retry strategy helpers that
-do that for you.
+以下のコードは、ある例外タイプと別の例外タイプを区別しています。この処理を自動的に行う再試行戦略ヘルパーが提供されていることに注意してください。
 
 ```py
 from dlt.common.exceptions import TerminalException
@@ -235,21 +242,21 @@ def check(ex: Exception):
     return True
 ```
 
-### Failed jobs
+### 失敗したジョブ
 
-If any job in the package **fails terminally**, it will be moved to the `failed_jobs` folder and assigned
-such status.
-By default, **an exception is raised** and on the first failed job, the load package will be aborted with `LoadClientJobFailed` (terminal exception).
-Such a package will be completed but its load id is not added to the `_dlt_loads` table.
-All the jobs that were running in parallel are completed before raising. The dlt state, if present, will not be visible to `dlt`.
-Here is an example `config.toml` to disable this behavior:
+パッケージ内のジョブが**ターミナルで失敗**した場合、そのジョブは `failed_jobs` フォルダに移動さ​​れ、そのステータスが割り当てられます。
+デフォルトでは**例外が発生し**、最初の失敗したジョブで、ロードパッケージは `LoadClientJobFailed`（ターミナル例外）で中止されます。
+このようなパッケージは完了しますが、そのロードIDは `_dlt_loads` テーブルに追加されません。
+並行して実行されていたすべてのジョブは、例外が発生する前に完了しています。
+dlt 状態が存在する場合、`dlt` からは参照できません。
+この動作を無効にする `config.toml` の例を以下に示します。
 
 ```toml
 # I hope you know what you are doing by setting this to false
 load.raise_on_failed_jobs=false
 ```
 
-If you prefer dlt not to raise a terminal exception on failed jobs, then you can manually check for failed jobs and raise an exception by checking the load info as follows:
+失敗したジョブで dlt がターミナル例外を発生させないようにしたい場合は、次のようにロード情報をチェックして失敗したジョブを手動で確認し、例外を発生させることができます:
 
 ```py
 # returns True if there are failed jobs in any of the load packages
@@ -259,36 +266,33 @@ load_info.raise_on_failed_jobs()
 ```
 
 :::caution
-Note that certain write dispositions will irreversibly modify your data:
-1. `replace` write disposition with the default `truncate-and-insert` [strategy](../general-usage/full-loading.md) will truncate tables before loading.
-2. `merge` write disposition will merge staging dataset tables into the destination dataset. This will happen only when all data for this table (and nested tables) got loaded.
+特定の書き込み処理は、データを不可逆的に変更することに注意してください。
+1. デフォルトの `truncate-and-insert` [戦略](../general-usage/full-loading.md) を使用した `replace` 書き込み処理は、ロード前にテーブルを切り詰めます。
+2. `merge` 書き込み処理は、ステージングデータセットのテーブルを宛先データセットにマージします。これは、このテーブル（およびネストされたテーブル）のすべてのデータがロードされた場合にのみ実行されます。
 
-Here's what you can do to deal with partially loaded packages:
-1. Retry the load step in case of transient errors.
-2. Use replace strategy with staging dataset so replace happens only when data for the table (and all nested tables) was fully loaded and is an atomic operation (if possible).
-3. Use only "append" write disposition. When your load package fails, you are able to use `_dlt_load_id` to remove all unprocessed data.
-4. Use "staging append" (`merge` disposition without primary key and merge key defined).
+部分的にロードされたパッケージに対処するには、次の操作を実行できます。
+1. 一時的なエラーが発生した場合は、ロード手順を再試行します。
+2. ステージングデータセットで replace 戦略を使用し、テーブル（およびすべてのネストされたテーブル）のデータが完全にロードされ、アトミック操作（可能な場合）が実行できた場合にのみ replace を実行します。
+3. "append" 書き込み処理のみを使用します。ロードパッケージが失敗した場合は、`_dlt_load_id` を使用して未処理のデータをすべて削除できます。
+4. 「ステージング追加」を使用します (主キーとマージ キーを定義せずに `merge` 配置)。
 
 :::
 
 
-### What `run` does inside
+### `run` メソッドの内部動作
 
-Before adding retry to pipeline steps, note how the `run` method actually works:
+パイプラインステップに再試行を追加する前に、`run` メソッドの実際の動作を確認してください。
 
-1. The `run` method will first use the `sync_destination` method to synchronize pipeline state and
-   schemas with the destination. Obviously, at this point, a connection to the destination is
-   established (which may fail and be retried).
-2. Next, it will make sure that data from the previous runs is fully processed. If not, the `run` method
-   normalizes, loads pending data items, and **exits**.
-3. If there was no pending data, new data from the `data` argument is extracted, normalized, and loaded.
+1. `run` メソッドはまず `sync_destination` メソッドを使用して、パイプラインの状態とスキーマを同期先と同期します。
+当然のことながら、この時点では同期先への接続が確立されています（接続に失敗して再試行される場合もあります）。
+2. 次に、前回の実行で取得したデータが完全に処理されていることを確認します。処理されていない場合、`run` メソッドは正規化し、保留中のデータ項目をロードして **終了** します。
+3. 保留中のデータがない場合、`data` 引数から新しいデータが抽出され、正規化されてロードされます。
 
-### Retry helpers and `tenacity`
+### 再試行ヘルパーと `tenacity`
 
-By default, `dlt` does not retry any of the pipeline steps. This is left to the included helpers and
-the [tenacity](https://tenacity.readthedocs.io/en/latest/) library. The snippet below will retry the
-`load` stage with the `retry_load` strategy and define back-off or re-raise exceptions for any other
-steps (`extract`, `normalize`) and for terminal exceptions.
+デフォルトでは、`dlt` はパイプラインのどのステップも再試行しません。
+これは、同梱のヘルパーと [tenacity](https://tenacity.readthedocs.io/en/latest/) ライブラリによって処理されます。
+以下のスニペットは、`retry_load` 戦略を使用して `load` ステージを再試行し、他のステップ (`extract`、`normalize`) とターミナル例外に対してバックオフまたは例外の再発生を定義します。
 
 ```py
 from tenacity import stop_after_attempt, retry_if_exception, Retrying, retry, wait_exponential
@@ -311,7 +315,7 @@ if __name__ == "__main__":
         raise
 ```
 
-You can also use `tenacity` to decorate functions. This example additionally retries on `extract`:
+`tenacity` を使って関数をデコレートすることもできます。この例では、`extract` でさらに再試行を行っています:
 
 ```py
 if __name__ == "__main__":

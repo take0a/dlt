@@ -5,26 +5,26 @@ keywords: [how to, load data incrementally from SQL]
 slug: sql-incremental-configuration
 ---
 
-# Add incremental configuration to SQL resources
-Incremental loading is the act of loading only new or changed data and not old records that have already been loaded.
-For example, a bank loads only the latest transactions, or a company updates its database with new or modified user
-information. In this article, we’ll discuss a few incremental loading strategies.
+# SQL リソースに増分設定を追加する
+
+増分読み込みとは、新規または変更されたデータのみを読み込み、既に読み込まれている古いレコードは読み込まない操作です。
+例えば、銀行は最新の取引のみを読み込み、企業は新規または変更されたユーザー情報でデータベースを更新します。
+この記事では、いくつかの増分読み込み戦略について説明します。
 
 :::important
-Processing data incrementally, or in batches, enhances efficiency, reduces costs, lowers latency, improves scalability,
-and optimizes resource utilization.
+データを段階的に、またはバッチで処理すると、効率が向上し、コストが削減され、待ち時間が短縮され、スケーラビリティが向上し、リソースの使用率が最適化されます。
 :::
 
-### Incremental loading strategies
+### 増分ロード戦略
 
-In this guide, we will discuss various incremental loading methods using `dlt`, specifically:
+このガイドでは、`dlt` を使用したさまざまな増分ロード手法について説明します。具体的には以下のとおりです:
 
 | S.No. | Strategy | Description |
 | --- | --- | --- |
-| 1. | Full load (replace) | It completely overwrites the existing data with the new/updated dataset. |
-| 2. | Append new records based on Incremental ID | Appends only new records to the table based on an incremental ID.  |
-| 3. | Append new records based on date ("created_at") | Appends only new records to the table based on a date field.  |
-| 4. | Merge (Update/Insert) records based on timestamp ("last_modified_at") and ID | Merges records based on a composite ID key and a timestamp field. Updates existing records and inserts new ones as necessary. |
+| 1. | Full load (replace) |既存のデータを新しい/更新されたデータセットで完全に上書きします。|
+| 2. | Append new records based on Incremental ID |増分 ID に基づいて新しいレコードのみをテーブルに追加します。 |
+| 3. | Append new records based on date ("created_at") | 日付フィールドに基づいて、新しいレコードのみをテーブルに追加します。 |
+| 4. | Merge (Update/Insert) records based on timestamp ("last_modified_at") and ID | 複合IDキーとタイムスタンプフィールドに基づいてレコードをマージします。必要に応じて既存のレコードを更新し、新しいレコードを挿入します。 |
 
 ## Code examples
 
@@ -32,22 +32,22 @@ In this guide, we will discuss various incremental loading methods using `dlt`, 
 
 ### 1. Full load (replace)
 
-A full load strategy completely overwrites the existing data with the new dataset. This is useful when you want to refresh the entire table with the latest data.
+フルロード戦略では、既存のデータが新しいデータセットで完全に上書きされます。これは、テーブル全体を最新のデータで更新したい場合に便利です。
 
 :::note
-This strategy technically does not load only new data but instead reloads all data: old and new.
+この戦略は技術的には新しいデータのみをロードするのではなく、古いデータと新しいデータをすべて再ロードします。
 :::
 
-Here’s a walkthrough:
+以下に手順を説明します。
 
-1. The initial table, named "contact," in the SQL source looks like this:
+1. SQL ソース内の「contact」という名前の初期テーブルは次のようになります:
 
     | id | name | created_at |
     | --- | --- | --- |
     | 1 | Alice | 2024-07-01 |
     | 2 | Bob | 2024-07-02 |
 
-2. The Python code illustrates the process of loading data from an SQL source into BigQuery using the `dlt` pipeline. Please note the `write_disposition = "replace"` used below.
+2. このPythonコードは、`dlt`パイプラインを使用してSQLソースからBigQueryにデータをロードするプロセスを示しています。以下で使用されている`write_disposition = "replace"`にご注意ください。
 
     ```py
     def load_full_table_resource() -> None:
@@ -70,14 +70,15 @@ Here’s a walkthrough:
     load_full_table_resource()
     ```
 
-3. After running the `dlt` pipeline, the data loaded into the BigQuery "contact" table looks like:
+3. `dlt` パイプラインを実行すると、BigQuery の「contact」テーブルにロードされたデータは次のようになります:
 
     | Row | id | name | created_at | _dlt_load_id | _dlt_id |
     | --- | --- | --- | --- | --- | --- |
     | 1 | 1 | Alice | 2024-07-01 | 1721878309.021546 | tgyMM73iMz0cQg |
     | 2 | 2 | Bob | 2024-07-02 | 1721878309.021546 | 88P0bD796pXo/Q |
 
-4. Next, the "contact" table in the SQL source is updated—two new rows are added, and the row with `id = 2` is removed. The updated data source ("contact" table) now presents itself as follows:
+4. 次に、SQLソースの「contact」テーブルが更新されます。2つの新しい行が追加され、 `id = 2` の行が削除されます。
+更新されたデータソース（「contact」テーブル）は次のようになります:
 
     | id | name | created_at |
     | --- | --- | --- |
@@ -85,7 +86,7 @@ Here’s a walkthrough:
     | 3 | Charlie | 2024-07-03 |
     | 4 | Dave | 2024-07-04 |
 
-5. The "contact" table created in BigQuery after running the pipeline again:
+5. パイプラインを再度実行した後、BigQuery に作成された「contact」テーブル:
 
     | Row | id | name | created_at | _dlt_load_id | _dlt_id |
     | --- | --- | --- | --- | --- | --- |
@@ -93,24 +94,26 @@ Here’s a walkthrough:
     | 2 | 3 | Charlie | 2024-07-03 | 1721878309.021546 | eT0zheRx9ONWuQ |
     | 3 | 4 | Dave | 2024-07-04 | 1721878309.021546 | gtflF8BdL2NO/Q |
 
-**What happened?**
+**何が起こったか？**
 
-After running the pipeline, the original data in the "contact" table (Alice and Bob) is completely replaced with the new updated table with data “Charlie” and “Dave” added and “Bob” removed. This strategy is useful for scenarios where the entire dataset needs to be refreshed or replaced with the latest information.
+パイプラインを実行すると、「contact」テーブルの元のデータ（AliceとBob）が、新しい更新されたテーブルに完全に置き換えられます。このテーブルには「Charlie」と「Dave」のデータが追加され、「Bob」のデータは削除されています。この戦略は、データセット全体を最新の情報に更新または置き換える必要があるシナリオで役立ちます。
 
-### 2. Append new records based on incremental ID
+### 2. 増分IDに基づいて新しいレコードを追加する
 
-This strategy appends only new records to the table based on an incremental ID. It is useful for scenarios where each new record has a unique, incrementing identifier.
+この戦略では、増分IDに基づいて、新しいレコードのみをテーブルに追加します。
+これは、新しいレコードごとに一意の増分IDが割り当てられているシナリオで役立ちます。
 
-Here’s a walkthrough:
+手順は以下のとおりです:
 
-1. The initial table, named "contact," in the SQL source looks like this:
+1. SQL ソース内の「contact」という名前の初期テーブルは次のようになります:
 
     | id | name | created_at |
     | --- | --- | --- |
     | 1 | Alice | 2024-07-01 |
     | 2 | Bob | 2024-07-02 |
 
-2. The Python code demonstrates loading data from an SQL source into BigQuery using an incremental variable, `id`. This variable tracks new or updated records in the `dlt` pipeline. Please note the `write_disposition = "append"` used below.
+2. この Python コードは、増分変数 `id` を使用して SQL ソースから BigQuery にデータをロードする方法を示しています。
+この変数は、`dlt` パイプライン内の新規または更新されたレコードを追跡します。以下で使用されている `write_disposition = "append"` に注意してください。
 
     ```py
     def load_incremental_id_table_resource() -> None:
@@ -132,14 +135,14 @@ Here’s a walkthrough:
         print(info)
     ```
 
-3. After running the `dlt` pipeline, the data loaded into the BigQuery "contact" table looks like:
+3. `dlt` パイプラインを実行すると、BigQuery の「contact」テーブルにロードされたデータは次のようになります:
 
     | Row | id | name | created_at | _dlt_load_id | _dlt_id |
     | --- | --- | --- | --- | --- | --- |
     | 1 | 1 | Alice | 2024-07-01 | 1721878309.021546 | YQfmAu8xysqWmA |
     | 2 | 2 | Bob | 2024-07-02 | 1721878309.021546 | Vcb5KKah/RpmQw |
 
-4. Next, the "contact" table in the SQL source is updated—two new rows are added, and the row with `id = 2` is removed. The updated data source now presents itself as follows:
+4. 次に、SQLソースの「contact」テーブルが更新されます。2つの新しい行が追加され、`id = 2` の行が削除されます。更新されたデータソースは次のようになります。
 
     | id | name | created_at |
     | --- | --- | --- |
@@ -147,7 +150,7 @@ Here’s a walkthrough:
     | 3 | Charlie | 2024-07-03 |
     | 4 | Dave | 2024-07-04 |
 
-5. The "contact" table created in BigQuery after running the pipeline again:
+5. パイプラインを再度実行した後、BigQuery に作成された「contact」テーブル:
 
     | Row | id | name | created_at | _dlt_load_id | _dlt_id |
     | --- | --- | --- | --- | --- | --- |
@@ -156,24 +159,24 @@ Here’s a walkthrough:
     | 3 | 3 | Charlie | 2024-07-03 | 1721878309.021546 | y+T4Q2JDnR33jg |
     | 4 | 4 | Dave | 2024-07-04 | 1721878309.021546 | MAXrGhNNADXAiQ |
 
-**What happened?**
+**何が起こったか？**
 
-In this scenario, the pipeline appends new records (Charlie and Dave) to the existing data (Alice and Bob) without affecting the pre-existing entries. This strategy is ideal when only new data needs to be added, preserving the historical data.
+このシナリオでは、パイプラインは既存のエントリに影響を与えることなく、既存のデータ（Alice と Bob）に新しいレコード（Charlie と Dave）を追加します。この戦略は、履歴データを保持しながら新しいデータのみを追加する必要がある場合に最適です。
 
-### Append new records based on timestamp ("created_at")
+### タイムスタンプ（"created_at"）に基づいて新しいレコードを追加する
 
-This strategy appends only new records to the table based on a date/timestamp field. It is useful for scenarios where records are created with a timestamp, and you want to load only those records created after a certain date.
+この戦略では、日付/タイムスタンプフィールドに基づいて、新しいレコードのみをテーブルに追加します。これは、レコードがタイムスタンプ付きで作成され、特定の日付以降に作成されたレコードのみをロードしたい場合に便利です。
 
-Here’s a walkthrough:
+手順は以下のとおりです:
 
-1. The initial dataset, named "contact," in the SQL source looks like this:
+1. SQLソース内の「contact」という名前の初期データセットは次のようになります:
 
     | id | name | created_at |
     | --- | --- | --- |
     | 1 | Alice | 2024-07-01 00:00:00 |
     | 2 | Bob | 2024-07-02 00:00:00 |
 
-2. The Python code illustrates the process of loading data from an SQL source into BigQuery using the `dlt` pipeline. Please note the `write_disposition = "append"`, with `created_at` being used as the incremental parameter.
+2. Pythonコードは、`dlt`パイプラインを使用してSQLソースからBigQueryにデータをロードするプロセスを示しています。`write_disposition = "append"`と、増分パラメータとして`created_at`が使用されていることに注意してください。
 
     ```py
     def load_incremental_timestamp_table_resource() -> None:
@@ -198,14 +201,14 @@ Here’s a walkthrough:
     load_incremental_timestamp_table_resource()
     ```
 
-3. After running the `dlt` pipeline, the data loaded into the BigQuery "contact" table looks like:
+3. `dlt` パイプラインを実行すると、BigQuery の「contact」テーブルにロードされたデータは次のようになります:
 
     | Row | id | name | created_at | _dlt_load_id | _dlt_id |
     | --- | --- | --- | --- | --- | --- |
     | 1 | 1 | Alice | 2024-07-01 00:00:00 UTC | 1721878309.021546 | 5H8ca6C89umxHA |
     | 2 | 2 | Bob | 2024-07-02 00:00:00 UTC | 1721878309.021546 | M61j4aOSqs4k2w |
 
-4. Next, the "contact" table in the SQL source is updated—two new rows are added, and the row with `id = 2` is removed. The updated data source now presents itself as follows:
+4. 次に、SQLソースの「contact」テーブルが更新されます。2つの新しい行が追加され、`id = 2` の行が削除されます。更新されたデータソースは次のようになります:
 
     | id | name | created_at |
     | --- | --- | --- |
@@ -213,7 +216,7 @@ Here’s a walkthrough:
     | 3 | Charlie | 2024-07-03 00:00:00 |
     | 4 | Dave | 2024-07-04 00:00:00 |
 
-5. The "contact" table created in BigQuery after running the pipeline again:
+5. パイプラインを再度実行した後、BigQuery に作成された「contact」テーブル:
 
     | Row | id | name | created_at | _dlt_load_id | _dlt_id |
     | --- | --- | --- | --- | --- | --- |
@@ -222,24 +225,24 @@ Here’s a walkthrough:
     | 3 | 3 | Charlie | 2024-07-03 00:00:00 UTC | 1721878309.021546 | L/MnhG19xeMrvQ |
     | 4 | 4 | Dave | 2024-07-04 00:00:00 UTC | 1721878309.021546 | W6ZdfvTzfRXlsA |
 
-**What happened?**
+**何が起こったか？**
 
-The pipeline adds new records (Charlie and Dave) that have a `created_at` timestamp after the specified initial value while retaining the existing data (Alice and Bob). This approach is useful for loading data incrementally based on when it was created.
+パイプラインは、既存のデータ（AliceとBob）を保持しながら、指定された初期値以降の「created_at」タイムスタンプを持つ新しいレコード（CharlieとDave）を追加します。このアプローチは、データの作成日時に基づいて段階的にロードする場合に便利です。
 
-### 4. Merge (update/insert) records based on timestamp ("last_modified_at") and ID
+### 4. タイムスタンプ（"last_modified_at"）とIDに基づいてレコードをマージ（更新/挿入）する
 
-This strategy merges records based on a composite key of ID and a timestamp field. It updates existing records and inserts new ones as necessary.
+この戦略では、IDとタイムスタンプフィールドの複合キーに基づいてレコードをマージします。既存のレコードを更新し、必要に応じて新しいレコードを挿入します。
 
-Here’s a walkthrough:
+手順は以下のとおりです:
 
-1. The initial dataset, named ‘contact’, in the SQL source looks like this:
+1. SQLソース内の「contact」という名前の初期データセットは次のようになります:
 
     | id | name | last_modified_at |
     | --- | --- | --- |
     | 1 | Alice | 2024-07-01 00:00:00 |
     | 2 | Bob | 2024-07-02 00:00:00 |
 
-2. The Python code illustrates the process of loading data from an SQL source into BigQuery using the `dlt` pipeline. Please note the `write_disposition = "merge"`, with `last_modified_at` being used as the incremental parameter.
+2. このPythonコードは、`dlt`パイプラインを使用してSQLソースからBigQueryにデータをロードするプロセスを示しています。`write_disposition = "merge"`と、`last_modified_at`が増分パラメータとして使用されている点にご注意ください。
 
     ```py
     def load_merge_table_resource() -> None:
@@ -265,21 +268,21 @@ Here’s a walkthrough:
     load_merge_table_resource()
     ```
 
-3. After running the `dlt` pipeline, the data loaded into BigQuery ‘contact’ table looks like:
+3. `dlt` パイプラインを実行すると、BigQuery の「contact」テーブルにロードされたデータは次のようになります。
 
     | Row | id | name | last_modified_at | _dlt_load_id | _dlt_id |
     | --- | --- | --- | --- | --- | --- |
     | 1 | 1 | Alice | 2024-07-01 00:00:00 UTC | 1721878309.021546 | ObbVlxcly3VknQ |
     | 2 | 2 | Bob | 2024-07-02 00:00:00 UTC | 1721878309.021546 | Vrlkus/haaKlEg |
 
-4. Next, the "contact" table in the SQL source is updated— “Alice” is updated to “Alice Updated”, and a new row “Hank” is added:
+4. 次に、SQL ソースの "contact" テーブルが更新されます。「Alice」が「Alice Updated」に更新され、新しい行「Hank」が追加されます。
 
     | id | name | last_modified_at |
     | --- | --- | --- |
     | 1 | Alice Updated | 2024-07-08 00:00:00 |
     | 3 | Hank | 2024-07-08 00:00:00 |
 
-5. The "contact" table created in BigQuery after running the pipeline again:
+5. パイプラインを再度実行した後、BigQuery に作成された「contact」テーブル:
 
     | Row | id | name | last_modified_at | _dlt_load_id | _dlt_id |
     | --- | --- | --- | --- | --- | --- |
@@ -287,9 +290,9 @@ Here’s a walkthrough:
     | 2 | 1 | Alice Updated | 2024-07-08 00:00:00 UTC | 1721878309.021546 | OeMLIPw7rwFG7g |
     | 3 | 3 | Hank | 2024-07-08 00:00:00 UTC | 1721878309.021546 | Ttp6AI2JxqffpA |
 
-**What happened?**
+**何が起こったか？**
 
-The pipeline updates the record for Alice with the new data, including the updated `last_modified_at` timestamp, and adds a new record for Hank. This method is beneficial when you need to ensure that records are both updated and inserted based on a specific timestamp and ID.
+パイプラインは、更新された `last_modified_at` タイムスタンプを含む新しいデータで Alice のレコードを更新し、Hank の新しいレコードを追加します。この方法は、特定のタイムスタンプと ID に基づいてレコードの更新と挿入の両方を確実に行う必要がある場合に役立ちます。
 
-The examples provided explain how to use `dlt` to achieve different incremental loading scenarios, highlighting the changes before and after running each pipeline.
+提供されている例では、`dlt` を使用してさまざまな増分ロードシナリオを実現する方法を説明し、各パイプラインの実行前後の変更点を強調表示しています。
 

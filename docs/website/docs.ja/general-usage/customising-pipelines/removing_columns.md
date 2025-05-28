@@ -4,13 +4,13 @@ description: Removing columns by passing a list of column names
 keywords: [deleting, removing, columns, drop]
 ---
 
-# Removing columns
+# 列の削除
 
-Removing columns before loading data into a database is a reliable method to eliminate sensitive or unnecessary fields. For example, in the given scenario, a source is created with a "country_id" column, which is then excluded from the database before loading.
+データベースにデータをロードする前に列を削除することは、機密性の高いフィールドや不要なフィールドを除外するための確実な方法です。例えば、このシナリオでは、「country_id」列を含むソースを作成し、ロード前にデータベースからこの列を除外します。
 
-Let's create a sample pipeline demonstrating the process of removing a column.
+列を削除するプロセスを示すサンプルパイプラインを作成しましょう。
 
-1. Create a source function that creates dummy data as follows:
+1. 次のようにダミー データを作成するソース関数を作成します:
 
    ```py
    import dlt
@@ -25,9 +25,10 @@ Let's create a sample pipeline demonstrating the process of removing a column.
 
        return dummy_data()
    ```
-   This function creates three columns: `id`, `name`, and `country_code`.
 
-2. Next, create a function to filter out columns from the data before loading it into a database as follows:
+   この関数は、`id`、`name`、`country_code` の 3 つの列を作成します。
+
+2. 次に、次のように、データをデータベースにロードする前に、データから列をフィルター処理する関数を作成します:
 
    ```py
    from typing import Dict, List, Optional
@@ -45,11 +46,11 @@ Let's create a sample pipeline demonstrating the process of removing a column.
        return doc
    ```
 
-   `doc`: The document (dict) from which columns will be removed.
+   `doc`: 列を削除するドキュメント（辞書）。
 
-   `remove_columns`: List of column names to be removed, defaults to None.
+    `remove_columns`: 削除する列名のリスト。デフォルトは None です。
 
-3. Next, declare the columns to be removed from the table, and then modify the source as follows:
+3. 次に、テーブルから削除する列を宣言し、次のようにソースを変更します:
 
    ```py
    # Example columns to remove:
@@ -63,7 +64,8 @@ Let's create a sample pipeline demonstrating the process of removing a column.
        lambda doc: remove_columns(doc, remove_columns_list)
    )
    ```
-4. You can optionally inspect the result:
+
+4. オプションで結果を検査することもできます:
 
    ```py
    for row in source_instance:
@@ -73,7 +75,7 @@ Let's create a sample pipeline demonstrating the process of removing a column.
    #{'id': 2, 'name': 'Jane Washington 2'}
    ```
 
-5. At last, create a pipeline:
+5. 最後に、パイプラインを作成します:
 
    ```py
    # Integrating with a dlt pipeline

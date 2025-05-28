@@ -5,21 +5,21 @@ keywords: [datasets, data, access, transformations]
 ---
 import DocCardList from '@theme/DocCardList';
 
-# Transforming data
+# データの変換
 
-If you'd like to transform your data after a pipeline load, you have 3 options available to you:
+パイプラインロード後にデータを変換する場合、以下の3つのオプションがあります。
 
-* [Using dbt](./dbt/dbt.md) - dlt provides a convenient dbt wrapper to make integration easier.
-* [Using the `dlt` SQL client](./sql.md) - dlt exposes an SQL client to transform data on your destination directly using SQL.
-* [Using Python with DataFrames or Arrow tables](./python.md) - you can also transform your data using Arrow tables and DataFrames in Python.
+* [dbt の使用](./dbt/dbt.md) - dlt は、統合を容易にする便利な dbt ラッパーを提供します。
+* [`dlt` SQL クライアントの使用](./sql.md) - dlt は、SQL を使用して出力先のデータを直接変換するための SQL クライアントを公開します。
+* [Python で DataFrame または Arrow テーブルを使用する](./python.md) - Python で Arrow テーブルと DataFrame を使用してデータを変換することもできます。
 
-If you need to preprocess some of your data before it is loaded, you can learn about strategies to:
+データをロードする前に前処理が必要な場合は、以下の戦略についてご確認ください。
 
-* [Rename columns.](../../general-usage/customising-pipelines/renaming_columns)
-* [Pseudonymize columns.](../../general-usage/customising-pipelines/pseudonymizing_columns)
-* [Remove columns.](../../general-usage/customising-pipelines/removing_columns)
+* [列名を変更する](../../general-usage/customising-pipelines/renaming_columns)
+* [列を仮名化する](../../general-usage/customising-pipelines/pseudonymizing_columns)
+* [列を削除する](../../general-usage/customising-pipelines/removing_columns)
 
-This is particularly useful if you are trying to remove data related to PII or other sensitive data, you want to remove columns that are not needed for your use case or you are using a destination that does not support certain data types in your source data.
+これは、PII（個人情報）やその他の機密データに関連するデータを削除する場合、ユースケースに不要な列を削除する場合、またはソースデータの特定のデータ型をサポートしていない出力先を使用する場合に特に役立ちます。
 
 
 # Learn more

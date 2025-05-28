@@ -359,54 +359,55 @@ print(info)
 
 上記のデータセットとローカル PostgreSQL インスタンスを使用すると、`ConnectorX` バックエンドは `PyArrow` バックエンドよりも 2 倍高速になります。
 
-## Arguments for `sql_database` source
-The following arguments can be used with the `sql_database` source:
-    
-    `credentials` (Union[ConnectionStringCredentials, Engine, str]): Database credentials or an `sqlalchemy.Engine` instance.
-    
-    `schema` (Optional[str]): Name of the database schema to load (if different from default).
-    
-    `metadata` (Optional[MetaData]): Optional `sqlalchemy.MetaData` instance. `schema` argument is ignored when this is used.
-    
-    `table_names` (Optional[List[str]]): A list of table names to load. By default, all tables in the schema are loaded.
-    
-    `chunk_size` (int): Number of rows yielded in one batch. SQL Alchemy will create additional internal rows buffer twice the chunk size.
-    
-    `backend` (TableBackend): Type of backend to generate table data. One of: "sqlalchemy", "pyarrow", "pandas" and "connectorx".
+## `sql_database` ソースの引数
 
-        - "sqlalchemy" yields batches as lists of Python dictionaries, "pyarrow" and "connectorx" yield batches as arrow tables, "pandas" yields panda frames.
+`sql_database` ソースでは次の引数を使用できます。
+    
+    `credentials` (Union[ConnectionStringCredentials, Engine, str]): データベース資格情報または `sqlalchemy.Engine` インスタンス。
+    
+    `schema` (Optional[str]): ロードするデータベーススキーマ名（デフォルトと異なる場合）。
 
-        - "sqlalchemy" is the default and does not require additional dependencies, 
+    `metadata` (Optional[MetaData]): オプションの `sqlalchemy.MetaData` インスタンス。これを使用する場合、`schema` 引数は無視されます。
 
-        - "pyarrow" creates stable destination schemas with correct data types,
+    `table_names` (Optional[List[str]]): ロードするテーブル名のリスト。デフォルトでは、スキーマ内のすべてのテーブルがロードされます。
 
-        - "connectorx" is typically the fastest but ignores the "chunk_size" so you must deal with large tables yourself.
+    `chunk_size` (int): 1回のバッチで生成される行数。SQL Alchemy はチャンクサイズの2倍のサイズの追加内部行バッファを作成します。
     
-    `detect_precision_hints` (bool): Deprecated. Use `reflection_level`. Set column precision and scale hints for supported data types in the target schema based on the columns in the source tables. This is disabled by default.
-    
-    `reflection_level`: (ReflectionLevel): Specifies how much information should be reflected from the source database schema.
+    `backend` (TableBackend): テーブルデータを生成するバックエンドの種類。"sqlalchemy"、"pyarrow"、"pandas"、"connectorx" のいずれかです。
 
-        - "minimal": Only table names, nullability and primary keys are reflected. Data types are inferred from the data. This is the default option.
+        - "sqlalchemy" はバッチを Python 辞書のリストとして生成します。"pyarrow" と "connectorx" はバッチをアローテーブルとして生成します。"pandas" は panda frame として生成します。
 
-        - "full": Data types will be reflected on top of "minimal". `dlt` will coerce the data into reflected types if necessary.
+        - "sqlalchemy" はデフォルトであり、追加の依存関係は必要ありません。
 
-        - "full_with_precision": Sets precision and scale on supported data types (ie. decimal, text, binary). Creates big and regular integer types.
+        - "pyarrow" は正しいデータ型で安定した出力先スキーマを作成します。
+
+        - "connectorx" は通常最も高速ですが、"chunk_size" を無視するため、大きなテーブルを扱う場合は自分で処理する必要があります。
     
-    `defer_table_reflect` (bool): Will connect and reflect table schema only when yielding data. Requires table_names to be explicitly passed.
-        Enable this option when running on Airflow. Available on dlt 0.4.4 and later.
+    `detect_precision_hints` (bool): 非推奨です。`reflection_level` を使用してください。ソーステーブルの列に基づいて、ターゲットスキーマでサポートされているデータ型の列精度とスケールヒントを設定します。これはデフォルトで無効になっています。
     
-    `table_adapter_callback`: (Callable): Receives each reflected table. May be used to modify the list of columns that will be selected.
+    `reflection_level`: (ReflectionLevel): ソースデータベーススキーマからどの程度の情報を反映するかを指定します。
+
+        - "minimal": テーブル名、NULL値許容、主キーのみが反映されます。データ型はデータから推測されます。これがデフォルトのオプションです。
+
+        - "full": データ型は "minimal" に加算されて反映されます。`dlt` は必要に応じて、データを反映された型に変換します。
+
+        - "full_with_precision": サポートされているデータ型（例：decimal、text、binary）の精度とスケールを設定します。big integer型とregular integer型を作成します。
     
-    `backend_kwargs` (**kwargs): kwargs passed to table backend ie. "conn" is used to pass specialized connection string to connectorx.
-    
-    `include_views` (bool): Reflect views as well as tables. Note view names included in `table_names` are always included regardless of this setting. This is set to false by default.
-    
-    `type_adapter_callback`(Optional[Callable]): Callable to override type inference when reflecting columns.
-        Argument is a single sqlalchemy data type (`TypeEngine` instance) and it should return another sqlalchemy data type, or `None` (type will be inferred from data)
-    
-    `query_adapter_callback`(Optional[Callable[Select, Table], Select]): Callable to override the SELECT query used to fetch data from the table. The callback receives the sqlalchemy `Select` and corresponding `Table`, 'Incremental` and `Engine` objects and should return the modified `Select` or `Text`.
-    
-    `resolve_foreign_keys` (bool): Translate foreign keys in the same schema to `references` table hints.
-        May incur additional database calls as all referenced tables are reflected.
-    
-    `engine_adapter_callback` (Callable[[Engine], Engine]): Callback to configure, modify and Engine instance that will be used to open a connection ie. to set transaction isolation level.
+    `defer_table_reflect` (bool): データ出力時にのみテーブルスキーマに接続し、反映します。table_names を明示的に渡す必要があります。
+    Airflow で実行する場合は、このオプションを有効にしてください。dlt 0.4.4 以降で利用可能です。
+
+    `table_adapter_callback`: (呼び出し可能): 反映される各テーブルを受け取ります。選択される列のリストを変更するために使用できます。
+
+    `backend_kwargs` (**kwargs): テーブルバックエンドに渡されるキーワード。例えば、"conn" は connectorx に特殊な接続文字列を渡すために使用されます。
+
+    `include_views` (bool): テーブルだけでなくビューも反映します。`table_names` に含まれるビュー名は、この設定に関わらず常に含まれることに注意してください。デフォルトでは false に設定されています。
+
+    `type_adapter_callback`(Optional[Callable]): 列を反映する際の型推論をオーバーライドするために呼び出し可能。
+    引数は単一の sqlalchemy データ型（`TypeEngine` インスタンス）であり、別の sqlalchemy データ型を返すか、`None`（型はデータから推測されます）を返す必要があります。
+
+    `query_adapter_callback`(Optional[Callable[Select, Table], Select]): テーブルからデータを取得するために使用される SELECT クエリをオーバーライドするための呼び出し可能オブジェクトです。コールバックは sqlalchemy の `Select` と、対応する `Table`、'Incremental`、および `Engine` オブジェクトを受け取り、変更された `Select` または `Text` を返す必要があります。
+
+    `resolve_foreign_keys` (bool): 同じスキーマ内の外部キーを `references` テーブルヒントに変換します。
+    参照されているすべてのテーブルが反映されるため、追加のデータベース呼び出しが発生する可能性があります。
+
+    `engine_adapter_callback` (Callable[[Engine], Engine]): 接続を開くために使用される Engine インスタンスを設定、変更するためのコールバックです。トランザクション分離レベルを設定します。

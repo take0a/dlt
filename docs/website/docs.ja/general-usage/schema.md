@@ -208,19 +208,21 @@ data = [
 
 `merge` 書き込み処理には、**ネストされた** テーブルから **ルート** テーブルまで、その間にあるすべての親テーブルをスキップする追加のネストされた参照が必要です。この参照は、`root_key` (デフォルトでは `_dlt_root_id` という名前) [ヒントを含む列](incremental-loading.md#forcing-root-key-propagation)をネストされたテーブルに追加することによって作成されます。
 
-### Generate custom linking for nested tables
-Using `nested_hints` in `@dlt.resource` you can model your own relations between root and nested tables. You do that by specifying `primary_key` or `merge_key` on
-a nested table.
+### ネストされたテーブル用のカスタムリンクを生成する
+
+`@dlt.resource` の `nested_hints` を使用すると、ルートテーブルとネストされたテーブル間の独自のリレーションをモデル化できます。
+これを行うには、ネストされたテーブルに `primary_key` または `merge_key` を指定します。
 <!--@@@DLT_SNIPPET ./snippets/schema-snippets.py::nested_hints_primary_key-->
 
-In the above example we effectively convert `customers__purchases` table into a top level table that is linked to `customers` table `id` column with `customer_id` foreign key.
-1. we declare compound primary key on `purchases` on (customer_id, id) columns
-2. we add a mapping function that will push the customer `id` to `purchases` as `customer_id`
-3. we declare table reference from `purchases` to `customers` (this is optional)
-4. we set `merge` write disposition on `purchases`.
+上記の例では、`customers__purchases` テーブルを、`customers` テーブルの `id` 列に `customer_id` 外部キーでリンクされた最上位テーブルに変換しています。
 
-Here's resulting schema. Note that regular linking for nested tables was not generated. Instead `customer__purchases` table has compound
-primary key, write disposition, load id but still receives data from `purchases` nested list.
+1. `purchases` の (customer_id, id) 列に複合主キーを宣言します。
+2. 顧客 `id` を `purchases` に `customer_id` としてプッシュするマッピング関数を追加します。
+3. `purchases` から `customers` へのテーブル参照を宣言します (これはオプションです)。
+4. `purchases` に `merge` 書き込み処理を設定します。
+
+結果のスキーマは次のとおりです。ネストされたテーブルに対する通常のリンクは生成されていないことに注意してください。
+代わりに、`customer__purchases` テーブルは複合主キー、書き込み処理、ID のロードを持ちますが、`purchases` ネストされたリストからデータを受け取ります。
 
 ```yaml
 tables:

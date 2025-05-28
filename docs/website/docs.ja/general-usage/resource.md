@@ -70,10 +70,11 @@ for row in source_name().resources.get('table_name'):
 
 `schema_contract` 引数を使用して、dlt に [新しいテーブル、データ型、不正なデータ型の処理方法](schema-contracts.md)を指示します。たとえば、これを **freeze** に設定すると、`dlt` は新しいテーブル、列、またはデータ型をスキーマに導入することを許可せず、例外を発生させます。使用可能な契約モードの詳細については、[こちら](schema-contracts.md#setting-up-the-contract)を参照してください。
 
-### Define schema of nested tables
+### ネストされたテーブルのスキーマを定義する
 
-`dlt` creates [nested tables](schema.md#nested-references-root-and-nested-tables) to store [list of objects](destination-tables.md#nested-tables) if present in your data.
-You can define the schema of such tables with `nested_hints` argument to `@dlt.resource`:
+`dlt` は、データ内に存在する場合、[オブジェクトのリスト](destination-tables.md#nested-tables)を格納するための[ネストされたテーブル](schema.md#nested-references-root-and-nested-tables)を作成します。
+このようなテーブルのスキーマは、`@dlt.resource` の `nested_hints` 引数で定義できます:
+
 ```py
 import dlt
 
@@ -96,13 +97,15 @@ def customers():
         },
     ]
 ```
-Here we convert the `price` field in list of `purchases` to decimal type and set the schema contract to lock the list
-of columns in it. We use convenience function `dlt.mark.make_nested_hints` to generate nested hints dictionary. You are
-free to use it directly.
 
-Mind that `purchases` list will be stored as table with name `customers__purchases`. When declaring nested hints you just need
-to specify nested field(s) name(s). In case of deeper nesting ie. let's say each `purchase` has a list of `coupons` applied,
-you can apply hints to coupons and define `customers__purchases__coupons` table schema:
+ここでは、`purchases` リストの `price` フィールドを 10 進数型に変換し、その中の列のリストをロックするためのスキーマコントラクトを設定します。
+ネストされたヒント辞書を生成するために、便利な関数 `dlt.mark.make_nested_hints` を使用します。
+この関数はそのまま使用しても構いません。
+
+`purchases` リストは `customers__purchases` という名前のテーブルとして保存されることに注意してください。
+ネストされたヒントを宣言する際は、ネストされたフィールド名を指定するだけです。
+ネストが深い場合、つまり各 `purchase` に `coupons` リストが適用されている場合、クーポンにヒントを適用し、`customers__purchases__coupons` テーブルスキーマを定義できます:
+
 ```py
 import dlt
 
@@ -117,22 +120,21 @@ import dlt
 def customers():
     ...
 ```
-Here we use `("purchases", "coupons")` to locate list at the depth of 2 and set the data type on `registered_at` column
-to `timestamp`. We do that by directly using nested hints dict.
-Note that we specified `purchases` with an empty list of hints. **You are required to specify all parent hints, even if they 
-are empty. Currently we are not adding missing path elements automatically**.
 
-You can use `nested_hints` primarily to set column hints and schema contract, those work exactly as in case of root tables.
-* `file_format` has no effect (not implemented yet)
-* `write_disposition` works as expected but leads to unintended consequences (ie. you can set nested table to `replace`) while root table is `append`.
-* `references` will create [table references](schema.md#table-references-1) (annotations) as expected.
-* `primary_key` and `merge_key`: **setting those will convert nested table into a regular table, with a separate write disposition, file format etc.**
-[It allows you to create custom table relationships ie. using natural primary and foreign keys present in the data.](schema.md#generate-custom-linking-for-nested-tables)
+ここでは、`("purchases", "coupons")` を使用して、深さ2のリストを見つけ、`registered_at`列のデータ型を`timestamp`に設定しています。これは、ネストされたヒント辞書を直接使用することで実現しています。
+`purchases` に空のヒントリストを指定していることに注意してください。**親ヒントが空であっても、すべて指定する必要があります。現在、不足しているパス要素は自動的に追加されません**。
+
+`nested_hints` は主に列ヒントとスキーマコントラクトの設定に使用でき、これらはルートテーブルの場合と全く同じように機能します。
+* `file_format` は効果がありません（まだ実装されていません）。
+* `write_disposition` は期待通りに動作しますが、意図しない結果（つまり、ルートテーブルが `append` であるにもかかわらず、ネストテーブルを `replace` に設定できるなど）が発生します。
+* `references` は期待通りに [テーブル参照](schema.md#table-references-1) (アノテーション) を作成します。
+* `primary_key` と `merge_key`: **これらを設定すると、ネストテーブルが通常のテーブルに変換され、書き込み処理、ファイル形式などが別々になります。**
+[これにより、データ内に存在する自然な主キーと外部キーを使用して、カスタムテーブル関係を作成できます。](schema.md#generate-custom-linking-for-nested-tables)
 
 :::tip
-[REST API Source](../dlt-ecosystem/verified-sources/rest_api/basic.md) accepts `nested_hints` argument as well.
+[REST API ソース](../dlt-ecosystem/verified-sources/rest_api/basic.md) は `nested_hints` 引数も受け入れます。
 
-You can apply nested hints after the resource was created by using [apply_hints](#set-table-name-and-adjust-schema).
+リソース作成後に [apply_hints](#set-table-name-and-adjust-schema) を使用してネストされたヒントを適用できます。
 :::
 
 ### Pydanticでスキーマを定義する

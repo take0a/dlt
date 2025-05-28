@@ -4,18 +4,16 @@ description: Transforming data loaded by a dlt pipeline with pandas dataframes o
 keywords: [transform, pandas]
 ---
 
-# Transforming data in Python with Arrow tables or DataFrames
+# PythonでArrowテーブルまたはDataFramesを使ってデータを変換する
 
-You can transform your data in Python using Pandas DataFrames or Arrow tables. To get started, please read the [dataset docs](../../general-usage/dataset-access/dataset).
-
-
-## Interactively transforming your data in Python
-
-Using the methods explained in the [dataset docs](../../general-usage/dataset-access/dataset), you can fetch data from your destination into a DataFrame or Arrow table in your local Python process and work with it interactively. This even works for filesystem destinations:
+Pythonでは、Pandas DataFramesまたはArrowテーブルを使ってデータを変換できます。まずは[データセットのドキュメント](../../general-usage/dataset-access/dataset)をご覧ください。
 
 
-The example below reads GitHub reactions data from the `issues` table and
-counts the reaction types.
+## Python でデータをインタラクティブに変換する
+
+[データセットのドキュメント](../../general-usage/dataset-access/dataset)で説明されている方法を使用することで、ローカル Python プロセスで出力先から DataFrame または Arrow テーブルにデータを取得し、インタラクティブに操作できます。これはファイルシステムの出力先でも機能します。
+
+以下の例では、GitHub の反応データを `issues` テーブルから読み取り、反応の種類をカウントします。
 
 ```py
 pipeline = dlt.pipeline(
@@ -37,14 +35,14 @@ reactions = pipeline.dataset().issues.select("reactions__+1", "reactions__-1", "
 # ... do transformations on the arrow table
 ```
 
-## Persisting your transformed data
+## 変換されたデータの永続化
 
-Since dlt supports DataFrames and Arrow tables from resources directly, you can use the same pipeline to load the transformed data back into the destination.
+dlt はリソースから DataFrame と Arrow テーブルを直接サポートしているため、同じパイプラインを使用して変換されたデータを出力先にロードできます。
 
 
-### A simple example
+### 簡単な例
 
-A simple example that creates a new table from an existing user table but only with columns that do not contain private information. Note that we use the `iter_arrow()` method on the relation to iterate over the arrow table instead of fetching it all at once.
+既存のユーザーテーブルから、個人情報を含まない列のみを含む新しいテーブルを作成する簡単な例です。リレーションの `iter_arrow()` メソッドを使用して、矢印テーブルを一度にすべて取得するのではなく、反復処理していることに注意してください。
 
 ```py
 pipeline = dlt.pipeline(
@@ -61,9 +59,9 @@ users = pipeline.dataset().users.select("age", "amount_spent", "country")
 pipeline.run(users.iter_arrow(chunk_size=1000), table_name="users_clean")
 ```
 
-### A more complex example
+### より複雑な例
 
-The example above could easily be done in SQL. Let's assume you'd like to actually do in Python some Arrow transformations. For this will create a resources from which we can yield the modified Arrow tables. The same is possibly with DataFrames.
+上記の例はSQLで簡単に実行できます。PythonでArrow変換を実際に実行したいとしましょう。そのためには、変更されたArrowテーブルを生成するためのリソースを作成します。DataFramesでも同様です。
 
 ```py
 import pyarrow.compute as pc
@@ -99,10 +97,10 @@ def users_clean():
 pipeline.run(users_clean())
 ```
 
-## Other transforming tools
+## その他の変換ツール
 
-If you want to transform your data before loading, you can use Python. If you want to transform the
-data after loading, you can use Pandas or one of the following:
+ロード前にデータを変換したい場合は、Python を使用できます。
+ロード後にデータを変換したい場合は、Pandas または次のいずれかを使用できます。
 
 1. [dbt.](dbt/dbt.md) (recommended)
 2. [`dlt` SQL client.](sql.md)

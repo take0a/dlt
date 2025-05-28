@@ -4,17 +4,14 @@ description: How to run a pipeline
 keywords: [how to, run a pipeline]
 ---
 
-# Run a pipeline
+# パイプラインを実行する
 
-Follow the steps below to run your pipeline script, see your loaded data and tables, inspect
-pipeline state, trace and handle the most common problems.
+以下の手順に従って、パイプラインスクリプトを実行し、読み込まれたデータとテーブルを確認し、パイプラインの状態を検査し、最も一般的な問題をトレースして対処します。
 
-## 1. Write and execute pipeline script
+## 1. パイプラインスクリプトの作成と実行
 
-Once you have [created a new pipeline](create-a-pipeline) or
-[added and verified a source](add-a-verified-source), you will want to use it to load data. You need to write
-(or [customize](add-a-verified-source#3-customize-or-write-a-pipeline-script)) a pipeline script,
-like the one below that loads data from the [chess.com](https://www.chess.com) API:
+[新しいパイプラインを作成](create-a-pipeline) または [ソースを追加して検証](add-a-verified-source) したら、それを使用してデータをロードします。
+[chess.com](https://www.chess.com) API からデータをロードする以下の例のようなパイプラインスクリプトを作成（または[カスタマイズ](add-a-verified-source#3-customize-or-write-a-pipeline-script)）する必要があります。
 
 ```py
 import dlt
@@ -26,18 +23,14 @@ if __name__ == "__main__":
     load_info = pipeline.run(data)
 ```
 
-The `run` method will [extract](../reference/explainers/how-dlt-works.md#extract) data from the
-chess API, [normalize](../reference/explainers/how-dlt-works.md#normalize) it into tables, and then
-[load](../reference/explainers/how-dlt-works.md#load) it into `duckdb` in the form of one or many load
-packages. The `run` method returns a `load_info` object that, when printed, displays information
-with pipeline and dataset names, ids of the load packages, and optionally, information on failed
-jobs. Add the following line to your script:
+`run` メソッドは、チェス API からデータを[抽出](../reference/explainers/how-dlt-works.md#extract)し、テーブルに[正規化](../reference/explainers/how-dlt-works.md#normalize)した後、1つまたは複数のロードパッケージの形式で `duckdb` に[ロード](../reference/explainers/how-dlt-works.md#load)します。
+`run` メソッドは `load_info` オブジェクトを返します。このオブジェクトを出力すると、パイプライン名とデータセット名、ロードパッケージの ID、そしてオプションで失敗したジョブの情報が表示されます。スクリプトに次の行を追加してください。
 
 ```py
 print(load_info)
 ```
 
-To get this printed:
+これがプリントされて:
 
 ```text
 Pipeline chess_pipeline completed in 1.80 seconds
@@ -46,50 +39,46 @@ The duckdb destination used duckdb:////home/user-name/src/dlt_tests/dlt-cmd-test
 Load package 1679931001.985323 is COMPLETED and contains no failed jobs
 ```
 
-## 2. See the progress during loading
+## 2. 読み込み中の進行状況を確認する
 
-Suppose you want to load a whole year of chess games and that it takes some time. You can enable
-progress bars or console logging to observe what the pipeline is doing. We support most of the Python
-progress bar libraries, Python loggers, or just a text console. To demonstrate, let's modify the
-script to get a year of chess games data:
+チェスのゲームデータを1年間分読み込みたいが、時間がかかるとします。パイプラインの動作を確認するには、プログレスバーやコンソールログを有効にできます。
+Pythonのプログレスバーライブラリ、Pythonロガー、またはテキストコンソールのほとんどをサポートしています。
+例として、スクリプトを変更して1年間分のチェスのゲームデータを取得してみましょう。
 
 ```py
 data = chess_source(['magnuscarlsen', 'rpragchess'], start_month="2021/11", end_month="2022/12")
 ```
 
-Install [enlighten](https://github.com/Rockhopper-Technologies/enlighten). Enlighten displays
-progress bars that can be mixed with log messages:
+[enlighten](https://github.com/Rockhopper-Technologies/enlighten)をインストールします。Enlightenは、ログメッセージと組み合わせることができるプログレスバーを表示します:
 
 ```sh
 pip install enlighten
 ```
 
-Run your script setting the `PROGRESS` environment variable to the library name:
+`PROGRESS` 環境変数をライブラリ名に設定してスクリプトを実行します:
 
 ```sh
 PROGRESS=enlighten python chess_pipeline.py
 ```
 
-Other libraries that you can use are [tqdm](https://github.com/tqdm/tqdm),
-[alive_progress](https://github.com/rsalmei/alive-progress). Set the name to `log` to dump progress
-to the console periodically:
+他に使用できるライブラリとしては、[tqdm](https://github.com/tqdm/tqdm)、[alive_progress](https://github.com/rsalmei/alive-progress) などがあります。
+定期的にコンソールに進行状況を出力するには、名前を `log` に設定します:
 
 ```sh
 PROGRESS=log python chess_pipeline.py
 ```
 
-[You can configure the progress bars however you want in code](../general-usage/pipeline.md#display-the-loading-progress).
+[コード内でプログレス バーを自由に構成できます](../general-usage/pipeline.md#display-the-loading-progress)。
 
-## 3. See your data and tables
+## 3. データとテーブルを確認する
 
-You can quickly inspect the generated tables, the data, see how many rows were loaded to which
-table, do SQL queries, etc., by executing the following command from the same folder as your script:
+スクリプトと同じフォルダから次のコマンドを実行すると、生成されたテーブルとデータを簡単に確認したり、どのテーブルに何行がロードされたかを確認したり、SQLクエリを実行したりできます。
 
 ```sh
 dlt pipeline chess_pipeline show
 ```
 
-This will launch a Streamlit app, which you can open in your browser:
+これにより、Streamlit アプリが起動し、ブラウザで開くことができます:
 
 ```text
 Found pipeline chess_pipeline in /home/user-name/.dlt/pipelines
@@ -103,71 +92,72 @@ Collecting usage statistics. To deactivate, set browser.gatherUsageStats to Fals
   External URL: http://46.142.217.118:8501
 ```
 
-## 4. Inspect a load process
+## 4. ロードプロセスの検査
 
-`dlt` loads data in the form of **load packages**. Each package contains several jobs with data for
-particular tables. The packages are identified by **load_id**, which you can see in the printout
-above or obtain by running the following command:
+`dlt` は、**ロードパッケージ** の形式でデータをロードします。各パッケージには、特定のテーブルのデータを含む複数のジョブが含まれています。
+パッケージは **load_id** で識別されます。このIDは上記の出力で確認できます。また、次のコマンドを実行して取得することもできます:
 
 ```sh
 dlt pipeline chess_pipeline info
 ```
 
-You can inspect the package, get a list of jobs, and in the case of failed ones, get the associated error
-messages.
-- See the most recent load package info:
+パッケージを検査し、ジョブのリストを取得し、失敗したジョブの場合は関連するエラー メッセージを取得できます。
+
+- 最新のロード パッケージ情報を参照してください:
   ```sh
   dlt pipeline chess_pipeline load-package
   ```
-- See package info with a given load id:
+- 指定されたロード ID のパッケージ情報を表示します。
   ```sh
   dlt pipeline chess_pipeline load-package 1679931001.985323
   ```
-- Also, see the schema changes introduced in the package:
+- また、パッケージで導入されたスキーマの変更も参照してください。
   ```sh
   dlt pipeline -v chess_pipeline load-package
   ```
 
-`dlt` stores the trace of the most recent data load. The trace contains information on the pipeline
-processing steps: `extract`, `normalize`, and `load`. It also shows the last `load_info`:
+`dlt` は最新のデータロードのトレースを保存します。
+このトレースには、パイプライン処理ステップ（`extract`、`normalize`、`load`）に関する情報が含まれます。
+また、最新の `load_info` も表示されます。
 
 ```sh
 dlt pipeline chess_pipeline trace
 ```
 
-You can access all this information in your pipeline script, save `load_info` and trace to the
-destination, etc. Please refer to
-[Running in production](../running-in-production/running.md#inspect-and-save-the-load-info-and-trace)
-for more details.
+パイプラインスクリプトでこれらの情報すべてにアクセスし、`load_info` を保存して宛先までトレースするなどできます。
+詳細については、[本番環境での実行](../running-in-production/running.md#inspect-and-save-the-load-info-and-trace)を参照してください。
 
-## Run dlt in Notebooks
+## ノートブックで dlt を実行する
 
 ### Colab
-You'll need to install `dlt` like any other dependency:
+他の依存関係と同様に、`dlt` をインストールする必要があります:
+
 ```sh
 !pip install dlt
 ```
 
-You can configure secrets using **Secrets** sidebar. Just create a variable with the name `secrets.toml` and paste
-the content of the **toml** file from your `.dlt` folder into it. We support `config.toml` variable as well.
+**Secrets** サイドバーを使用してシークレットを設定できます。
+`secrets.toml` という名前の変数を作成し、`.dlt` フォルダにある **toml** ファイルの内容をそこに貼り付けるだけです。
+`config.toml` 変数もサポートしています。
 
 :::note
-`dlt` will not reload the secrets automatically. Please restart your interpreter in Colab options when you add/change
-content of the variables above.
+`dlt` はシークレットを自動的にリロードしません。
+上記の変数の内容を追加/変更した場合は、Colab オプションでインタープリターを再起動してください。
 :::
 
 
-## Troubleshooting
+## トラブルシューティング
 
-What happens if something goes wrong? In most cases, the `dlt` `run` command raises exceptions. We put a
-lot of effort into making the exception messages easy to understand. Reading them is the first step
-to solving your problem. Let us know if you come across one that is not clear to you
-[here](https://github.com/dlt-hub/dlt/issues/new).
+何か問題が発生した場合はどうなりますか？
+ほとんどの場合、`dlt` `run` コマンドは例外を発生させます。
+私たちは、例外メッセージを分かりやすくするために多大な努力を払っています。
+それらを読むことが、問題解決の第一歩です。
+ご不明な点がございましたら、[こちら](https://github.com/dlt-hub/dlt/issues/new) からお知らせください。
 
-### Missing secret or configuration values
+### シークレットまたは設定値が不足しています
 
-The most common exception that you will encounter looks like this. Here we modify our
-`chess_pipeline.py` script to load data into PostgreSQL, but we are not providing the password.
+最もよく発生する例外は以下のようになります。
+ここでは、PostgreSQLにデータをロードするために「chess_pipeline.py」スクリプトを変更していますが、パスワードは提供していません。
 
 ```sh
 CREDENTIALS="postgres://loader@localhost:5432/dlt_data" python chess_pipeline.py
@@ -189,35 +179,32 @@ dlt.common.configuration.exceptions.ConfigFieldMissingException: Following field
 Please refer to https://dlthub.com/docs/general-usage/credentials/ for more information
 ```
 
-What does this exception tell you?
+この例外は何を示していますか？
 
-1. You are missing a `password` field ("Following fields are missing: \['password'\]").
-1. `dlt` tried to look for the password in `secrets.toml` and environment variables.
-1. `dlt` tried several locations or keys in which the password could be stored, starting from
-   more precise to more general.
+1. `password` フィールドがありません（「次のフィールドがありません: \['password'\]」）。
+1. `dlt` は `secrets.toml` と環境変数でパスワードを検索しようとしました。
+1. `dlt` は、より正確なものからより一般的なものまで、パスワードを保存できる複数の場所またはキーを試しました。
 
 How to fix that?
 
-The easiest way is to look at the last line of the exception message:
+最も簡単な方法は、例外メッセージの最後の行を確認することです:
 
 `In secrets.toml key credentials.password was not found.`
 
-and just add the `password` to your
-`secrets.toml` using the suggested key:
+提案されたキーを使用して、`secrets.toml` に `password` を追加するだけです:
 
 ```toml
 credentials.password="loader"
 ```
 
-> 💡 Make sure you run the script from the same folder in which it is saved. For example,
-> `python chess_demo/chess.py` will run the script from the `chess_demo` folder, but the current working
-> directory is the folder above. This prevents `dlt` from finding `chess_demo/.dlt/secrets.toml` and
-> filling in credentials.
+> 💡 スクリプトは、保存されているフォルダから実行してください。
+> 例えば、`python chess_demo/chess.py` は `chess_demo` フォルダからスクリプトを実行しますが、現在の作業ディレクトリは上記のフォルダです。
+> これにより、`dlt` が `chess_demo/.dlt/secrets.toml` を見つけて認証情報を入力するのを防ぐことができます。
 
-### Failed API or database connections and other exceptions
+### APIまたはデータベース接続の失敗、およびその他の例外
 
-`dlt` will raise a `PipelineStepFailed` exception to inform you of a problem encountered during
-the execution of a particular step. You can catch those in code:
+`dlt` は、特定のステップの実行中に発生した問題を通知するために、`PipelineStepFailed` 例外を発生させます。
+これらの例外はコードでキャッチできます。
 
 ```py
 from dlt.pipeline.exceptions import PipelineStepFailed
@@ -229,7 +216,7 @@ except PipelineStepFailed as step_failed:
     raise
 ```
 
-Or use the `trace` command to review the last exception. Here we provided a wrong PostgreSQL password:
+または、`trace` コマンドを使用して最後の例外を確認してください。ここでは、PostgreSQL のパスワードを間違って入力しました。
 
 ```sh
 dlt pipeline chess_pipeline trace
@@ -242,12 +229,12 @@ Step run FAILED in 0.01 seconds.
 Failed due to: connection to server at "localhost" (127.0.0.1), port 5432 failed: FATAL:  password authentication failed for user "loader"
 ```
 
-### Failed jobs in load package
+### ロードパッケージ内の失敗したジョブ
 
-In rare cases, some jobs in a load package will fail in such a way that `dlt` will not be able
-to load it, even if it retries the process. In that case, the job is marked as failed, and additional
-information is available. Please note that ([if not otherwise configured](../running-in-production//running.md#failed-jobs)), `dlt` **will raise
-an exception on failed jobs and abort the package**. Aborted packages cannot be retried.
+まれに、ロードパッケージ内の一部のジョブが失敗し、`dlt` がプロセスを再試行してもロードできない場合があります。
+その場合、ジョブは失敗としてマークされ、追加情報が提供されます。
+なお、([特に設定されていない場合](../running-in-production//running.md#failed-jobs))、`dlt` は**失敗したジョブに対して例外を発生し、パッケージを中止します**。
+中止されたパッケージは再試行できません。
 
 ```text
 Step run COMPLETED in 14.21 seconds.
@@ -257,15 +244,15 @@ The dummy destination used /dev/null location to store data
 Load package 1679996953.776288 is COMPLETED and contains 4 FAILED job(s)!
 ```
 
-What now?
+次は何をすればいいですか？
 
-Investigate further with the following command:
+次のコマンドでさらに詳しく調べてください:
 
 ```sh
 dlt pipeline chess_pipeline failed-jobs
 ```
 
-To get the following output:
+次の出力を得て:
 
 ```text
 Found pipeline chess_pipeline in /home/user-name/.dlt/pipelines
@@ -276,16 +263,14 @@ JOB file path: /home/user-name/.dlt/pipelines/chess_pipeline/load/loaded/1679996
 a random fail occurred
 ```
 
-The `a random fail occurred` (on console in red) is the error message from the destination. It
-should tell you what went wrong.
+ `a random fail occurred`（コンソール上で赤字で表示）は、出力先からのエラーメッセージです。
+何が問題だったかが分かります。
 
-The most probable cause of the failed job is **the data in the job file**. You can inspect the file
-using the **JOB file path** provided.
+ジョブが失敗した原因として最も可能性が高いのは、**ジョブファイル内のデータ**です。
+**ジョブファイルパス**を使用して、ファイルの内容を確認できます。
 
-## Further readings
+## さらに詳しい情報
 
-- [Beef up your script for production](../running-in-production/running.md), easily add alerting,
-  retries, and logging, so you are well-informed when something goes wrong.
-- [Deploy this pipeline with GitHub Actions](deploy-a-pipeline/deploy-with-github-actions), so that
-  your pipeline script is automatically executed on a schedule.
+- [本番環境向けにスクリプトを強化](../running-in-production/running.md) することで、アラート、再試行、ログ記録を簡単に追加でき、問題発生時に的確な情報を得ることができます。
+- [このパイプラインを GitHub Actions でデプロイ](deploy-a-pipeline/deploy-with-github-actions) することで、パイプラインスクリプトがスケジュールに従って自動的に実行されるようになります。
 

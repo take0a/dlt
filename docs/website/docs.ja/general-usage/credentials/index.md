@@ -5,13 +5,13 @@ keywords: [credentials, secrets.toml, secrets, config, configuration, environmen
 ---
 import DocCardList from '@theme/DocCardList';
 
-`dlt` pipelines usually require configurations and credentials. These can be set up in [various ways](./setup):
+`dlt` パイプラインは通常、設定と認証情報を必要とします。これらは [様々な方法](./setup) で設定できます。
 
-1. Environment variables
-2. Configuration files (`secrets.toml` and `config.toml`)
-3. Key managers and vaults
+1. 環境変数
+2. 設定ファイル (`secrets.toml` および `config.toml`)
+3. キーマネージャーとキーボールト
 
-`dlt` automatically extracts configuration settings and secrets based on flexible [naming conventions](./setup/#naming-convention). It then [injects](./advanced/#injection-mechanism) these values where needed in code.
+`dlt` は、柔軟な [命名規則](./setup/#naming-convention) に基づいて、設定とシークレットを自動的に抽出します。そして、これらの値をコード内の必要な場所に [挿入](./advanced/#injection-mechanism) します。
 
 # Learn details about
 

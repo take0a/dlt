@@ -4,37 +4,40 @@ description: How to deploy a pipeline with Prefect
 keywords: [how to, deploy a pipeline, Prefect]
 ---
 
-# Deploy with Prefect
+# Prefectでデプロイ
 
-## Introduction to Prefect
+## Prefect の紹介
 
-Prefect is a workflow orchestration and observability platform that automates and orchestrates data pipelines. As an open-source platform, it offers a framework for defining, scheduling, and executing tasks with dependencies. It enables users to observe, maintain, and scale their data workflows efficiently.
+Prefect は、データパイプラインを自動化およびオーケストレーションするワークフローオーケストレーションおよび可観測性プラットフォームです。
+オープンソースプラットフォームとして、依存関係を持つタスクの定義、スケジュール設定、実行のためのフレームワークを提供します。
+Prefect により、ユーザーはデータワークフローを効率的に監視、維持、拡張できます。
 
 ![Prefect Flow Run](images/prefect-flow-run.png)
 
-### Prefect features
+### Prefect の機能
 
-- **Flows**: These contain workflow logic and are defined as Python functions.
-- **Tasks**: A task represents a discrete unit of work. Tasks allow encapsulation of workflow logic that can be reused for flows and subflows.
-- **Deployments and Scheduling**: Deployments transform workflows from manually called functions into API-managed entities that you can trigger remotely. Prefect allows you to use schedules to automatically create new flow runs for deployments or trigger new runs based on events.
-- **Automations**: Prefect Cloud enables you to configure [actions](https://docs.prefect.io/latest/concepts/automations/#actions) that Prefect executes automatically based on [triggers](https://docs.prefect.io/latest/concepts/automations/#triggers).
-- **Caching**: This feature enables a task to reflect a completed state without actually executing its defining code.
-- **Observability**: This feature allows users to monitor workflows and tasks. It provides insights into data pipeline performance and behavior through logging, metrics, and notifications.
+- **フロー**: フローにはワークフローロジックが含まれており、Python 関数として定義されています。
+- **タスク**: タスクは個別の作業単位を表します。タスクを使用すると、フローやサブフローで再利用できるワークフローロジックをカプセル化できます。
+- **デプロイメントとスケジュール**: デプロイメントは、ワークフローを手動で呼び出される関数から、リモートからトリガーできる API 管理エンティティに変換します。Prefect では、スケジュールを使用して、デプロイメントの新しいフロー実行を自動的に作成したり、イベントに基づいて新しい実行をトリガーしたりできます。
+- **オートメーション**: Prefect Cloud では、[トリガー](https://docs.prefect.io/latest/concepts/automations/#triggers) に基づいて Prefect が自動的に実行する [アクション](https://docs.prefect.io/latest/concepts/automations/#actions) を設定できます。
+- **キャッシュ**: この機能により、タスクを定義するコードを実際に実行することなく、完了した状態を反映できます。
+- **可観測性**: この機能により、ユーザーはワークフローとタスクを監視できます。ログ、メトリクス、通知を通じて、データパイプラインのパフォーマンスと動作に関する洞察が得られます。
 
-## Building data pipelines with `dlt`
+## `dlt` を使ったデータパイプラインの構築
 
-`dlt` is an open-source Python library that enables the declarative loading of data sources into well-structured tables or datasets by automatically inferring and evolving schemas. It simplifies the construction of data pipelines by offering functionality to support the complete extract and load process.
+`dlt` は、スキーマの自動推論と進化により、データソースを適切に構造化されたテーブルまたはデータセットに宣言的にロードすることを可能にするオープンソースの Python ライブラリです。
+完全な抽出とロードのプロセスをサポートする機能を提供することで、データパイプラインの構築を簡素化します。
 
-### How does **`dlt`** integrate with Prefect for pipeline orchestration?
+### **`dlt`** は、パイプラインのオーケストレーションのために Prefect とどのように統合するのでしょうか？
 
-Here's a concise guide to orchestrating a `dlt` pipeline with Prefect using "Moving Slack data into BigQuery" as an example. You can find a comprehensive, step-by-step guide in the article [“Building resilient data pipelines in minutes with dlt + Prefect”,](https://www.prefect.io/blog/building-resilient-data-pipelines-in-minutes-with-dlt-prefect) and the corresponding GitHub repository [here.](https://github.com/dylanbhughes/dlt_slack_pipeline/blob/main/slack_pipeline_with_prefect.py)
+ここでは、「Slack データを BigQuery に移動する」を例に、Prefect を使用して `dlt` パイプラインをオーケストレーションするための簡潔なガイドをご紹介します。包括的なステップバイステップガイドは、記事「dlt + Prefect で数分で耐障害性の高いデータパイプラインを構築する」](https://www.prefect.io/blog/building-resilient-data-pipelines-in-minutes-with-dlt-prefect) と、対応する GitHub リポジトリ [こちら](https://github.com/dylanbhughes/dlt_slack_pipeline/blob/main/slack_pipeline_with_prefect.py) でご覧いただけます。
 
-### Here's a summary of the steps followed:
+### 実行した手順の概要は次のとおりです。
 
-1. Create a `dlt` pipeline. For detailed instructions on creating a pipeline, please refer to the [documentation](../create-a-pipeline).
+1. `dlt` パイプラインを作成します。パイプラインの作成手順の詳細については、[ドキュメント](../create-a-pipeline) を参照してください。
 
-1. Add `@task` decorator to the individual functions.
-    1. Here we use the `@task` decorator for the `get_users` function: 
+1. 個々の関数に `@task` デコレータを追加します。
+    1. ここでは、`get_users` 関数に `@task` デコレータを使用します。
         
         ```py
         @task
@@ -42,7 +45,7 @@ Here's a concise guide to orchestrating a `dlt` pipeline with Prefect using "Mov
             """Execute a pipeline that will load the Slack users list."""
         ```
         
-    1. Use the `@flow` function on the `slack_pipeline` function as:
+    1. `slack_pipeline` 関数で `@flow` 関数を次のように使用します。
         
         ```py
         @flow
@@ -54,20 +57,20 @@ Here's a concise guide to orchestrating a `dlt` pipeline with Prefect using "Mov
         
         ```
         
-2. Lastly, append `.serve` to the `if __name__ == '__main__'` block to automatically create and schedule a Prefect deployment for daily execution as:
+2. 最後に、`if __name__ == '__main__'` ブロックに `.serve` を追加して、毎日実行するための Prefect デプロイメントを自動的に作成してスケジュールします。
     
     ```py
     if __name__ == "__main__":
         slack_pipeline.serve("slack_pipeline", cron="0 0 * * *")
     ```
     
-3. You can view deployment details and scheduled runs, including successes and failures, using [PrefectUI](https://app.prefect.cloud/auth/login). This will help you know when a pipeline ran or, more importantly, when it did not.
+3. [PrefectUI](https://app.prefect.cloud/auth/login) を使用すると、デプロイの詳細とスケジュールされた実行（成功と失敗を含む）を確認できます。これにより、パイプラインがいつ実行されたか、そしてさらに重要な点として、いつ実行されなかったかを把握できます。
 
 ![Prefect Dashboard](images/prefect-dashboard.png)
 
-You can further extend the pipeline by: 
+パイプラインをさらに拡張するには、次の方法があります。
 
-- Setting up [remote infrastructure with workers](https://docs.prefect.io/latest/tutorial/workers/?deviceId=bb3e22c1-c2c7-4981-bd5e-c81715503e08).
-- [Adding automations](https://docs.prefect.io/latest/concepts/automations/?deviceId=bb3e22c1-c2c7-4981-bd5e-c81715503e08) to notify the status of the pipeline run.
-- [Setting up retries](https://docs.prefect.io/latest/concepts/tasks/?deviceId=bb3e22c1-c2c7-4981-bd5e-c81715503e08#custom-retry-behavior).
+- [ワーカーを使用したリモートインフラストラクチャ](https://docs.prefect.io/latest/tutorial/workers/?deviceId=bb3e22c1-c2c7-4981-bd5e-c81715503e08)を設定します。
+- [自動化を追加](https://docs.prefect.io/latest/concepts/automations/?deviceId=bb3e22c1-c2c7-4981-bd5e-c81715503e08)して、パイプラインの実行ステータスを通知します。
+- [再試行の設定](https://docs.prefect.io/latest/concepts/tasks/?deviceId=bb3e22c1-c2c7-4981-bd5e-c81715503e08#custom-retry-behavior)。
 
