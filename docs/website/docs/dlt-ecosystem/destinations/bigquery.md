@@ -226,6 +226,13 @@ BigQuery supports the following [column hints](../../general-usage/schema#tables
 
 * `cluster` - creates cluster column(s). Many columns per table are supported and only when a new table is created.
 
+:::caution
+**Deprecation Notice:**
+Per-column `cluster` hints are deprecated and will be removed in a future release.  
+**To migrate, use the `cluster` argument of the `bigquery_adapter` instead.**  
+See the [example below](#use-an-adapter-to-apply-hints-to-a-resource) for how to specify clustering columns with the adapter.
+:::
+
 ### Table and column identifiers
 BigQuery uses case-sensitive identifiers by default, and this is what `dlt` assumes. If the dataset you use has case-insensitive identifiers (you have such an option
 when you create it), make sure that you use a case-insensitive [naming convention](../../general-usage/naming-convention.md#case-sensitive-and-insensitive-destinations) or you tell `dlt` about it so identifier collisions are properly detected.
@@ -246,7 +253,7 @@ The option above is off by default.
 
 BigQuery supports GCS as a file staging destination. `dlt` will upload files in the parquet format to GCS and ask BigQuery to copy their data directly into the database.
 Please refer to the [Google Storage filesystem documentation](./filesystem.md#google-storage) to learn how to set up your GCS bucket with the bucket_url and credentials.
-If you use the same service account for GCS and your Redshift deployment, you do not need to provide additional authentication for BigQuery to be able to read from your bucket.
+If you use the same service account for GCS and your BigQuery deployment, you do not need to provide additional authentication for BigQuery to be able to read from your bucket.
 
 Alternatively to parquet files, you can specify jsonl as the staging file format. For this, set the `loader_file_format` argument of the `run` command of the pipeline to `jsonl`.
 

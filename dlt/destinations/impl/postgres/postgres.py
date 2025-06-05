@@ -21,18 +21,17 @@ from dlt.destinations.impl.postgres.configuration import PostgresClientConfigura
 from dlt.destinations.impl.postgres.sql_client import Psycopg2SqlClient
 from dlt.destinations.insert_job_client import InsertValuesJobClient
 from dlt.destinations.sql_client import SqlClientBase
-from dlt.destinations.sql_jobs import SqlStagingCopyFollowupJob, SqlJobParams
+from dlt.destinations.sql_jobs import SqlStagingReplaceFollowupJob
 
 HINT_TO_POSTGRES_ATTR: Dict[TColumnHint, str] = {"unique": "UNIQUE"}
 
 
-class PostgresStagingCopyJob(SqlStagingCopyFollowupJob):
+class PostgresStagingReplaceJob(SqlStagingReplaceFollowupJob):
     @classmethod
     def generate_sql(
         cls,
         table_chain: Sequence[PreparedTableSchema],
         sql_client: SqlClientBase[Any],
-        params: SqlJobParams,
     ) -> List[str]:
         sql: List[str] = []
         for table in table_chain:
@@ -97,14 +96,14 @@ class PostgresCsvCopyJob(RunnableLoadJob, HasFollowupJobs):
 
             # normalized and quoted headers
             split_headers = [
-                sql_client.escape_column_name(h.strip('"'), escape=True) for h in split_headers
+                sql_client.escape_column_name(h.strip('"'), quote=True) for h in split_headers
             ]
             split_null_headers = []
             split_columns = []
             # detect columns with NULL to use in FORCE NULL
             # detect headers that are not in columns
             for col in self._job_client.schema.get_table_columns(table_name).values():
-                norm_col = sql_client.escape_column_name(col["name"], escape=True)
+                norm_col = sql_client.escape_column_name(col["name"], quote=True)
                 split_columns.append(norm_col)
                 if norm_col in split_headers and is_nullable_column(col):
                     split_null_headers.append(norm_col)
@@ -164,8 +163,9 @@ class PostgresClient(InsertValuesJobClient):
     def _create_replace_followup_jobs(
         self, table_chain: Sequence[PreparedTableSchema]
     ) -> List[FollowupJobRequest]:
-        if self.config.replace_strategy == "staging-optimized":
-            return [PostgresStagingCopyJob.from_table_chain(table_chain, self.sql_client)]
+        root_table = table_chain[0]
+        if root_table["x-replace-strategy"] == "staging-optimized":  # type: ignore[typeddict-item]
+            return [PostgresStagingReplaceJob.from_table_chain(table_chain, self.sql_client)]
         return super()._create_replace_followup_jobs(table_chain)
 
     def _from_db_type(

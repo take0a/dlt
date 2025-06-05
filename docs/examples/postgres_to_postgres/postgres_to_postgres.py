@@ -108,7 +108,6 @@ def pg_resource_chunked(
         table_name=table_name,
         write_disposition=load_type,  # use `replace` for initial load, `merge` for incremental
         primary_key=primary_key,
-        standalone=True,
         parallelized=True,
     )(read_sql_x_chunked)(
         credentials.to_native_representation(),  # Pass the connection string directly
@@ -187,14 +186,14 @@ if __name__ == "__main__":
 
     # 1. extract
     print("##################################### START EXTRACT ########")
-    pipeline.extract(resources)
+    pipeline.extract(resources, loader_file_format="parquet")
     print(f"--Time elapsed: {pendulum.now() - startTime}")
 
     # 2. normalize
     print("##################################### START NORMALIZATION ########")
     if load_type == "replace":
         info = pipeline.normalize(
-            workers=2, loader_file_format="parquet"
+            workers=2,
         )  # https://dlthub.com/docs/blog/dlt-arrow-loading
     else:
         info = pipeline.normalize()

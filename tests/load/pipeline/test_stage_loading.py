@@ -118,9 +118,7 @@ def test_staging_load(destination_config: DestinationTestConfiguration) -> None:
             == num_sql_jobs
         )
 
-    initial_counts = load_table_counts(
-        pipeline, *[t["name"] for t in pipeline.default_schema.data_tables()]
-    )
+    initial_counts = load_table_counts(pipeline)
     assert initial_counts["issues"] == 100
 
     # check item of first row in db
@@ -141,9 +139,7 @@ def test_staging_load(destination_config: DestinationTestConfiguration) -> None:
         info = pipeline.run(load_modified_issues, **destination_config.run_kwargs)
         assert_load_info(info)
         assert pipeline.default_schema.tables["issues"]["write_disposition"] == "merge"
-        merge_counts = load_table_counts(
-            pipeline, *[t["name"] for t in pipeline.default_schema.data_tables()]
-        )
+        merge_counts = load_table_counts(pipeline)
         assert merge_counts == initial_counts
 
         # check changes where merged in
@@ -175,9 +171,7 @@ def test_staging_load(destination_config: DestinationTestConfiguration) -> None:
     assert_load_info(info)
     assert pipeline.default_schema.tables["issues"]["write_disposition"] == "append"
     # the counts of all tables must be double
-    append_counts = load_table_counts(
-        pipeline, *[t["name"] for t in pipeline.default_schema.data_tables()]
-    )
+    append_counts = load_table_counts(pipeline)
     assert {k: v * 2 for k, v in initial_counts.items()} == append_counts
 
     # test replace
@@ -189,9 +183,7 @@ def test_staging_load(destination_config: DestinationTestConfiguration) -> None:
     assert_load_info(info)
     assert pipeline.default_schema.tables["issues"]["write_disposition"] == "replace"
     # the counts of all tables must be double
-    replace_counts = load_table_counts(
-        pipeline, *[t["name"] for t in pipeline.default_schema.data_tables()]
-    )
+    replace_counts = load_table_counts(pipeline)
     assert replace_counts == initial_counts
 
 
@@ -209,6 +201,7 @@ def test_truncate_staging_dataset(destination_config: DestinationTestConfigurati
     pipeline = destination_config.setup_pipeline(
         pipeline_name="test_stage_loading", dataset_name="test_staging_load" + uniq_id()
     )
+    # pipeline.destination.config_params["table_location_layout"] = "{dataset_name}/{table_name}_{location_tag}"
     resource = event_many_load_2()
     table_name: str = resource.table_name  # type: ignore[assignment]
 
@@ -229,12 +222,12 @@ def test_truncate_staging_dataset(destination_config: DestinationTestConfigurati
     # check there are two staging files
     _, staging_client = pipeline._get_destination_clients(pipeline.default_schema)
     with staging_client:
-        # except Athena + Iceberg which does not store tables in staging dataset
+        # except Athena + Iceberg which stores Iceberg data and metadata
         if (
             destination_config.destination_type == "athena"
             and destination_config.table_format == "iceberg"
         ):
-            table_count = 0
+            table_count = 9
             # but keeps them in staging dataset on staging destination - but only the last one
             with staging_client.with_staging_dataset():  # type: ignore[attr-defined]
                 assert len(staging_client.list_table_files(table_name)) == 1  # type: ignore[attr-defined]
@@ -259,7 +252,8 @@ def test_truncate_staging_dataset(destination_config: DestinationTestConfigurati
         # except for Athena which does not delete staging destination tables
         if destination_config.destination_type == "athena":
             if destination_config.table_format == "iceberg":
-                table_count = 0
+                # even more iceberg metadata
+                table_count = 13
             else:
                 table_count = 3
         else:

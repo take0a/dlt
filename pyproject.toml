@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dlt"
-version = "1.9.0"
+version = "1.11.0"
 description = "dlt is an open-source python-first scalable data loading library that does not require any backend to run."
 authors = ["dltHub Inc. <services@dlthub.com>"]
 maintainers = [ "Marcin Rudolf <marcin@dlthub.com>", "Adrian Brudaru <adrian@dlthub.com>", "Anton Burnashev <anton@dlthub.com>", "David Scharf <david@dlthub.com>" ]
@@ -31,11 +31,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.9,<3.14"
 requests = ">=2.26.0"
-pendulum = {version = ">=2.1.2", markers = "python_version < '3.13'"}
-# NOTE: revert to normal pendulum once it supports python 3.13
-dlt-pendulum = [
-    {version=">=3.0.2", markers = "python_version >= '3.13'"}
-]
+pendulum = ">=2.1.2"
 simplejson = ">=3.17.5"
 PyYAML = ">=5.4.1"
 semver = ">=3.0.0"
@@ -44,7 +40,6 @@ tzdata = ">=2022.1"
 tomlkit = ">=0.11.3"
 pathvalidate = ">=2.5.2"
 typing-extensions = ">=4.8.0"
-makefun = ">=1.15.0"
 click = ">=7.1"
 requirements-parser = ">=0.5.0"
 setuptools = ">=65.6.0"
@@ -99,7 +94,7 @@ clickhouse-driver = { version = ">=0.2.7", optional = true }
 clickhouse-connect = { version = ">=0.7.7", optional = true }
 lancedb = { version = ">=0.8.2", optional = true, markers = "python_version < '3.13'", allow-prereleases = true }
 tantivy = { version = ">= 0.22.0", optional = true }
-deltalake = { version = ">=0.21.0", optional = true }
+deltalake = { version = ">=0.25.1", optional = true }
 sqlalchemy = { version = ">=1.4", optional = true }
 alembic = {version = ">1.10.0", optional = true}
 paramiko = {version = ">=3.3.0", optional = true}
@@ -109,10 +104,11 @@ db-dtypes = { version = ">=1.2.0", optional = true }
 # https://github.com/apache/airflow/issues/28723
 # pyiceberg = { version = ">=0.7.1", optional = true, extras = ["sql-sqlite"] }
 # we will rely on manual installation of `sqlalchemy>=2.0.18` instead
-pyiceberg = { version = ">=0.8.1", optional = true }
+pyiceberg = { version = ">=0.9.0", optional = true }
 databricks-sdk = {version = ">=0.38.0", optional = true}
 pywin32 = {version = ">=306", optional = true, platform = "win32"}
 rich-argparse = "^1.6.0"
+marimo = {version = "^0.13.6", optional = true}
 
 [tool.poetry.extras]
 gcp = ["grpcio", "google-cloud-bigquery", "db-dtypes", "gcsfs"]
@@ -196,6 +192,7 @@ shapely = ">=2.0.6"
 pip = ">=24.0.0"
 # keep duckdb compatible with motherduck
 duckdb = "<1.3"
+pydoclint = "^0.6.5"
 
 [tool.poetry.group.sources]
 optional = true
@@ -226,33 +223,46 @@ pandas = [
     {version = "<2.1", markers = "python_version < '3.12'"}
 ]
 
+# dependencies to run and test airflow
 [tool.poetry.group.airflow]
 optional = true
-
 [tool.poetry.group.airflow.dependencies]
 apache-airflow = {version = "^2.8.0", markers = "python_version < '3.12'"}
 
-# TODO: restore when ibis allows pyarrow 18
-# [tool.poetry.group.ibis]
-#optional = true
+# dependencies to run and test things that require ibis
+[tool.poetry.group.ibis]
+optional = true
+[tool.poetry.group.ibis.dependencies]
+ibis-framework = { version = ">=10.3.0", markers = "python_version >= '3.10'", extras = ["duckdb", "postgres", "bigquery", "snowflake", "mssql", "clickhouse", "databricks"]}
 
-#[tool.poetry.group.ibis.dependencies]
-# ibis-framework = { version = ">=9.0.0,<10.0.0", markers = "python_version >= '3.10'", extras = ["duckdb", "postgres", "bigquery", "snowflake", "mssql", "clickhouse"]}
+# dependencies to run and test the streamlit app (streamlit does not work with python 3.9.7)
+[tool.poetry.group.streamlit]
+optional = true
+[tool.poetry.group.streamlit.dependencies]
+streamlit = {version = "^1.40.0", markers = "python_version >= '3.9' and python_version != '3.9.7' and python_version < '3.14'"}
+
+# dependencies to run and test the marimo app 
+[tool.poetry.group.marimo]
+optional = true
+[tool.poetry.group.marimo.dependencies]
+marimo = "^0.13.6"
+playwright = "^1.52.0"
+pytest-playwright = "^0.7.0"
+# TODO: make marimo app independent of pyarrow
+pandas = [
+    {version = ">2.1", markers = "python_version >= '3.12'"},
+    {version = "<2.1", markers = "python_version < '3.12'"}
+]
 
 [tool.poetry.group.providers]
 optional = true
-
 [tool.poetry.group.providers.dependencies]
 google-api-python-client = "^2.86.0"
 
 [tool.poetry.group.sentry-sdk]
 optional = true
-
 [tool.poetry.group.sentry-sdk.dependencies]
 sentry-sdk = "^2.0.0"
-
-[tool.poetry.group.docs]
-optional = true
 
 [tool.poetry.group.dbt]
 optional = true
@@ -266,6 +276,8 @@ dbt-athena-community = ">=1.5.0"
 dbt-sqlserver = ">=1.5.0"
 # dbt-databricks = {version = ">=1.7.3", optional = true}
 
+[tool.poetry.group.docs]
+optional = true
 [tool.poetry.group.docs.dependencies]
 SQLAlchemy = ">=1.4.0"
 pymysql = "^1.1.0"

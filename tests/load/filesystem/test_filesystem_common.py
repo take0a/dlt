@@ -52,6 +52,7 @@ def test_filesystem_configuration() -> None:
         "client_kwargs": None,
         "kwargs": None,
         "deltalake_storage_options": None,
+        "deltalake_configuration": None,
     }
 
 
@@ -71,6 +72,17 @@ def test_remote_url(bucket_url: str) -> None:
     fs_path = fs_class._strip_protocol(bucket_url)
     # reconstitute url
     assert make_fsspec_url(scheme, fs_path, bucket_url) == bucket_url
+    # make sure bucket_url does not have separator at the end
+    assert not bucket_url.endswith("/")
+    assert not fs_path.endswith("/")
+    # separator must be preserved
+    fs_path += "/"
+    assert make_fsspec_url(scheme, fs_path, bucket_url) == bucket_url + "/"
+    # add path
+    fs_path += "path"
+    assert make_fsspec_url(scheme, fs_path, bucket_url) == bucket_url + "/path"
+    fs_path += "/"
+    assert make_fsspec_url(scheme, fs_path, bucket_url) == bucket_url + "/path/"
 
 
 def test_make_az_url() -> None:
@@ -212,6 +224,10 @@ def test_filesystem_configuration_with_additional_arguments() -> None:
         kwargs={"use_ssl": True},
         client_kwargs={"verify": "public.crt"},
         deltalake_storage_options={"AWS_S3_LOCKING_PROVIDER": "dynamodb"},
+        deltalake_configuration={
+            "delta.minWriterVersion": "7",
+            "delta.enableChangeDataFeed": "true",
+        },
     )
     assert dict(config) == {
         "read_only": False,
@@ -220,6 +236,10 @@ def test_filesystem_configuration_with_additional_arguments() -> None:
         "kwargs": {"use_ssl": True},
         "client_kwargs": {"verify": "public.crt"},
         "deltalake_storage_options": {"AWS_S3_LOCKING_PROVIDER": "dynamodb"},
+        "deltalake_configuration": {
+            "delta.minWriterVersion": "7",
+            "delta.enableChangeDataFeed": "true",
+        },
     }
 
 

@@ -1,5 +1,6 @@
 import os
 import pathlib
+import posixpath
 from typing import Any, Literal, Optional, Type, ClassVar, Dict, Union
 from urllib.parse import urlparse, unquote, urlunparse
 
@@ -15,7 +16,7 @@ from dlt.common.configuration.specs import (
     SFTPCredentials,
 )
 from dlt.common.exceptions import TerminalValueError
-from dlt.common.typing import DictStrAny, get_args
+from dlt.common.typing import DictStrAny, DictStrOptionalStr, get_args
 from dlt.common.utils import digest128
 
 
@@ -106,11 +107,17 @@ def _make_az_url(scheme: str, fs_path: str, bucket_url: str) -> str:
         # az://<container_name>@<storage_account_name>.dfs.core.windows.net/<path>
         # fs_path always starts with container
         split_path = fs_path.split("/", maxsplit=1)
+        # preserve slash at the end
+        if len(split_path) == 2 and split_path[1] == "":
+            split_path[1] = "/"
+        # if just a container name, add empty path
         if len(split_path) == 1:
             split_path.append("")
         container, path = split_path
         netloc = f"{container}@{parsed_bucket_url.hostname}"
-        return urlunparse(parsed_bucket_url._replace(path=path, scheme=scheme, netloc=netloc))
+        # this strips trailing slash
+        uri = urlunparse(parsed_bucket_url._replace(path=path, scheme=scheme, netloc=netloc))
+        return uri
     return f"{scheme}://{fs_path}"
 
 
@@ -120,8 +127,12 @@ def _make_file_url(scheme: str, fs_path: str, bucket_url: str) -> str:
     netloc is never set. UNC paths are represented as file://host/path
     """
     p_ = pathlib.Path(fs_path)
+    # will remove trailing separator
     p_ = p_.expanduser().resolve()
-    return p_.as_uri()
+    uri = p_.as_uri()
+    if fs_path.endswith(os.path.sep):
+        uri += "/"
+    return uri
 
 
 MAKE_URI_DISPATCH = {"az": _make_az_url, "file": _make_file_url, "sftp": _make_sftp_url}
@@ -134,7 +145,8 @@ MAKE_URI_DISPATCH["local"] = MAKE_URI_DISPATCH["file"]
 
 
 def make_fsspec_url(scheme: str, fs_path: str, bucket_url: str) -> str:
-    """Creates url from `fs_path` and `scheme` using bucket_url as an `url` template
+    """Creates url from `fs_path` and `scheme` using bucket_url as an `url` template, if `fs_path`
+    ends with separator (indicating folder), it is preserved
 
     Args:
         scheme (str): scheme of the resulting url
@@ -181,8 +193,11 @@ class FilesystemConfiguration(BaseConfiguration):
     read_only: bool = False
     """Indicates read only filesystem access. Will enable caching"""
     kwargs: Optional[DictStrAny] = None
+    """Additional arguments passed to fsspec constructor ie. dict(use_ssl=True) for s3fs"""
     client_kwargs: Optional[DictStrAny] = None
+    """Additional arguments passed to underlying fsspec native client ie. dict(verify="public.crt) for botocore"""
     deltalake_storage_options: Optional[DictStrAny] = None
+    deltalake_configuration: Optional[DictStrOptionalStr] = None
 
     @property
     def protocol(self) -> str:
@@ -196,7 +211,27 @@ class FilesystemConfiguration(BaseConfiguration):
     def is_local_filesystem(self) -> bool:
         return self.protocol == "file"
 
+    @property
+    def pathlib(self) -> Any:
+        """Returns pathlib suitable for joining and other path ops"""
+        return os.path if self.is_local_path(self.bucket_url) else posixpath
+
     def on_resolved(self) -> None:
+        self.verify_bucket_url()
+
+    def on_partial(self) -> None:
+        if self.bucket_url:
+            self.verify_bucket_url()
+
+    def normalize_bucket_url(self) -> None:
+        """Normalizes bucket_url ie. by making local paths absolute and converting to file:"""
+        # save original url
+        self._orig_bucket_url = self.bucket_url
+        # this is just a path in a local file system
+        if self.is_local_path(self.bucket_url):
+            self.bucket_url = self.make_file_url(self.bucket_url)
+
+    def verify_bucket_url(self) -> None:
         url = urlparse(self.bucket_url)
         if not url.path and not url.netloc:
             raise ConfigurationValueError(
@@ -206,11 +241,9 @@ class FilesystemConfiguration(BaseConfiguration):
             )
         self.normalize_bucket_url()
 
-    def normalize_bucket_url(self) -> None:
-        """Normalizes bucket_url ie. by making local paths absolute"""
-        # this is just a path in a local file system
-        if self.is_local_path(self.bucket_url):
-            self.bucket_url = self.make_file_url(self.bucket_url)
+    def original_bucket_url(self) -> str:
+        """Returns bucket_url before normalization"""
+        return self._orig_bucket_url
 
     @resolve_type("credentials")
     def resolve_credentials_type(self) -> Type[CredentialsConfiguration]:

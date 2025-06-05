@@ -44,20 +44,25 @@ has-poetry:
 	poetry --version
 
 dev: has-poetry
-	poetry install --all-extras --with docs,providers,pipeline,sources,sentry-sdk
+	poetry install --all-extras --with docs,providers,pipeline,sources,sentry-sdk,ibis,marimo
 
+
+dev-airflow: has-poetry
+	poetry install --all-extras --with docs,providers,pipeline,sources,sentry-sdk,ibis,airflow
+	
 lint:
 	poetry run python ./tools/check-lockfile.py
 	poetry run mypy --config-file mypy.ini dlt tests
-	poetry run flake8 --max-line-length=200 dlt
-	poetry run flake8 --max-line-length=200 tests --exclude tests/reflection/module_cases,tests/common/reflection/cases/modules/
+	# NOTE: we exclude all D lint errors (docstrings)
+	poetry run flake8 --extend-ignore=D --max-line-length=200 dlt
+	poetry run flake8 --extend-ignore=D --max-line-length=200 tests --exclude tests/reflection/module_cases,tests/common/reflection/cases/modules/
 	poetry run black dlt docs tests --check --diff --color --extend-exclude=".*syntax_error.py"
 	# poetry run isort ./ --diff
 	$(MAKE) lint-security
+	$(MAKE) lint-docstrings
 
 format:
 	poetry run black dlt docs tests --extend-exclude='.*syntax_error.py|_storage/.*'
-	# poetry run isort ./
 
 lint-snippets:
 	cd docs/tools && poetry run python check_embedded_snippets.py full
@@ -80,14 +85,31 @@ lint-security:
 	# go for ll by cleaning up eval and SQL warnings.
 	poetry run bandit -r dlt/ -n 3 -lll
 
+# check docstrings for all important public classes and functions
+lint-docstrings:
+	poetry run flake8 --count \
+		dlt/common/pipeline.py \
+		dlt/extract/decorators.py \
+		dlt/destinations/decorators.py \
+		dlt/sources/**/__init__.py \
+		dlt/extract/source.py \
+		dlt/common/destination/dataset.py \
+		dlt/destinations/impl/**/factory.py \
+		dlt/pipeline/pipeline.py \
+		dlt/pipeline/__init__.py \
+		tests/pipeline/utils.py
+
 test:
 	poetry run pytest tests
 
 test-load-local:
-	DESTINATION__POSTGRES__CREDENTIALS=postgresql://loader:loader@localhost:5432/dlt_data DESTINATION__DUCKDB__CREDENTIALS=duckdb:///_storage/test_quack.duckdb  poetry run pytest tests -k '(postgres or duckdb)'
+	ACTIVE_DESTINATIONS='["duckdb", "filesystem"]' ALL_FILESYSTEM_DRIVERS='["memory", "file"]'  poetry run pytest tests/load
+
+test-load-local-postgres:
+	DESTINATION__POSTGRES__CREDENTIALS=postgresql://loader:loader@localhost:5432/dlt_data ACTIVE_DESTINATIONS='["postgres"]' ALL_FILESYSTEM_DRIVERS='["memory"]'  poetry run pytest tests/load
 
 test-common:
-	poetry run pytest tests/common tests/normalize tests/extract tests/pipeline tests/reflection tests/sources tests/cli/common tests/load/test_dummy_client.py tests/libs tests/destinations
+	poetry run pytest tests/common tests/normalize tests/extract tests/pipeline tests/reflection tests/sources tests/cli/common tests/load/test_dummy_client.py tests/libs tests/destinations tests/transformations
 
 reset-test-storage:
 	-rm -r _storage
@@ -121,9 +143,19 @@ start-test-containers:
 	docker compose -f "tests/load/weaviate/docker-compose.yml" up -d
 	docker compose -f "tests/load/filesystem_sftp/docker-compose.yml" up -d
 	docker compose -f "tests/load/sqlalchemy/docker-compose.yml" up -d
+	docker compose -f "tests/load/clickhouse/clickhouse-compose.yml" up -d
 
 update-cli-docs:
 	poetry run dlt --debug render-docs docs/website/docs/reference/command-line-interface.md
 
 check-cli-docs:
 	poetry run dlt --debug render-docs docs/website/docs/reference/command-line-interface.md --compare
+
+test-e2e-studio:
+	poetry run pytest --browser chromium tests/e2e
+
+test-e2e-studio-headed:
+	poetry run pytest --headed --browser chromium tests/e2e
+
+start-dlt-studio-e2e:
+	poetry run marimo run --headless dlt/helpers/studio/app.py -- -- --pipelines_dir _storage/.dlt/pipelines --with_test_identifiers true

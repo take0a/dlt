@@ -31,7 +31,7 @@ Creates, adds, inspects and deploys dlt pipelines. Further help is available at 
 ```sh
 dlt [-h] [--version] [--disable-telemetry] [--enable-telemetry]
     [--non-interactive] [--debug]
-    {telemetry,schema,pipeline,init,render-docs,deploy} ...
+    {telemetry,studio,schema,pipeline,init,render-docs,deploy,ai} ...
 ```
 
 <details>
@@ -48,11 +48,13 @@ dlt [-h] [--version] [--disable-telemetry] [--enable-telemetry]
 
 **Available subcommands**
 * [`telemetry`](#dlt-telemetry) - Shows telemetry status
+* [`studio`](#dlt-studio) - Starts the dlt studio marimo app
 * [`schema`](#dlt-schema) - Shows, converts and upgrades schemas
 * [`pipeline`](#dlt-pipeline) - Operations on pipelines that were ran locally
 * [`init`](#dlt-init) - Creates a pipeline project in the current folder by adding existing verified source or creating a new one from template.
 * [`render-docs`](#dlt-render-docs) - Renders markdown version of cli docs
 * [`deploy`](#dlt-deploy) - Creates a deployment package for a selected pipeline script
+* [`ai`](#dlt-ai) - Use ai-powered development tools and utilities
 
 </details>
 
@@ -68,6 +70,35 @@ dlt telemetry [-h]
 **Description**
 
 The `dlt telemetry` command shows the current status of dlt telemetry. Lern more about telemetry and what we send in our telemetry docs.
+
+<details>
+
+<summary>Show Arguments and Options</summary>
+
+Inherits arguments from [`dlt`](#dlt).
+
+**Options**
+* `-h, --help` - Show this help message and exit
+
+</details>
+
+## `dlt studio`
+
+Starts the dlt studio marimo app.
+
+**Usage**
+```sh
+dlt studio [-h]
+```
+
+**Description**
+
+The `dlt studio` command starts the dlt studio app. You can use the studio:
+
+* to list and inspect local pipelines
+* browse the full pipeline schema and all hints
+* browse the data in the destination
+* inspect the pipeline state.
 
 <details>
 
@@ -662,6 +693,63 @@ Inherits arguments from [`dlt deploy`](#dlt-deploy).
 * `--location LOCATION` - Advanced. uses a specific url or local path to pipelines repository.
 * `--branch BRANCH` - Advanced. uses specific branch of the deploy repository to fetch the template.
 * `--secrets-format {env,toml}` - Format of the secrets
+
+</details>
+
+## `dlt ai`
+
+Use AI-powered development tools and utilities.
+
+**Usage**
+```sh
+dlt ai [-h] {setup} ...
+```
+
+**Description**
+
+The `dlt ai` command provides commands to configure your LLM-enabled IDE and MCP server.
+
+<details>
+
+<summary>Show Arguments and Options</summary>
+
+Inherits arguments from [`dlt`](#dlt).
+
+**Options**
+* `-h, --help` - Show this help message and exit
+
+**Available subcommands**
+* [`setup`](#dlt-ai-setup) - Generate ide-specific configuration and rules files
+
+</details>
+
+### `dlt ai setup`
+
+Generate IDE-specific configuration and rules files.
+
+**Usage**
+```sh
+dlt ai setup [-h] [--location LOCATION] [--branch BRANCH]
+    {cursor,continue,cline,claude_desktop}
+```
+
+**Description**
+
+Get AI rules files and configuration into your local project for the selected IDE.
+Files are fetched from https://github.com/dlt-hub/verified-sources by default.
+
+<details>
+
+<summary>Show Arguments and Options</summary>
+
+Inherits arguments from [`dlt ai`](#dlt-ai).
+
+**Positional arguments**
+
+**Options**
+* `-h, --help` - Show this help message and exit
+* `--location LOCATION` - Advanced. specify git url or local path to rules files and config.
+* `--branch BRANCH` - Advanced. specify git branch to fetch rules files and config.
 
 </details>
 

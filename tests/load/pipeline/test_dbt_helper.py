@@ -24,9 +24,8 @@ def dbt_venv() -> Iterator[Venv]:
     # context manager will delete venv at the end
     # yield Venv.restore_current()
     # NOTE: we limit the max version of dbt to allow all dbt adapters to run. ie. sqlserver does not work on 1.8
-    # TODO: pytest marking below must be fixed
     dbt_configs = set(
-        c.values[0].destination_type  # type: ignore[attr-defined]
+        c.destination_type
         for c in destinations_configs(default_sql_configs=True, supports_dbt=True)
     )
     with create_venv(tempfile.mkdtemp(), list(dbt_configs), dbt_version="<1.9") as venv:
@@ -64,9 +63,11 @@ def test_run_jaffle_package(
 
     # get and display dataframe with customers
     qual_name = pipeline.sql_client().make_qualified_table_name
-    customers = select_data(pipeline, f"SELECT * FROM {qual_name('customers')}")
+    customers = select_data(
+        pipeline, f"SELECT * FROM {qual_name('customers')}", normalize_query=False
+    )
     assert len(customers) == 100
-    orders = select_data(pipeline, f"SELECT * FROM {qual_name('orders')}")
+    orders = select_data(pipeline, f"SELECT * FROM {qual_name('orders')}", normalize_query=False)
     assert len(orders) == 99
 
 
@@ -107,21 +108,25 @@ def test_run_chess_dbt(destination_config: DestinationTestConfiguration, dbt_ven
     # run all the tests
     transforms.test()
     load_ids = select_data(
-        pipeline, "SELECT load_id, schema_name, status FROM _dlt_loads ORDER BY status"
+        pipeline,
+        "SELECT load_id, schema_name, status FROM _dlt_loads ORDER BY status",
+        normalize_query=False,
     )
     assert len(load_ids) == 2
     view_player_games = select_data(
-        pipeline, "SELECT * FROM view_player_games ORDER BY username, uuid"
+        pipeline, "SELECT * FROM view_player_games ORDER BY username, uuid", normalize_query=False
     )
     assert len(view_player_games) > 0
     # run again
     transforms.run()
     # no new load ids - no new data in view table
     new_load_ids = select_data(
-        pipeline, "SELECT load_id, schema_name, status FROM _dlt_loads ORDER BY status"
+        pipeline,
+        "SELECT load_id, schema_name, status FROM _dlt_loads ORDER BY status",
+        normalize_query=False,
     )
     new_view_player_games = select_data(
-        pipeline, "SELECT * FROM view_player_games ORDER BY username, uuid"
+        pipeline, "SELECT * FROM view_player_games ORDER BY username, uuid", normalize_query=False
     )
     assert load_ids == new_load_ids
     assert view_player_games == new_view_player_games
@@ -181,6 +186,7 @@ def test_run_chess_dbt_to_other_dataset(
         pipeline,
         "SELECT load_id, schema_name, status FROM _dlt_loads ORDER BY status",
         schema_name=test_suffix,
+        dataset_name=info.dataset_name + "_" + test_suffix,
     )
     # TODO: the package is not finished, both results should be here
     assert len(load_ids) == 1

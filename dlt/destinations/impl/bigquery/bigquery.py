@@ -34,6 +34,7 @@ from dlt.destinations.exceptions import (
 )
 from dlt.destinations.impl.bigquery.bigquery_adapter import (
     AUTODETECT_SCHEMA_HINT,
+    CLUSTER_COLUMNS_HINT,
     PARTITION_HINT,
     PARTITION_EXPIRATION_DAYS_HINT,
     CLUSTER_HINT,
@@ -44,6 +45,7 @@ from dlt.destinations.impl.bigquery.bigquery_adapter import (
     should_autodetect_schema,
 )
 from dlt.destinations.impl.bigquery.configuration import BigQueryClientConfiguration
+from dlt.destinations.impl.bigquery.warnings import per_column_cluster_hint_deprecated
 from dlt.destinations.impl.bigquery.sql_client import BigQuerySqlClient, BQ_TERMINAL_REASONS
 from dlt.destinations.job_client_impl import SqlJobClientWithStagingDataset
 from dlt.destinations.job_impl import DestinationJsonlLoadJob, DestinationParquetLoadJob
@@ -250,6 +252,24 @@ class BigQueryClient(SqlJobClientWithStagingDataset, SupportsStagingDestination)
                 )
         return job
 
+    def _bigquery_partition_clause(self, partition_hint: Optional[Dict[str, str]]) -> str:
+        """Generate partition clause for BigQuery SQL.
+
+        Args:
+            partition_hint (Optional[Dict[str, str]]): Partition hint.
+
+        Returns:
+            str: The partition clause for BigQuery SQL.
+        """
+        if not partition_hint:
+            return ""
+
+        [(column_name, clause)] = partition_hint.items()
+        return (
+            "PARTITION BY"
+            f" {clause.format(column_name=self.sql_client.escape_column_name(column_name))}"
+        )
+
     def _get_table_update_sql(
         self, table_name: str, new_columns: Sequence[TColumnSchema], generate_alter: bool
     ) -> List[str]:
@@ -262,6 +282,7 @@ class BigQueryClient(SqlJobClientWithStagingDataset, SupportsStagingDestination)
         sql = super()._get_table_update_sql(table_name, new_columns, generate_alter)
         canonical_name = self.sql_client.make_qualified_table_name(table_name)
 
+        # handle partitioning when user passes a string to the `partition` param in bigquery_adapter
         if partition_list := [
             c for c in new_columns if c.get("partition") or c.get(PARTITION_HINT, False)
         ]:
@@ -286,12 +307,43 @@ class BigQueryClient(SqlJobClientWithStagingDataset, SupportsStagingDestination)
                     f"\nPARTITION BY RANGE_BUCKET({self.sql_client.escape_column_name(c['name'])},"
                     " GENERATE_ARRAY(-172800000, 691200000, 86400))"
                 )
+        # handle partitioning when user passes a PartitionTransformation to the `partition` param in bigquery_adapter
+        partition_hint = table.get(PARTITION_HINT)
+        if isinstance(partition_hint, dict) and len(partition_hint) > 1:
+            col_names = [
+                self.sql_client.escape_column_name(col) for col, v in partition_hint.items()
+            ]
+            raise DestinationSchemaWillNotUpdate(
+                canonical_name, col_names, "Partition requested for more than one column"
+            )
 
-        if cluster_list := [
-            self.sql_client.escape_column_name(c["name"])
-            for c in new_columns
-            if c.get("cluster") or c.get(CLUSTER_HINT, False)
-        ]:
+        sql[0] += self._bigquery_partition_clause(
+            partition_hint if isinstance(partition_hint, dict) else None
+        )
+
+        # Collect cluster columns from table-level and per-column hints
+        cluster_columns_from_table_hint = list(
+            cast(Iterable[str], table.get(CLUSTER_COLUMNS_HINT, []))
+        )
+        cluster_columns_from_column_hints = [
+            c["name"] for c in new_columns if c.get("cluster") or c.get(CLUSTER_HINT, False)
+        ]
+
+        # Deprecation warning for per-column cluster hints
+        if cluster_columns_from_column_hints and not cluster_columns_from_table_hint:
+            per_column_cluster_hint_deprecated(cluster_columns_from_column_hints)
+
+        # Prefer table-level cluster columns if present, otherwise fallback to per-column hints
+        cluster_columns_final = (
+            cluster_columns_from_table_hint
+            if cluster_columns_from_table_hint
+            else cluster_columns_from_column_hints
+        )
+
+        if cluster_columns_final:
+            cluster_list = [
+                self.sql_client.escape_column_name(col) for col in cluster_columns_final
+            ]
             sql[0] += "\nCLUSTER BY " + ", ".join(cluster_list)
 
         # Table options.
@@ -363,7 +415,7 @@ class BigQueryClient(SqlJobClientWithStagingDataset, SupportsStagingDestination)
             try:
                 schema_table: TTableSchemaColumns = {}
                 table = self.sql_client.native_connection.get_table(
-                    self.sql_client.make_qualified_table_name(table_name, escape=False),
+                    self.sql_client.make_qualified_table_name(table_name, quote=False),
                     retry=self.sql_client._default_retry,
                     timeout=self.config.http_timeout,
                 )
@@ -444,7 +496,7 @@ SELECT {",".join(self._get_storage_table_query_columns())}
         if bucket_path:
             return self.sql_client.native_connection.load_table_from_uri(
                 bucket_path,
-                self.sql_client.make_qualified_table_name(table_name, escape=False),
+                self.sql_client.make_qualified_table_name(table_name, quote=False),
                 job_id=job_id,
                 job_config=job_config,
                 timeout=self.config.file_upload_timeout,
@@ -453,7 +505,7 @@ SELECT {",".join(self._get_storage_table_query_columns())}
         with open(file_path, "rb") as f:
             return self.sql_client.native_connection.load_table_from_file(
                 f,
-                self.sql_client.make_qualified_table_name(table_name, escape=False),
+                self.sql_client.make_qualified_table_name(table_name, quote=False),
                 job_id=job_id,
                 job_config=job_config,
                 timeout=self.config.file_upload_timeout,
@@ -534,7 +586,7 @@ def _streaming_load(
 
     sql_client = job_client.sql_client
 
-    full_name = sql_client.make_qualified_table_name(table["name"], escape=False)
+    full_name = sql_client.make_qualified_table_name(table["name"], quote=False)
 
     bq_client = sql_client._client
     bq_client.insert_rows_json(

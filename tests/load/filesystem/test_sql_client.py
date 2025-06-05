@@ -38,12 +38,8 @@ def _run_dataset_checks(
     destination_config: DestinationTestConfiguration,
     secret_directory: str,
     table_format: Optional[TTableFormat] = None,
-    alternate_access_pipeline: Pipeline = None,
 ) -> None:
     total_records = 200
-
-    # duckdb will store secrets lower case, that's why we could not delete it
-    TEST_SECRET_NAME = "test_secret_" + uniq_id()
 
     # only some buckets have support for persistent secrets
     needs_persistent_secrets = (
@@ -90,10 +86,6 @@ def _run_dataset_checks(
 
     # run source
     pipeline.run(source(), loader_file_format=destination_config.file_format)
-
-    if alternate_access_pipeline:
-        orig_dest = pipeline.destination
-        pipeline.destination = alternate_access_pipeline.destination
 
     import duckdb
     from duckdb import HTTPException, IOException, InvalidInputException
@@ -144,6 +136,8 @@ def _run_dataset_checks(
     #
 
     duck_db_location = TEST_STORAGE_ROOT + "/" + uniq_id()
+    # duckdb will store secrets lower case, that's why we could not delete it
+    TEST_SECRET_NAME = "second_" + uniq_id()
 
     def _external_duckdb_connection() -> duckdb.DuckDBPyConnection:
         external_db = duckdb.connect(duck_db_location)
@@ -156,11 +150,13 @@ def _run_dataset_checks(
 
     def _fs_sql_client_for_external_db(
         connection: duckdb.DuckDBPyConnection,
+        persist_secrets: bool = False,
     ) -> FilesystemSqlClient:
         return FilesystemSqlClient(
             dataset_name="second",
-            fs_client=pipeline.destination_client(),  #  type: ignore
-            credentials=DuckDbCredentials(connection),
+            remote_client=pipeline.destination_client(),  #  type: ignore
+            cache_db=DuckDbCredentials(connection),
+            persist_secrets=persist_secrets,
         )
 
     # we create a duckdb with a table an see whether we can add more views from the fs client
@@ -181,20 +177,21 @@ def _run_dataset_checks(
     assert len(external_db.sql("SELECT * FROM first.items").fetchall()) == 3
 
     # test if view reflects source table accurately after it has changed
-    # conretely, this tests if an existing view is replaced with formats that need it, such as
+    # concretely, this tests if an existing view is replaced with formats that need it, such as
     # `iceberg` table format
     with fs_sql_client as sql_client:
         sql_client.create_views_for_tables({"arrow_all_types": "arrow_all_types"})
     assert external_db.sql("FROM second.arrow_all_types;").arrow().num_rows == total_records
-    if alternate_access_pipeline:
-        # switch back for the write path
-        pipeline.destination = orig_dest
+
     pipeline.run(  # run pipeline again to add rows to source table
         source().with_resources("arrow_all_types"),
         loader_file_format=destination_config.file_format,
     )
+    # and recreate views because autorefresh is not enabled by default
     with fs_sql_client as sql_client:
-        sql_client.create_views_for_tables({"arrow_all_types": "arrow_all_types"})
+        sql_client.create_view(
+            "arrow_all_types", pipeline.default_schema.get_table("arrow_all_types")  # type: ignore
+        )
     assert external_db.sql("FROM second.arrow_all_types;").arrow().num_rows == (2 * total_records)
 
     external_db.close()
@@ -224,11 +221,19 @@ def _run_dataset_checks(
 
     # create secret
     external_db = _external_duckdb_connection()
-    fs_sql_client = _fs_sql_client_for_external_db(external_db)
+    fs_sql_client = _fs_sql_client_for_external_db(external_db, persist_secrets=True)
 
     try:
         with fs_sql_client as sql_client:
-            fs_sql_client.create_authentication(persistent=True, secret_name=TEST_SECRET_NAME)
+            # remove all previous secrets
+            for secret_name in fs_sql_client.list_secrets():
+                fs_sql_client.drop_secret(secret_name)
+
+            fs_sql_client.create_secret(
+                fs_sql_client.remote_client.config.bucket_url,
+                fs_sql_client.remote_client.config.credentials,
+                secret_name=TEST_SECRET_NAME,
+            )
         external_db.close()
 
         # now this should work
@@ -241,7 +246,7 @@ def _run_dataset_checks(
         # now drop the secrets again
         fs_sql_client = _fs_sql_client_for_external_db(external_db)
         with fs_sql_client as sql_client:
-            fs_sql_client.drop_authentication(TEST_SECRET_NAME)
+            fs_sql_client.drop_secret(TEST_SECRET_NAME)
         external_db.close()
 
         # fails again
@@ -252,11 +257,11 @@ def _run_dataset_checks(
                 == total_records
             )
         external_db.close()
-    finally:
+    except Exception:
         with duckdb.connect() as conn:
             fs_sql_client = _fs_sql_client_for_external_db(conn)
             with fs_sql_client as sql_client:
-                fs_sql_client.drop_authentication(TEST_SECRET_NAME)
+                fs_sql_client.drop_secret(TEST_SECRET_NAME)
 
 
 @pytest.mark.essential
@@ -265,6 +270,7 @@ def _run_dataset_checks(
     destinations_configs(
         local_filesystem_configs=True,
         all_buckets_filesystem_configs=True,
+        table_format_local_configs=True,
         bucket_exclude=[SFTP_BUCKET, MEMORY_BUCKET],
     ),  # TODO: make SFTP work
     ids=lambda x: x.name,
@@ -308,10 +314,55 @@ def test_read_interfaces_filesystem(
 @pytest.mark.parametrize(
     "destination_config",
     destinations_configs(
+        local_filesystem_configs=True,
+        all_buckets_filesystem_configs=True,
+        table_format_local_configs=True,
+        bucket_exclude=[SFTP_BUCKET, MEMORY_BUCKET],
+    ),  # TODO: make SFTP work
+    ids=lambda x: x.name,
+)
+@pytest.mark.parametrize("autorefresh", (True, False))
+def test_auto_refresh_views(
+    destination_config: DestinationTestConfiguration, autorefresh: bool
+) -> None:
+    pipeline = destination_config.setup_pipeline(
+        "read_pipeline",
+        dataset_name="read_test",
+        dev_mode=True,
+    )
+    # set autorefresh
+    pipeline.destination.config_params["always_refresh_views"] = autorefresh
+    pipeline.run(
+        [1, 2, 3],
+        table_name="digits",
+        table_format=destination_config.table_format,
+        loader_file_format=destination_config.file_format,
+    )
+
+    # get dataset and keep connection
+    with pipeline.dataset() as ds_:
+        digits = ds_.digits
+        # this also creates view
+        assert len(digits.fetchall()) == 3
+
+        # do not close dataset to not remove views and run again
+        pipeline.run(
+            [7, 8],
+            table_name="digits",
+            table_format=destination_config.table_format,
+            loader_file_format=destination_config.file_format,
+        )
+
+        should_refresh = autorefresh or destination_config.table_format == "delta"
+        assert len(digits.fetchall()) == 5 if should_refresh else 3
+
+
+@pytest.mark.essential
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(
         table_format_filesystem_configs=True,
         with_table_format=("delta", "iceberg"),
-        bucket_exclude=[SFTP_BUCKET, MEMORY_BUCKET],
-        # NOTE: delta does not work on memory buckets
     ),
     ids=lambda x: x.name,
 )
@@ -326,25 +377,11 @@ def test_table_formats(
         dev_mode=True,
     )
 
-    # in case of gcs we use the s3 compat layer for reading
-    # for writing we still need to use the gc authentication, as delta_rs seems to use
-    # methods on the s3 interface that are not implemented by gcs
-    # s3 compat layer does not work with `iceberg` table format
-    access_pipeline = pipeline
-    if destination_config.bucket_url == GCS_BUCKET and destination_config.table_format != "iceberg":
-        gcp_bucket = filesystem(
-            GCS_BUCKET.replace("gs://", "s3://"), destination_name="filesystem_s3_gcs_comp"
-        )
-        access_pipeline = destination_config.setup_pipeline(
-            "read_pipeline", dataset_name="read_test", dev_mode=True, destination=gcp_bucket
-        )
-
     _run_dataset_checks(
         pipeline,
         destination_config,
         secret_directory=secret_directory,
         table_format=destination_config.table_format,
-        alternate_access_pipeline=access_pipeline,
     )
 
 
@@ -365,8 +402,12 @@ def test_evolving_filesystem(
             f"Test only works for jsonl and parquet, given: {destination_config.file_format}"
         )
 
-    @dlt.resource(table_name="items")
+    @dlt.resource(table_name="items", file_format=destination_config.file_format)
     def items():
+        yield from [{"id": i} for i in range(20)]
+
+    @dlt.resource(file_format="csv")
+    def csv_items():
         yield from [{"id": i} for i in range(20)]
 
     pipeline = destination_config.setup_pipeline(
@@ -375,16 +416,20 @@ def test_evolving_filesystem(
         dev_mode=True,
     )
 
-    pipeline.run([items()], loader_file_format=destination_config.file_format)
+    pipeline.run([items(), csv_items()])
 
     df = pipeline.dataset().items.df()
     assert len(df.index) == 20
 
-    @dlt.resource(table_name="items")
+    assert pipeline.default_schema.get_table("csv_items")["file_format"] == "csv"
+
+    assert len(pipeline.dataset().csv_items.fetchall()) == 20
+
+    @dlt.resource(table_name="items", file_format=destination_config.file_format)
     def items2():
         yield from [{"id": i, "other_value": "Blah"} for i in range(20, 50)]
 
-    pipeline.run([items2()], loader_file_format=destination_config.file_format)
+    pipeline.run([items2()])
 
     # check df and arrow access
     assert len(pipeline.dataset().items.df().index) == 50

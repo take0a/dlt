@@ -309,6 +309,13 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
             self.allow_external_schedulers = merged.allow_external_schedulers
             self.row_order = merged.row_order
             self.lag = merged.lag
+            # also copy the orig class to preserve cursor type
+            if constructor := getattr(self, "__orig_class__", None):
+                pass
+            elif constructor := getattr(native_value, "__orig_class__", None):
+                pass
+            if constructor is not None:
+                self.__orig_class__ = constructor
             self.__is_resolved__ = self.__is_resolved__
         else:  # TODO: Maybe check if callable(getattr(native_value, '__lt__', None))
             # Passing bare value `incremental=44` gets parsed as initial_value
@@ -547,7 +554,9 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
         return self._make_or_get_transformer(JsonIncremental)
 
     def __call__(self, rows: TDataItems, meta: Any = None) -> Optional[TDataItems]:
-        if rows is None:
+        # NOTE: we also forward empty lists, so special empty list types are preserved
+        # example: MaterializedEmptyList
+        if rows is None or (isinstance(rows, list) and len(rows) == 0):
             return rows
         transformer = self._get_transformer(rows)
         if isinstance(rows, list):
@@ -718,7 +727,7 @@ class IncrementalResourceWrapper(ItemTransform[TDataItem]):
                 and p.annotation
                 and get_args(p.annotation)
             ):
-                new_incremental.__orig_class__ = p.annotation  # type: ignore
+                new_incremental.__orig_class__ = p.annotation
 
             # set the incremental only if not yet set or if it was passed explicitly
             # NOTE: the _incremental may be also set by applying hints to the resource see `set_template` in `DltResource`

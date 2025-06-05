@@ -30,6 +30,7 @@ from dlt.sources.helpers.transform import skip_first, take_first
 from dlt.pipeline.exceptions import PipelineStepFailed
 from dlt.normalize.exceptions import NormalizeJobFailed
 
+from tests.load.pipeline.utils import skip_if_unsupported_merge_strategy
 from tests.pipeline.utils import (
     assert_load_info,
     load_table_counts,
@@ -38,25 +39,13 @@ from tests.pipeline.utils import (
     assert_records_as_set,
 )
 from tests.load.utils import (
+    AWS_BUCKET,
     normalize_storage_table_cols,
     destinations_configs,
     DestinationTestConfiguration,
     FILE_BUCKET,
-    AZ_BUCKET,
-    SFTP_BUCKET,
+    ABFS_BUCKET,
 )
-
-
-def skip_if_not_supported(
-    merge_strategy: TLoaderMergeStrategy,
-    destination: AnyDestination,
-) -> None:
-    # resolve_merge_strategy
-    if merge_strategy not in destination.capabilities().supported_merge_strategies:
-        pytest.skip(
-            f"`{merge_strategy}` merge strategy not supported for `{destination.destination_name}`"
-            " destination."
-        )
 
 
 @pytest.mark.essential
@@ -67,7 +56,7 @@ def skip_if_not_supported(
         all_buckets_filesystem_configs=True,
         table_format_filesystem_configs=True,
         supports_merge=True,
-        bucket_subset=(FILE_BUCKET, AZ_BUCKET),  # test one local, one remote
+        bucket_subset=(FILE_BUCKET, AWS_BUCKET),  # test one local, one remote
     ),
     ids=lambda x: x.name,
 )
@@ -77,9 +66,9 @@ def test_merge_on_keys_in_schema_nested_hints(
     merge_strategy: TLoaderMergeStrategy,
 ) -> None:
     """Tests merge disposition on an annotated schema, no annotations on resource"""
-    p = destination_config.setup_pipeline("eth_2", dev_mode=True)
+    skip_if_unsupported_merge_strategy(destination_config, merge_strategy)
 
-    skip_if_not_supported(merge_strategy, p.destination)
+    p = destination_config.setup_pipeline("eth_2", dev_mode=True)
 
     with open("tests/common/cases/schemas/eth/ethereum_schema_v11.yml", "r", encoding="utf-8") as f:
         schema = dlt.Schema.from_dict(yaml.safe_load(f))
@@ -136,7 +125,7 @@ def test_merge_on_keys_in_schema_nested_hints(
         **destination_config.run_kwargs,
     )
     assert_load_info(info)
-    eth_2_counts = load_table_counts(p, *[t["name"] for t in p.default_schema.data_tables()])
+    eth_2_counts = load_table_counts(p)
     # we have 2 blocks in dataset
     assert eth_2_counts["blocks"] == 2 if destination_config.supports_merge else 3
     # make sure we have same record after merging full dataset again
@@ -148,7 +137,7 @@ def test_merge_on_keys_in_schema_nested_hints(
     # for non merge destinations we just check that the run passes
     if not destination_config.supports_merge:
         return
-    eth_3_counts = load_table_counts(p, *[t["name"] for t in p.default_schema.data_tables()])
+    eth_3_counts = load_table_counts(p)
     assert eth_2_counts == eth_3_counts
 
 
@@ -158,7 +147,7 @@ def test_merge_on_keys_in_schema_nested_hints(
     destinations_configs(
         default_sql_configs=True,
         local_filesystem_configs=True,
-        table_format_filesystem_configs=True,
+        table_format_local_configs=True,
         supports_merge=True,
         bucket_subset=(FILE_BUCKET,),
     ),
@@ -169,9 +158,9 @@ def test_merge_record_updates(
     destination_config: DestinationTestConfiguration,
     merge_strategy: TLoaderMergeStrategy,
 ) -> None:
-    p = destination_config.setup_pipeline("test_merge_record_updates", dev_mode=True)
+    skip_if_unsupported_merge_strategy(destination_config, merge_strategy)
 
-    skip_if_not_supported(merge_strategy, p.destination)
+    p = destination_config.setup_pipeline("test_merge_record_updates", dev_mode=True)
 
     @dlt.resource(
         table_name="parent",
@@ -272,9 +261,9 @@ def test_merge_record_updates(
     destinations_configs(
         default_sql_configs=True,
         local_filesystem_configs=True,
-        table_format_filesystem_configs=True,
+        table_format_local_configs=True,
         supports_merge=True,
-        subset=("postgres", "snowflake"),
+        subset=("postgres", "snowflake", "filesystem", "iceberg"),
     ),
     ids=lambda x: x.name,
 )
@@ -283,9 +272,8 @@ def test_merge_primary_key_normalization(
     destination_config: DestinationTestConfiguration,
     merge_strategy: TLoaderMergeStrategy,
 ) -> None:
+    skip_if_unsupported_merge_strategy(destination_config, merge_strategy)
     p = destination_config.setup_pipeline("test_merge_record_updates", dev_mode=True)
-
-    skip_if_not_supported(merge_strategy, p.destination)
 
     @dlt.resource(
         table_name="parent",
@@ -391,9 +379,8 @@ def test_merge_primary_key_normalization(
     destinations_configs(
         default_sql_configs=True,
         local_filesystem_configs=True,
-        table_format_filesystem_configs=True,
+        table_format_local_configs=True,
         supports_merge=True,
-        bucket_subset=(FILE_BUCKET,),
     ),
     ids=lambda x: x.name,
 )
@@ -402,11 +389,11 @@ def test_merge_nested_records_inserted_deleted(
     destination_config: DestinationTestConfiguration,
     merge_strategy: TLoaderMergeStrategy,
 ) -> None:
+    skip_if_unsupported_merge_strategy(destination_config, merge_strategy)
+
     p = destination_config.setup_pipeline(
         "test_merge_nested_records_inserted_deleted", dev_mode=True
     )
-
-    skip_if_not_supported(merge_strategy, p.destination)
 
     @dlt.resource(
         table_name="parent",
@@ -528,9 +515,8 @@ def test_merge_nested_records_inserted_deleted(
     destinations_configs(
         default_sql_configs=True,
         local_filesystem_configs=True,
-        table_format_filesystem_configs=True,
+        table_format_local_configs=True,
         supports_merge=True,
-        bucket_subset=(FILE_BUCKET,),
     ),
     ids=lambda x: x.name,
 )
@@ -539,11 +525,11 @@ def test_bring_your_own_dlt_id(
     destination_config: DestinationTestConfiguration,
     merge_strategy: TLoaderMergeStrategy,
 ) -> None:
+    skip_if_unsupported_merge_strategy(destination_config, merge_strategy)
+
     p = destination_config.setup_pipeline(
         "test_merge_nested_records_inserted_deleted", dev_mode=True
     )
-
-    skip_if_not_supported(merge_strategy, p.destination)
 
     # sets _dlt_id as both primary key and row key.
     @dlt.resource(
@@ -635,9 +621,8 @@ def test_bring_your_own_dlt_id(
     destinations_configs(
         default_sql_configs=True,
         local_filesystem_configs=True,
-        table_format_filesystem_configs=True,
+        table_format_local_configs=True,
         supports_merge=True,
-        bucket_subset=(FILE_BUCKET,),
     ),
     ids=lambda x: x.name,
 )
@@ -646,8 +631,9 @@ def test_merge_on_ad_hoc_primary_key(
     destination_config: DestinationTestConfiguration,
     merge_strategy: TLoaderMergeStrategy,
 ) -> None:
+    skip_if_unsupported_merge_strategy(destination_config, merge_strategy)
+
     p = destination_config.setup_pipeline("github_1", dev_mode=True)
-    skip_if_not_supported(merge_strategy, p.destination)
 
     @dlt.resource(
         table_name="issues",
@@ -664,7 +650,7 @@ def test_merge_on_ad_hoc_primary_key(
     # note: NodeId will be normalized to "node_id" which exists in the schema
     info = p.run(data(slice(0, 17)), **destination_config.run_kwargs)
     assert_load_info(info)
-    github_1_counts = load_table_counts(p, *[t["name"] for t in p.default_schema.data_tables()])
+    github_1_counts = load_table_counts(p)
     # 17 issues
     assert github_1_counts["issues"] == 17
     # primary key set on issues
@@ -677,7 +663,7 @@ def test_merge_on_ad_hoc_primary_key(
     # for non merge destinations we just check that the run passes
     if not destination_config.supports_merge:
         return
-    github_2_counts = load_table_counts(p, *[t["name"] for t in p.default_schema.data_tables()])
+    github_2_counts = load_table_counts(p)
     # 100 issues total
     assert github_2_counts["issues"] == 100
     # still 100 after the reload
@@ -703,7 +689,9 @@ def github():
 
 @pytest.mark.essential
 @pytest.mark.parametrize(
-    "destination_config", destinations_configs(default_sql_configs=True), ids=lambda x: x.name
+    "destination_config",
+    destinations_configs(default_sql_configs=True, supports_merge=True),
+    ids=lambda x: x.name,
 )
 def test_merge_source_compound_keys_and_changes(
     destination_config: DestinationTestConfiguration,
@@ -712,7 +700,7 @@ def test_merge_source_compound_keys_and_changes(
 
     info = p.run(github(), **destination_config.run_kwargs)
     assert_load_info(info)
-    github_1_counts = load_table_counts(p, *[t["name"] for t in p.default_schema.data_tables()])
+    github_1_counts = load_table_counts(p)
     # 100 issues total
     assert github_1_counts["issues"] == 100
     # check keys created
@@ -734,7 +722,7 @@ def test_merge_source_compound_keys_and_changes(
     assert_load_info(info)
     assert p.default_schema.tables["issues"]["write_disposition"] == "append"
     # the counts of all tables must be double
-    github_2_counts = load_table_counts(p, *[t["name"] for t in p.default_schema.data_tables()])
+    github_2_counts = load_table_counts(p)
     assert {k: v * 2 for k, v in github_1_counts.items()} == github_2_counts
 
     # now replace all resources
@@ -743,7 +731,7 @@ def test_merge_source_compound_keys_and_changes(
     assert p.default_schema.tables["issues"]["write_disposition"] == "replace"
     # assert p.default_schema.tables["issues__labels"]["write_disposition"] == "replace"
     # the counts of all tables must be double
-    github_3_counts = load_table_counts(p, *[t["name"] for t in p.default_schema.data_tables()])
+    github_3_counts = load_table_counts(p)
     assert github_1_counts == github_3_counts
 
 
@@ -769,7 +757,7 @@ def test_merge_no_child_tables(destination_config: DestinationTestConfiguration)
     assert len(p.default_schema.data_tables()) == 1
     assert "issues" in p.default_schema.tables
     assert_load_info(info)
-    github_1_counts = load_table_counts(p, *[t["name"] for t in p.default_schema.data_tables()])
+    github_1_counts = load_table_counts(p)
     assert github_1_counts["issues"] == 15
 
     # load all
@@ -777,7 +765,7 @@ def test_merge_no_child_tables(destination_config: DestinationTestConfiguration)
     github_data.max_table_nesting = 0
     info = p.run(github_data, **destination_config.run_kwargs)
     assert_load_info(info)
-    github_2_counts = load_table_counts(p, *[t["name"] for t in p.default_schema.data_tables()])
+    github_2_counts = load_table_counts(p)
     # 100 issues total, or 115 if merge is not supported
     assert github_2_counts["issues"] == 100 if destination_config.supports_merge else 115
 
@@ -801,7 +789,7 @@ def test_merge_no_merge_keys(destination_config: DestinationTestConfiguration) -
     github_data.load_issues.add_filter(skip_first(45))
     info = p.run(github_data, **destination_config.run_kwargs)
     assert_load_info(info)
-    github_1_counts = load_table_counts(p, *[t["name"] for t in p.default_schema.data_tables()])
+    github_1_counts = load_table_counts(p)
     assert github_1_counts["issues"] == 100 - 45
 
     # take first 10 rows.
@@ -812,7 +800,7 @@ def test_merge_no_merge_keys(destination_config: DestinationTestConfiguration) -
     github_data.load_issues.add_filter(take_first(10))
     info = p.run(github_data, **destination_config.run_kwargs)
     assert_load_info(info)
-    github_1_counts = load_table_counts(p, *[t["name"] for t in p.default_schema.data_tables()])
+    github_1_counts = load_table_counts(p)
     # we have 10 rows more, merge falls back to append if no keys present
     assert github_1_counts["issues"] == 100 - 45 + 10
 
@@ -820,7 +808,11 @@ def test_merge_no_merge_keys(destination_config: DestinationTestConfiguration) -
 @pytest.mark.parametrize(
     "destination_config",
     destinations_configs(
-        default_sql_configs=True, with_file_format="parquet", local_filesystem_configs=True
+        default_sql_configs=True,
+        with_file_format="parquet",
+        local_filesystem_configs=True,
+        table_format_local_configs=True,
+        supports_merge=True,
     ),
     ids=lambda x: x.name,
 )
@@ -841,15 +833,18 @@ def test_pipeline_load_parquet(destination_config: DestinationTestConfiguration)
     assert_load_info(info)
     # make sure it was parquet or sql transforms
     expected_formats = ["parquet"]
-    if p.staging:
+    if p.staging or destination_config.table_format:
         # allow references if staging is present
         expected_formats.append("reference")
     files = p.get_load_package_info(p.list_completed_load_packages()[0]).jobs["completed_jobs"]
     assert all(f.job_file_info.file_format in expected_formats + ["sql"] for f in files)
 
-    github_1_counts = load_table_counts(p, *[t["name"] for t in p.default_schema.data_tables()])
+    github_1_counts = load_table_counts(p)
     expected_rows = 100
-    if not destination_config.supports_merge:
+    # if table_format is set we use upsert which does not deduplicate input data
+    if not destination_config.supports_merge or (
+        destination_config.table_format and destination_config.destination_type != "athena"
+    ):
         expected_rows *= 2
     assert github_1_counts["issues"] == expected_rows
 
@@ -873,7 +868,7 @@ def test_pipeline_load_parquet(destination_config: DestinationTestConfiguration)
         expected_formats.append("sql")
     assert all(f.job_file_info.file_format in expected_formats for f in files)
 
-    github_1_counts = load_table_counts(p, *[t["name"] for t in p.default_schema.data_tables()])
+    github_1_counts = load_table_counts(p)
     assert github_1_counts["issues"] == 100
 
 
@@ -1043,8 +1038,7 @@ def test_deduplicate_single_load(destination_config: DestinationTestConfiguratio
     counts = load_table_counts(p, "duplicates", "duplicates__child")
     assert counts["duplicates"] == 1 if destination_config.supports_merge else 2
     assert counts["duplicates__child"] == 3 if destination_config.supports_merge else 6
-    qual_name = p.sql_client().make_qualified_table_name("duplicates")
-    select_data(p, f"SELECT * FROM {qual_name}")[0]
+    select_data(p, "SELECT * FROM duplicates")[0]
 
     @dlt.resource(write_disposition="merge", primary_key=("id", "subkey"))
     def duplicates_no_child():
@@ -1090,9 +1084,8 @@ def test_no_deduplicate_only_merge_key(destination_config: DestinationTestConfig
     destinations_configs(
         default_sql_configs=True,
         local_filesystem_configs=True,
-        table_format_filesystem_configs=True,
+        table_format_local_configs=True,
         supports_merge=True,
-        bucket_subset=(FILE_BUCKET,),
     ),
     ids=lambda x: x.name,
 )
@@ -1101,11 +1094,12 @@ def test_nested_column_missing(
     destination_config: DestinationTestConfiguration,
     merge_strategy: TLoaderMergeStrategy,
 ) -> None:
-    if destination_config.table_format == "delta":
+    if destination_config.table_format:
         pytest.skip(
             "Record updates that involve removing elements from a nested"
-            " column is not supported for `delta` table format."
+            " column is not supported for open table destinations."
         )
+    skip_if_unsupported_merge_strategy(destination_config, merge_strategy)
 
     table_name = "test_nested_column_missing"
 
@@ -1119,7 +1113,6 @@ def test_nested_column_missing(
         yield data
 
     p = destination_config.setup_pipeline("abstract", dev_mode=True)
-    skip_if_not_supported(merge_strategy, p.destination)
 
     data = [
         {"id": 1, "simple": "foo", "nested": [1, 2, 3]},
@@ -1154,6 +1147,7 @@ def test_hard_delete_hint(
 ) -> None:
     if merge_strategy == "upsert" and key_type != "primary_key":
         pytest.skip("`upsert` merge strategy requires `primary_key`")
+    skip_if_unsupported_merge_strategy(destination_config, merge_strategy)
     # no_key setting will have the effect that hard deletes have no effect, since hard delete records
     # can not be matched
     table_name = "test_hard_delete_hint"
@@ -1175,7 +1169,6 @@ def test_hard_delete_hint(
         pass
 
     p = destination_config.setup_pipeline(f"abstract_{key_type}", dev_mode=True)
-    skip_if_not_supported(merge_strategy, p.destination)
 
     # insert two records
     data = [
@@ -1204,10 +1197,9 @@ def test_hard_delete_hint(
 
     # compare observed records with expected records
     if key_type != "no_key":
-        qual_name = p.sql_client().make_qualified_table_name(table_name)
         observed = [
             {"id": row[0], "val": row[1], "deleted": row[2]}
-            for row in select_data(p, f"SELECT id, val, deleted FROM {qual_name}")
+            for row in select_data(p, f"SELECT id, val, deleted FROM {table_name}")
         ]
         expected = [{"id": 2, "val": "baz", "deleted": None}]
         assert sorted(observed, key=lambda d: d["id"]) == expected
@@ -1316,6 +1308,8 @@ def test_hard_delete_hint_config(
     destination_config: DestinationTestConfiguration,
     merge_strategy: TLoaderMergeStrategy,
 ) -> None:
+    skip_if_unsupported_merge_strategy(destination_config, merge_strategy)
+
     table_name = "test_hard_delete_hint_non_bool"
 
     @dlt.resource(
@@ -1330,7 +1324,6 @@ def test_hard_delete_hint_config(
         yield data
 
     p = destination_config.setup_pipeline("abstract", dev_mode=True)
-    skip_if_not_supported(merge_strategy, p.destination)
 
     # insert two records
     data = [
@@ -1350,10 +1343,9 @@ def test_hard_delete_hint_config(
     assert load_table_counts(p, table_name)[table_name] == 1
 
     # compare observed records with expected records
-    qual_name = p.sql_client().make_qualified_table_name(table_name)
     observed = [
         {"id": row[0], "val": row[1], "deleted_timestamp": row[2]}
-        for row in select_data(p, f"SELECT id, val, deleted_timestamp FROM {qual_name}")
+        for row in select_data(p, f"SELECT id, val, deleted_timestamp FROM {table_name}")
     ]
     expected = [{"id": 2, "val": "bar", "deleted_timestamp": None}]
     assert sorted(observed, key=lambda d: d["id"]) == expected
@@ -1406,10 +1398,9 @@ def test_dedup_sort_hint(destination_config: DestinationTestConfiguration) -> No
 
     # compare observed records with expected records
     # record with highest value in sort column is inserted (because "desc")
-    qual_name = p.sql_client().make_qualified_table_name(table_name)
     observed = [
         {"id": row[0], "val": row[1], "sequence": row[2]}
-        for row in select_data(p, f"SELECT id, val, sequence FROM {qual_name}")
+        for row in select_data(p, f"SELECT id, val, sequence FROM {table_name}")
     ]
     expected = [{"id": 1, "val": "baz", "sequence": 3}]
     assert sorted(observed, key=lambda d: d["id"]) == expected
@@ -1423,10 +1414,9 @@ def test_dedup_sort_hint(destination_config: DestinationTestConfiguration) -> No
 
     # compare observed records with expected records
     # record with highest lowest in sort column is inserted (because "asc")
-    qual_name = p.sql_client().make_qualified_table_name(table_name)
     observed = [
         {"id": row[0], "val": row[1], "sequence": row[2]}
-        for row in select_data(p, f"SELECT id, val, sequence FROM {qual_name}")
+        for row in select_data(p, f"SELECT id, val, sequence FROM {table_name}")
     ]
     expected = [{"id": 1, "val": "foo", "sequence": 1}]
     assert sorted(observed, key=lambda d: d["id"]) == expected
@@ -1450,9 +1440,7 @@ def test_dedup_sort_hint(destination_config: DestinationTestConfiguration) -> No
     assert load_table_counts(p, table_name + "__val")[table_name + "__val"] == 3
 
     # compare observed records with expected records, now for child table
-    qual_name = p.sql_client().make_qualified_table_name(table_name + "__val")
-    value_quoted = p.sql_client().escape_column_name("value")
-    observed = [row[0] for row in select_data(p, f"SELECT {value_quoted} FROM {qual_name}")]
+    observed = [row[0] for row in select_data(p, f"SELECT value FROM {table_name}__val")]
     assert sorted(observed) == [7, 8, 9]  # type: ignore[type-var]
 
     table_name = "test_dedup_sort_hint_with_hard_delete"
@@ -1487,10 +1475,9 @@ def test_dedup_sort_hint(destination_config: DestinationTestConfiguration) -> No
     assert load_table_counts(p, table_name)[table_name] == 1
 
     # compare observed records with expected records
-    qual_name = p.sql_client().make_qualified_table_name(table_name)
     observed = [
         {"id": row[0], "val": row[1], "sequence": row[2]}
-        for row in select_data(p, f"SELECT id, val, sequence FROM {qual_name}")
+        for row in select_data(p, f"SELECT id, val, sequence FROM {table_name}")
     ]
     expected = [{"id": 1, "val": "baz", "sequence": 3}]
     assert sorted(observed, key=lambda d: d["id"]) == expected
@@ -1539,6 +1526,7 @@ def test_dedup_sort_hint(destination_config: DestinationTestConfiguration) -> No
         info = p.run(r(), **destination_config.run_kwargs)
 
 
+@pytest.mark.no_load
 def test_merge_strategy_config() -> None:
     # merge strategy invalid
     with pytest.raises(ValueError):
@@ -1550,7 +1538,7 @@ def test_merge_strategy_config() -> None:
     p = dlt.pipeline(
         pipeline_name="dummy_pipeline",
         destination="dummy",
-        full_refresh=True,
+        dev_mode=True,
     )
 
     # merge strategy not supported by destination
@@ -1570,20 +1558,13 @@ def test_merge_strategy_config() -> None:
     "destination_config",
     destinations_configs(
         default_sql_configs=True,
-        table_format_filesystem_configs=True,
+        table_format_local_configs=True,
         supports_merge=True,
         subset=["postgres", "filesystem"],  # test one SQL and one non-SQL destination
     ),
     ids=lambda x: x.name,
 )
 def test_upsert_merge_strategy_config(destination_config: DestinationTestConfiguration) -> None:
-    if destination_config.destination_type == "filesystem":
-        # TODO: implement validation and remove this test exception
-        pytest.skip(
-            "`upsert` merge strategy configuration validation has not yet been"
-            " implemented for `fileystem` destination."
-        )
-
     @dlt.resource(write_disposition={"disposition": "merge", "strategy": "upsert"})
     def r():
         yield {"foo": "bar"}
@@ -1608,7 +1589,7 @@ def test_missing_merge_key_column(destination_config: DestinationTestConfigurati
     def merging_test_table():
         yield {"foo": "bar"}
 
-    p = destination_config.setup_pipeline("abstract", full_refresh=True)
+    p = destination_config.setup_pipeline("abstract", dev_mode=True)
     with pytest.raises(PipelineStepFailed) as pip_ex:
         p.run(merging_test_table(), **destination_config.run_kwargs)
 
@@ -1633,7 +1614,7 @@ def test_merge_key_null_values(destination_config: DestinationTestConfiguration)
     def r():
         yield [{"id": 1}, {"id": None}, {"id": 2}]
 
-    p = destination_config.setup_pipeline("abstract", full_refresh=True)
+    p = destination_config.setup_pipeline("abstract", dev_mode=True)
     with pytest.raises(PipelineStepFailed) as pip_ex:
         p.run(r(), **destination_config.run_kwargs)
 
@@ -1650,9 +1631,8 @@ def test_merge_key_null_values(destination_config: DestinationTestConfiguration)
     destinations_configs(
         default_sql_configs=True,
         local_filesystem_configs=True,
-        table_format_filesystem_configs=True,
+        table_format_local_configs=True,
         supports_merge=True,
-        bucket_subset=(FILE_BUCKET,),
     ),
     ids=lambda x: x.name,
 )
@@ -1661,9 +1641,9 @@ def test_merge_arrow(
     destination_config: DestinationTestConfiguration,
     merge_strategy: TLoaderMergeStrategy,
 ) -> None:
-    pipeline = destination_config.setup_pipeline("merge_arrow", dev_mode=True)
+    skip_if_unsupported_merge_strategy(destination_config, merge_strategy)
 
-    skip_if_not_supported(merge_strategy, pipeline.destination)
+    pipeline = destination_config.setup_pipeline("merge_arrow", dev_mode=True)
 
     @dlt.resource(
         write_disposition={"disposition": "merge", "strategy": merge_strategy},
@@ -1707,7 +1687,7 @@ def test_merge_arrow(
     )
 
     assert_load_info(load_info)
-    tables = load_tables_to_dicts(pipeline, "arrow_items", "arrow_items")
+    tables = load_tables_to_dicts(pipeline, "arrow_items")
 
     assert_records_as_set(
         tables["arrow_items"],

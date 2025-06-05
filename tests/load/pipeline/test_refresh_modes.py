@@ -14,14 +14,13 @@ from dlt.pipeline.state_sync import load_pipeline_state_from_destination
 
 from tests.utils import clean_test_storage, TEST_STORAGE_ROOT
 from tests.pipeline.utils import (
-    _is_filesystem,
     assert_load_info,
     load_table_counts,
     load_tables_to_dicts,
     assert_only_table_columns,
     table_exists,
 )
-from tests.load.utils import destinations_configs, DestinationTestConfiguration
+from tests.load.utils import FILE_BUCKET, destinations_configs, DestinationTestConfiguration
 
 # mark all tests as essential, do not remove
 pytestmark = pytest.mark.essential
@@ -102,7 +101,10 @@ def refresh_source(first_run: bool = True, drop_sources: bool = False):
 @pytest.mark.parametrize(
     "destination_config",
     destinations_configs(
-        default_sql_configs=True, subset=["duckdb", "filesystem"], local_filesystem_configs=True
+        default_sql_configs=True,
+        subset=["duckdb", "filesystem", "iceberg"],
+        local_filesystem_configs=True,
+        table_format_local_configs=True,
     ),
     ids=lambda x: x.name,
 )
@@ -168,7 +170,10 @@ def test_refresh_drop_sources(
 @pytest.mark.parametrize(
     "destination_config",
     destinations_configs(
-        default_sql_configs=True, local_filesystem_configs=True, subset=["duckdb", "filesystem"]
+        default_sql_configs=True,
+        local_filesystem_configs=True,
+        subset=["duckdb", "filesystem", "iceberg"],
+        table_format_local_configs=True,
     ),
     ids=lambda x: x.name,
 )
@@ -216,7 +221,10 @@ def test_existing_schema_hash(destination_config: DestinationTestConfiguration):
 @pytest.mark.parametrize(
     "destination_config",
     destinations_configs(
-        default_sql_configs=True, local_filesystem_configs=True, subset=["duckdb", "filesystem"]
+        default_sql_configs=True,
+        local_filesystem_configs=True,
+        subset=["duckdb", "filesystem", "iceberg"],
+        table_format_local_configs=True,
     ),
     ids=lambda x: x.name,
 )
@@ -286,7 +294,10 @@ def test_refresh_drop_resources(
 @pytest.mark.parametrize(
     "destination_config",
     destinations_configs(
-        default_sql_configs=True, local_filesystem_configs=True, subset=["duckdb", "filesystem"]
+        default_sql_configs=True,
+        local_filesystem_configs=True,
+        subset=["duckdb", "filesystem", "iceberg"],
+        table_format_local_configs=True,
     ),
     ids=lambda x: x.name,
 )
@@ -352,7 +363,10 @@ def test_refresh_drop_data_only(destination_config: DestinationTestConfiguration
 @pytest.mark.parametrize(
     "destination_config",
     destinations_configs(
-        default_sql_configs=True, local_filesystem_configs=True, subset=["duckdb", "filesystem"]
+        default_sql_configs=True,
+        local_filesystem_configs=True,
+        subset=["duckdb", "filesystem", "iceberg"],
+        table_format_local_configs=True,
     ),
     ids=lambda x: x.name,
 )
@@ -527,6 +541,10 @@ def test_refresh_staging_dataset(destination_config: DestinationTestConfiguratio
     ]
 
     pipeline = destination_config.setup_pipeline("test_refresh_staging_dataset" + uniq_id())
+    # this is Athena iceberg setting: use random table location
+    pipeline.destination.config_params["table_location_layout"] = (
+        "{dataset_name}/{table_name}_{location_tag}"
+    )
 
     source = DltSource(
         dlt.Schema("data_x"),
@@ -570,12 +588,8 @@ def test_refresh_staging_dataset(destination_config: DestinationTestConfiguratio
     assert_load_info(info)
 
     # tables got dropped
-    if _is_filesystem(pipeline):
-        assert load_table_counts(pipeline, "data_1", "data_2") == {}
-    else:
-        with pytest.raises(DestinationUndefinedEntity):
-            load_table_counts(pipeline, "data_1", "data_2")
-    load_table_counts(pipeline, "data_1_v2", "data_1_v2")
+    with pytest.raises(DestinationUndefinedEntity):
+        load_table_counts(pipeline, "data_1", "data_2")
 
 
 @pytest.mark.parametrize(

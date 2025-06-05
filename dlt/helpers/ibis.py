@@ -4,9 +4,11 @@ from dlt.common.exceptions import MissingDependencyException
 from dlt.common.destination import TDestinationReferenceArg, Destination
 from dlt.common.destination.client import JobClientBase
 from dlt.common.schema import Schema
-from dlt.destinations.sql_client import SqlClientBase
+from dlt.common.storages.configuration import FilesystemConfiguration
 
+from dlt.destinations.impl.athena.configuration import AthenaClientConfiguration
 from dlt.destinations.impl.duckdb.configuration import DuckDbClientConfiguration
+from dlt.destinations.impl.databricks.configuration import DatabricksClientConfiguration
 from dlt.destinations.impl.motherduck.configuration import MotherDuckClientConfiguration
 from dlt.destinations.impl.postgres.configuration import PostgresClientConfiguration
 from dlt.destinations.impl.redshift.configuration import RedshiftClientConfiguration
@@ -14,12 +16,12 @@ from dlt.destinations.impl.snowflake.configuration import SnowflakeClientConfigu
 from dlt.destinations.impl.mssql.configuration import MsSqlClientConfiguration
 from dlt.destinations.impl.bigquery.configuration import BigQueryClientConfiguration
 from dlt.destinations.impl.clickhouse.configuration import ClickHouseClientConfiguration
-from dlt.common.storages.configuration import FilesystemConfiguration
+from dlt.destinations.impl.synapse.configuration import SynapseClientConfiguration
 
 try:
-    import ibis  # type: ignore
+    import ibis
     import sqlglot
-    from ibis import BaseBackend, Expr
+    from ibis import BaseBackend, Expr, Table
 except ModuleNotFoundError:
     raise MissingDependencyException("dlt ibis helpers", ["ibis-framework"])
 
@@ -52,17 +54,24 @@ def create_ibis_backend(
     if issubclass(destination.spec, DuckDbClientConfiguration) or issubclass(
         destination.spec, MotherDuckClientConfiguration
     ):
-        import duckdb
         from dlt.destinations.impl.duckdb.duck import DuckDbClient
+        import duckdb
 
-        duck_client = cast(DuckDbClient, client)
+        assert isinstance(client, DuckDbClient)
         duck = duckdb.connect(
-            database=duck_client.config.credentials._conn_str(),
-            read_only=duck_client.config.credentials.read_only,
-            config=duck_client.config.credentials._get_conn_config(),
+            database=client.config.credentials._conn_str(),
+            read_only=client.config.credentials.read_only,
+            config=client.config.credentials._get_conn_config(),
         )
         con = ibis.duckdb.from_connection(duck)
+        # make sure we can access tables from current dataset without qualification
+        dataset_name = client.sql_client.fully_qualified_dataset_name()
+        con.raw_sql(f"SET search_path = '{dataset_name}';")
     elif issubclass(destination.spec, PostgresClientConfiguration):
+        from dlt.destinations.impl.postgres.postgres import PostgresClient
+        from dlt.destinations.impl.redshift.redshift import RedshiftClient
+
+        assert isinstance(client, (PostgresClient, RedshiftClient))
         if destination.spec is RedshiftClientConfiguration:
             # patch psycopg
             try:
@@ -85,35 +94,38 @@ def create_ibis_backend(
                     "Redshift is not properly supported by ibis as of version 0.10.4. "
                     "Please use an older version of ibis."
                 )
-        credentials = client.config.credentials.to_native_representation()
-        con = ibis.connect(credentials)
+        credentials = client.config.credentials.copy()
+        # schema must be passed at path, `schema` argument does not work (overridden, probably a bug)
+        credentials.database = credentials.database + "/" + client.sql_client.dataset_name
+        con = ibis.connect(credentials.to_native_representation())
     elif issubclass(destination.spec, SnowflakeClientConfiguration):
         from dlt.destinations.impl.snowflake.snowflake import SnowflakeClient
 
-        sf_client = cast(SnowflakeClient, client)
-        credentials = sf_client.config.credentials.to_connector_params()
-        con = ibis.snowflake.connect(**credentials, create_object_udfs=False)
-    elif issubclass(destination.spec, MsSqlClientConfiguration):
+        assert isinstance(client, SnowflakeClient)
+        sn_credentials = client.config.credentials.to_connector_params()
+        dataset_name = client.sql_client.fully_qualified_dataset_name()
+        con = ibis.snowflake.connect(
+            schema=dataset_name, **sn_credentials, create_object_udfs=False
+        )
+    elif issubclass(destination.spec, MsSqlClientConfiguration) and not issubclass(
+        destination.spec, SynapseClientConfiguration
+    ):  # exclude synapse
         from dlt.destinations.impl.mssql.mssql import MsSqlJobClient
 
-        mssql_client = cast(MsSqlJobClient, client)
-        con = ibis.mssql.connect(
-            host=mssql_client.config.credentials.host,
-            port=mssql_client.config.credentials.port,
-            database=mssql_client.config.credentials.database,
-            user=mssql_client.config.credentials.username,
-            password=mssql_client.config.credentials.password,
-            driver=mssql_client.config.credentials.driver,
-        )
+        assert isinstance(client, MsSqlJobClient)
+        ms_credentials = client.config.credentials.to_native_representation()
+        ms_credentials = ms_credentials.replace("synapse://", "mssql://")
+        con = ibis.connect(ms_credentials, driver=client.config.credentials.driver)
     elif issubclass(destination.spec, BigQueryClientConfiguration):
         from dlt.destinations.impl.bigquery.bigquery import BigQueryClient
 
-        bq_client = cast(BigQueryClient, client)
-        credentials = bq_client.config.credentials.to_native_credentials()
+        assert isinstance(client, BigQueryClient)
+        credentials = client.config.credentials.to_native_credentials()
         con = ibis.bigquery.connect(
             credentials=credentials,
-            project_id=bq_client.sql_client.project_id,
-            location=bq_client.sql_client.location,
+            project_id=client.sql_client.project_id,
+            dataset_id=client.sql_client.fully_qualified_dataset_name(quote=False),
+            location=client.sql_client.location,
         )
     elif issubclass(destination.spec, ClickHouseClientConfiguration):
         from dlt.destinations.impl.clickhouse.clickhouse import ClickHouseClient
@@ -128,6 +140,23 @@ def create_ibis_backend(
             secure=bool(ch_client.config.credentials.secure),
             # compression=True,
         )
+    # elif issubclass(destination.spec, DatabricksClientConfiguration):
+    #     from dlt.destinations.impl.databricks.databricks import DatabricksClient
+
+    #     bricks_client = cast(DatabricksClient, client)
+    #     con = ibis.databricks.connect(
+    #         **bricks_client.config.credentials.to_connector_params(),
+    #         schema=bricks_client.sql_client.dataset_name,
+    #     )
+    elif issubclass(destination.spec, AthenaClientConfiguration):
+        from dlt.destinations.impl.athena.athena import AthenaClient
+
+        athena_client = cast(AthenaClient, client)
+        con = ibis.athena.connect(
+            schema_name=athena_client.sql_client.dataset_name,
+            **athena_client.config.to_connector_params(),
+        )
+    # TODO: allow for sqlalchemy mysql and sqlite here
     elif issubclass(destination.spec, FilesystemConfiguration):
         import duckdb
         from dlt.destinations.impl.filesystem.sql_client import (
@@ -141,7 +170,7 @@ def create_ibis_backend(
         sql_client = FilesystemSqlClient(
             fs_client,
             dataset_name=fs_client.dataset_name,
-            credentials=DuckDbCredentials(duckdb.connect()),
+            cache_db=DuckDbCredentials(duckdb.connect()),
         )
         # do not use context manager to not return and close the cloned connection
         duckdb_conn = sql_client.open_connection()
@@ -164,35 +193,19 @@ def create_ibis_backend(
     return con
 
 
-def create_unbound_ibis_table(
-    sql_client: SqlClientBase[Any], schema: Schema, table_name: str
-) -> Expr:
-    """Create an unbound ibis table from a dlt schema"""
-
-    if table_name not in schema.tables:
-        raise Exception(
-            f"Table {table_name} not found in schema. Available tables: {schema.tables.keys()}"
-        )
+def create_unbound_ibis_table(schema: Schema, dataset_name: str, table_name: str) -> Table:
+    """Create an unbound ibis table from a dlt schema. No additional identifiers normalization, quoting
+    or escaping is performed.
+    """
     table_schema = schema.tables[table_name]
 
     # Convert dlt table schema columns to ibis schema
     ibis_schema = {
-        sql_client.capabilities.casefold_identifier(col_name): DATA_TYPE_MAP[
-            col_info.get("data_type", "string")
-        ]
+        col_name: DATA_TYPE_MAP[col_info.get("data_type", "string")]
         for col_name, col_info in table_schema.get("columns", {}).items()
     }
 
-    # normalize table name
-    table_path = sql_client.make_qualified_table_name_path(table_name, escape=False)
-
-    catalog = None
-    if len(table_path) == 3:
-        catalog, database, table = table_path
-    else:
-        database, table = table_path
-
     # create unbound ibis table and return in dlt wrapper
-    unbound_table = ibis.table(schema=ibis_schema, name=table, database=database, catalog=catalog)
+    unbound_table = ibis.table(schema=ibis_schema, name=table_name, database=dataset_name)
 
     return unbound_table
