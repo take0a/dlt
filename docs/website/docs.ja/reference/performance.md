@@ -4,64 +4,71 @@ description: Scale-up, parallelize and finetune dlt pipelines
 keywords: [scaling, parallelism, finetuning]
 ---
 
-# Optimizing dlt
+# DLTの最適化
 
-This page contains a collection of tips and tricks to optimize dlt pipelines for speed, scalability and memory footprint. Keep in mind that dlt works in [three discreet stages](./explainers/how-dlt-works) that all have their own performance characteristics.
-
-
-## Optimizing the extract stage
+このページでは、DLTパイプラインの速度、スケーラビリティ、メモリ使用量を最適化するためのヒントとコツをまとめています。DLTは[3つの独立したステージ](./explainers/how-dlt-works)で動作し、それぞれに独自のパフォーマンス特性があることにご留意ください。
 
 
-### Yield pages instead of rows
+## 抽出段階の最適化
 
-If possible, yield pages when producing data. This approach makes some processes more effective by reducing
-the number of necessary function calls (each chunk of data that you yield goes through the extract pipeline once, so if you yield a chunk of 10,000 items, you will gain significant savings).
-For example:
+
+### 行ではなくページを生成する
+
+可能であれば、データ生成時にページをyieldします。
+このアプローチにより、必要な関数呼び出しの回数が削減され、一部のプロセスの効率が向上します（yieldするデータのチャンクごとに抽出パイプラインを1回通過するため、10,000項目のチャンクをyieldすると、大幅な節約になります）。
+例：
+
 <!--@@@DLT_SNIPPET ./performance_snippets/performance-snippets.py::performance_chunking-->
 
-can be replaced with:
+次のように置き換えることができます:
 
 <!--@@@DLT_SNIPPET ./performance_snippets/performance-snippets.py::performance_chunking_chunk-->
 
 
-### Resources extraction, `fifo` vs. `round robin`
+### リソース抽出：`fifo` vs. `round robin`
 
-When extracting from resources, you have two options to determine the order of queries to your
-resources: `round_robin` and `fifo`.
+リソースから抽出する際、リソースへのクエリの順序を決定するオプションとして、`round_robin` と `fifo` の2つがあります。
 
-`round_robin` is the default option and will result in the extraction of one item from the first resource, then one item from the second resource, etc., doing as many rounds as necessary until all resources are fully extracted. If you want to extract resources in parallel, you will need to keep `round_robin`.
+`round_robin` はデフォルトのオプションで、最初のリソースから1つのアイテムを抽出し、次に2番目のリソースから1つのアイテムを抽出し、というように、すべてのリソースが完全に抽出されるまで必要な回数だけ繰り返します。
+リソースを並列に抽出する場合は、`round_robin` を指定してください。
 
-`fifo` is an option for sequential extraction. It will result in every resource being fully extracted until the resource generator is expired, or a configured limit is reached, then the next resource will be evaluated. Resources are extracted in the order that you added them to your source.
+`fifo` は順次抽出を行うオプションです。
+このオプションを指定すると、リソースジェネレーターの有効期限が切れるか、設定された制限に達するまで、すべてのリソースが完全に抽出され、その後、次のリソースが評価されます。
+リソースは、ソースに追加された順序で抽出されます。
 
 :::tip
-Switch to `fifo` when debugging sources with many resources and connected transformers, for example [rest_api](../dlt-ecosystem/verified-sources/rest_api/index.md).
-Your data will be requested in a deterministic and straightforward order - a given data item (i.e., a user record you got from an API) will be processed by all resources
-and transformers until completion before starting with a new one.
+多くのリソースと接続されたトランスフォーマーを持つソース（[rest_api](../dlt-ecosystem/verified-sources/rest_api/index.md) など）をデバッグする場合は、`fifo` に切り替えてください。
+データは決定論的かつ明確な順序で要求されます。つまり、特定のデータ項目（API から取得したユーザーレコードなど）は、すべてのリソースとトランスフォーマーによって処理され、完了してから新しいデータ項目の処理が開始されます。
 :::
 
-You can change this setting in your `config.toml` as follows:
+この設定は`config.toml`で次のように変更できます。:
 
 <!--@@@DLT_SNIPPET ./performance_snippets/toml-snippets.toml::item_mode_toml-->
 
 
-### Use the built-in requests wrapper or RESTClient for API calls
+### API呼び出しには組み込みのリクエストラッパーまたはRESTClientを使用します。
 
-Instead of using Python Requests directly, you can use the built-in [requests wrapper](../general-usage/http/requests) or [`RESTClient`](../general-usage/http/rest-client) for API calls. This will make your pipeline more resilient to intermittent network errors and other random glitches.
+Pythonリクエストを直接使用する代わりに、API呼び出しには組み込みの[リクエストラッパー](../general-usage/http/requests)または[`RESTClient`](../general-usage/http/rest-client)を使用できます。
+これにより、断続的なネットワークエラーやその他の偶発的な不具合に対するパイプラインの耐性が向上します。
 
 
-### Use built-in JSON parser
-`dlt` uses **orjson** if available. If not, it falls back to **simplejson**. The built-in parsers serialize several Python types:
+### 組み込みのJSONパーサーを使用する
+
+`dlt`は、利用可能な場合は**orjson**を使用します。
+利用できない場合は、**simplejson**にフォールバックします。
+組み込みパーサーは、いくつかのPython型をシリアル化します。
+
 - Decimal
-- DateTime, Date
+- DateTime、Date
 - Dataclasses
 
-Import the module as follows for use in your sources, resources and transformers:
+ソース、リソース、およびトランスフォーマーで使用するには、次のようにモジュールをインポートします。
 
 ```py
 from dlt.common import json
 ```
 
-For custom types support you can add a custom user-defined encoder like this:
+カスタム タイプをサポートするには、次のようにカスタムのユーザー定義エンコーダーを追加できます:
 
 ```py
 from dlt.common import json
@@ -79,131 +86,170 @@ json.set_custom_encoder(my_custom_encoder)
 ```
 
 :::tip
-**orjson** is fast and available on most platforms. It uses binary streams, not strings, to load data natively.
-- Open files as binary, not string, to use `load` and `dump`.
-- Use `loadb` and `dumpb` methods to work with bytes without decoding strings.
+**orjson** は高速で、ほとんどのプラットフォームで利用可能です。文字列ではなくバイナリストリームを使用してネイティブにデータを読み込みます。
 
-You can switch to **simplejson** at any moment by (1) removing the **orjson** dependency or (2) setting the following env variable:
+- `load` および `dump` を使用するには、ファイルを文字列ではなくバイナリとして開きます。
+- 文字列をデコードせずにバイト列を操作するには、`loadb` および `dumpb` メソッドを使用します。
+
+**simplejson** への切り替えは、(1) **orjson** への依存関係を削除するか、(2) 以下の環境変数を設定することでいつでも可能です。
+
 ```sh
 DLT_USE_JSON=simplejson
 ```
 :::
 
+## 全体的なメモリとディスク管理
 
-## Overall Memory and disk management
-`dlt` buffers data in memory to speed up processing and uses the file system to pass data between the **extract** and **normalize** stages. You can control the size of the buffers and the size and number of the files to fine-tune memory and CPU usage. These settings also impact parallelism, which is explained in the next chapter.
+`dlt` は、処理を高速化するためにデータをメモリにバッファリングし、ファイルシステムを使用して **extract** ステージと **normalize** ステージ間でデータをやり取りします。
+バッファのサイズ、ファイルのサイズと数を制御することで、メモリと CPU 使用量を微調整できます。
+これらの設定は並列処理にも影響します。並列処理については次の章で説明します。
 
-### Controlling in-memory buffers
-`dlt` maintains in-memory buffers when writing intermediary files in the **extract** and **normalize** stages. The size of the buffers is controlled by specifying the number of data items held in them. Data is appended to open files when the item buffer is full, after which the buffer is cleared. You can specify the buffer size via environment variables or in `config.toml` to be more or less granular:
-* set all buffers (both extract and normalize)
-* set extract buffers separately from normalize buffers
-* set extract buffers for a particular source or resource
+### インメモリバッファの制御
+
+`dlt` は、**抽出** および **正規化** 段階で中間ファイルを書き込む際に、インメモリバッファを維持します。
+バッファのサイズは、バッファに保持するデータ項目の数を指定することによって制御されます。
+項目バッファがいっぱいになると、開いているファイルにデータが追加され、その後バッファはクリアされます。
+バッファサイズは、環境変数または `config.toml` で、より細かく指定できます。
+* すべてのバッファ（抽出バッファと正規化バッファの両方）を設定する
+* 抽出バッファを正規化バッファとは別々に設定する
+* 特定のソースまたはリソースに対して抽出バッファを設定する
 
 <!--@@@DLT_SNIPPET ./performance_snippets/toml-snippets.toml::buffer_toml-->
 
 
-The default buffer is actually set to a moderately low value (**5000 items**), so unless you are trying to run `dlt`
-on IoT sensors or other tiny infrastructures, you might actually want to increase it to speed up
-processing.
+デフォルトのバッファは実際には中程度に低い値 (**5000 項目**) に設定されているため、IoT センサーやその他の小さなインフラストラクチャで `dlt` を実行しようとしているのでなければ、処理を高速化するために実際に値を増やす必要があるかもしれません。
 
-### Controlling intermediary file size and rotation
-`dlt` writes data to intermediary files. You can control the file size and the number of created files by setting the maximum number of data items stored in a single file or the maximum single file size. Keep in mind that the file size is computed after compression has been performed.
-* `dlt` uses a custom version of the [JSON file format](../dlt-ecosystem/file-formats/jsonl.md) between the **extract** and **normalize** stages.
-* Files created between the **normalize** and **load** stages are the same files that will be loaded to the destination.
+### 中間ファイルのサイズとローテーションの制御
+
+`dlt` はデータを中間ファイルに書き込みます。
+1つのファイルに保存できるデータ項目の最大数、または1つのファイルの最大サイズを設定することで、ファイルサイズと作成されるファイルの数を制御できます。
+ファイルサイズは圧縮後に計算されることに注意してください。
+* `dlt` は、**extract** ステージと **normalize** ステージの間で、[JSON ファイル形式](../dlt-ecosystem/file-formats/jsonl.md) のカスタムバージョンを使用します。
+* **normalize** ステージと **load** ステージの間に作成されるファイルは、出力先にロードされるファイルと同じです。
 
 :::tip
-The default setting is to not rotate the files, so if you have a resource with millions of records, `dlt` will still create a single intermediary file to normalize and a single file to load. **If you want such data to be normalized and loaded in parallel, you must enable file rotation as described below.**
+デフォルト設定ではファイルのローテーションは行われないため、数百万件のレコードを含むリソースがある場合でも、`dlt` は正規化用の中間ファイルとロード用のファイルをそれぞれ 1 つずつ作成します。
+**このようなデータを正規化して並行してロードする場合は、以下の説明に従ってファイルのローテーションを有効にする必要があります。**
 :::
 :::note
-Some file formats (e.g., Parquet) do not support schema changes when writing a single file, and in that case, they are automatically rotated when new columns are discovered.
+一部のファイル形式 (Parquet など) では、単一のファイルを書き込むときにスキーマの変更がサポートされません。その場合、新しい列が検出されると、自動的にローテーションされます。
 :::
 
-Below, we set files to rotate after 100,000 items written or when the filesize exceeds 1MiB.
+以下では、100,000 個のアイテムが書き込まれた後、またはファイル サイズが 1MiB を超えた後にファイルをローテーションするように設定します。
 
 <!--@@@DLT_SNIPPET ./performance_snippets/toml-snippets.toml::file_size_toml-->
 
-### Disabling and enabling file compression
-Several [text file formats](../dlt-ecosystem/file-formats/) have `gzip` compression enabled by default. If you wish that your load packages have uncompressed files (e.g., to debug the content easily), change `data_writer.disable_compression` in config.toml. The entry below will disable the compression of the files processed in the `normalize` stage.
+### ファイル圧縮の無効化と有効化
+
+いくつかの[テキストファイル形式](../dlt-ecosystem/file-formats/)では、デフォルトで`gzip`圧縮が有効になっています。
+ロードパッケージに圧縮されていないファイルを含めたい場合（例えば、コンテンツのデバッグを容易にするため）、config.tomlの`data_writer.disable_compression`を変更してください。
+以下のエントリは、`normalize`ステージで処理されるファイルの圧縮を無効にします。
+
 <!--@@@DLT_SNIPPET ./performance_snippets/toml-snippets.toml::compression_toml-->
 
 
-### Freeing disk space after loading
+### ロード後のディスク容量の解放
 
-Keep in mind that load packages are buffered to disk and are left for any troubleshooting, so you can [clear disk space by setting the `delete_completed_jobs` option](../running-in-production/running.md#data-left-behind).
+ロードパッケージはディスクにバッファリングされ、トラブルシューティングのために残されます。そのため、[`delete_completed_jobs` オプションを設定することでディスク容量を解放](../running-in-production/running.md#data-left-behind)できます。
 
-### Observing CPU and memory usage
-Please make sure that you have the `psutil` package installed (note that Airflow installs it by default). Then, you can dump the stats periodically by setting the [progress](../general-usage/pipeline.md#display-the-loading-progress) to `log` in `config.toml`:
+### CPUとメモリの使用状況の監視
+
+`psutil` パッケージがインストールされていることを確認してください（Airflow はデフォルトでインストールします）。
+その後、`config.toml` で [progress](../general-usage/pipeline.md#display-the-loading-progress) を `log` に設定することで、定期的に統計情報をダンプできます。
+
 ```toml
 progress="log"
 ```
-or when running the pipeline:
+
+もしくはパイプラインを実行する場合:
+
 ```sh
 PROGRESS=log python pipeline_script.py
 ```
 
-## Parallelism within a pipeline
-You can create pipelines that extract, normalize, and load data in parallel.
+## パイプライン内の並列処理
 
-### Extract
-You can extract data concurrently if you write your pipelines to yield callables or awaitables, or use async generators for your resources that can then be evaluated in a thread or futures pool respectively.
+データの抽出、正規化、ロードを並列に実行するパイプラインを作成できます。
 
-This is easily accomplished by using the `parallelized` argument in the resource decorator.
-Resources based on sync generators will execute each step (yield) of the generator in a thread pool, so each individual resource is still extracted one item at a time, but multiple such resources can run in parallel with each other.
+### 抽出
 
-Consider an example source that consists of 2 resources fetching pages of items from different API endpoints, and each of those resources is piped to transformers to fetch complete data items respectively.
+パイプラインを呼び出し可能オブジェクトまたは待機可能オブジェクトを生成するように記述するか、リソースに非同期ジェネレーターを使用して、それぞれスレッドまたはフューチャープールで評価することで、データを並行して抽出できます。
 
-The `parallelized=True` argument wraps the resources in a generator that yields callables to evaluate each generator step. These callables are executed in the thread pool. Transformers that are not generators (as shown in the example) are internally wrapped in a generator that yields once.
+これは、リソースデコレータで `parallelized` 引数を使用することで簡単に実現できます。
+同期ジェネレーターに基づくリソースは、ジェネレーターの各ステップ（yield）をスレッドプールで実行します。そのため、個々のリソースは一度に 1 つのアイテムずつ抽出されますが、複数のリソースを並列に実行できます。
+
+異なる API エンドポイントからアイテムのページを取得する 2 つのリソースで構成されるソースの例を考えてみましょう。各リソースは、それぞれ完全なデータアイテムを取得するためにトランスフォーマーにパイプされます。
+
+`parallelized=True` 引数は、各ジェネレーターステップを評価するための呼び出し可能オブジェクトを生成するジェネレーターでリソースをラップします。
+これらの呼び出し可能オブジェクトはスレッドプールで実行されます。
+ジェネレーターではないトランスフォーマー (例に示すように) は、1 回だけ結果を出力するジェネレーターに内部的にラップされます。
 
 <!--@@@DLT_SNIPPET ./performance_snippets/performance-snippets.py::parallel_extract_callables-->
 
 
-The `parallelized` flag in the `resource` and `transformer` decorators is supported for:
+`resource` および `transformer` デコレータの `parallelized` フラグは、以下の関数でサポートされています。
 
-* Generator functions (as shown in the example)
-* Generators without functions (e.g., `dlt.resource(name='some_data', parallelized=True)(iter(range(100)))`)
-* `dlt.transformer` decorated functions. These can be either generator functions or regular functions that return one value
+* ジェネレータ関数（例を参照）
+* 関数を持たないジェネレータ（例：`dlt.resource(name='some_data', parallelized=True)(iter(range(100)))`）
+* `dlt.transformer` デコレータ関数。これらは、ジェネレータ関数または1つの値を返す通常の関数のいずれかです。
 
-You can control the number of workers in the thread pool with the **workers** setting. The default number of workers is **5**. Below, you see a few ways to do that with different granularity.
+**workers** 設定で、スレッドプール内のワーカー数を制御できます。
+デフォルトのワーカー数は **5** です。以下に、異なる粒度でワーカー数を制御する方法をいくつか示します。
+
 <!--@@@DLT_SNIPPET ./performance_snippets/toml-snippets.toml::extract_workers_toml-->
 
 
 
-The example below does the same but using an async generator as the main resource and async/await and futures pool for the transformer.
-The `parallelized` flag is not supported or needed for async generators; these are wrapped and evaluated concurrently by default:
+以下の例も同様ですが、非同期ジェネレータをメインリソースとして使い、トランスフォーマーには async/await と futures プールを使用しています。
+非同期ジェネレータでは `parallelized` フラグはサポートされておらず、必要もありません。これらはデフォルトでラップされ、並行して評価されます:
+
 <!--@@@DLT_SNIPPET ./performance_snippets/performance-snippets.py::parallel_extract_awaitables-->
 
 
-You can control the number of async functions/awaitables being evaluated in parallel by setting **max_parallel_items**. The default number is **20**. Below, you see a few ways to do that with different granularity.
+**max_parallel_items** を設定することで、並列評価される非同期関数/待機可能オブジェクトの数を制御できます。
+デフォルトの数は **20** です。
+以下に、異なる粒度でこれを行う方法をいくつか示します。
+
 <!--@@@DLT_SNIPPET ./performance_snippets/toml-snippets.toml::extract_parallel_items_toml-->
 
 
 :::note
-**max_parallel_items** applies to thread pools as well. It sets how many items may be queued to be executed and currently executing in a thread pool by the workers. Imagine a situation where you have millions
-of callables to be evaluated in a thread pool with a size of 5. This limit will instantiate only the desired amount of workers.
+**max_parallel_items** はスレッドプールにも適用されます。
+これは、ワーカーによってスレッドプール内で実行待ち状態にあり、現在実行中のアイテムの数を設定します。
+サイズが 5 のスレッドプールで、評価すべき呼び出し可能オブジェクトが数百万個ある状況を想像してみてください。
+この制限により、必要な数のワーカーのみがインスタンス化されます。
 :::
 
 :::caution
-Generators and iterators are always evaluated in a single thread: item by item. If you have a loop that yields items that you want to evaluate
-in parallel, instead yield functions or async functions that will be evaluated in separate threads or in an async pool.
+ジェネレータとイテレータは常に単一のスレッドで、項目ごとに評価されます。
+並列で評価したい項目を生成するループがある場合は、代わりに別のスレッドまたは非同期プールで評価される関数または非同期関数を使用してください。
 :::
 
-### Normalize
-The **normalize** stage uses a process pool to create load packages concurrently. Each file created by the **extract** stage is sent to a process pool. **If you have just a single resource with a lot of data, you should enable [extract file rotation](#controlling-intermediary-file-size-and-rotation)**. The number of processes in the pool is controlled by the `workers` config value:
+### 正規化
+
+**正規化** ステージでは、プロセスプールを使用してロードパッケージを並行して作成します。
+**抽出** ステージで作成された各ファイルは、プロセスプールに送られます。
+**大量のデータを含むリソースが1つしかない場合は、[抽出ファイルのローテーション](#controlling-intermediary-file-size-and-rotation)** を有効にする必要があります。
+プール内のプロセス数は、`workers` 設定値によって制御されます。
+
 <!--@@@DLT_SNIPPET ./performance_snippets/toml-snippets.toml::normalize_workers_toml-->
 
 
 :::note
-The default is to not parallelize normalization and to perform it in the main process.
+デフォルトでは、正規化は並列化されず、メイン プロセスで実行されます。
 :::
 
 :::note
-Normalization is CPU-bound and can easily saturate all your cores. Never allow `dlt` to use all cores on your local machine.
+正規化はCPUに大きく依存し、すべてのコアを簡単に飽和させてしまう可能性があります。`dlt` がローカルマシンのすべてのコアを使用することは絶対に許可しないでください。
 :::
 
 :::caution
-The default method of spawning a process pool on Linux is **fork**. If you are using threads in your code (or libraries that use threads),
-you should switch to **spawn**. Process forking does not respawn the threads and may destroy the critical sections in your code. Even logging
-with Python loggers from multiple threads may lock the `normalize` step. Here's how you switch to **spawn**:
+Linux でプロセスプールを生成するデフォルトの方法は **fork** です。
+コード内（またはスレッドを使用するライブラリ内）でスレッドを使用している場合は、**spawn** に切り替える必要があります。
+プロセスのフォークではスレッドが再生成されず、コード内の重要なセクションが破壊される可能性があります。
+複数のスレッドから Python ロガーを使用してログを記録する場合でも、`normalize` ステップがロックされる可能性があります。
+**spawn** に切り替える方法は次のとおりです。
+
 ```toml
 [normalize]
 workers=3
@@ -212,23 +258,35 @@ start_method="spawn"
 :::
 
 ### Load
-The **load** stage uses a thread pool for parallelization. Loading is input/output-bound. `dlt` avoids any processing of the content of the load package produced by the normalizer. By default, loading happens in 20 threads, each loading a single file.
 
-As before, **if you have just a single table with millions of records, you should enable [file rotation in the normalizer](#controlling-intermediary-file-size-and-rotation)**. Then the number of parallel load jobs is controlled by the `workers` config setting.
+**ロード** ステージでは、並列化のためにスレッドプールを使用します。ロードは入出力に依存します。
+`dlt` は、ノーマライザーによって生成されたロードパッケージの内容の処理を一切行いません。
+デフォルトでは、ロードは20のスレッドで行われ、各スレッドが1つのファイルをロードします。
+
+これまでと同様に、**数百万件のレコードを含む単一のテーブルしかない場合は、[ノーマライザーでのファイルローテーション](#中間ファイルのサイズとローテーションの制御)** を有効にする必要があります。
+その後、並列ロードジョブの数は `workers` 設定によって制御されます。
 
 <!--@@@DLT_SNIPPET ./performance_snippets/toml-snippets.toml::normalize_workers_2_toml-->
 
-The **normalize** stage in `dlt` uses a process pool to create load packages concurrently, and the settings for `file_max_items` and `file_max_bytes` play a crucial role in determining the size of data chunks. Lower values for these settings reduce the size of each chunk sent to the destination database, which is particularly helpful for managing memory constraints on the database server. By default, `dlt` writes all data rows into one large intermediary file, attempting to load all data at once. Configuring these settings enables file rotation, splitting the data into smaller, more manageable chunks. This not only improves performance but also minimizes memory-related issues when working with large tables containing millions of records.
+`dlt` の **normalize** ステージでは、プロセスプールを使用してロードパッケージを並行して作成します。`file_max_items` と `file_max_bytes` の設定は、データチャンクのサイズを決定する上で重要な役割を果たします。
+これらの設定値を低くすると、宛先データベースに送信される各チャンクのサイズが小さくなり、データベースサーバーのメモリ制約を管理するのに特に役立ちます。
+デフォルトでは、`dlt` はすべてのデータ行を 1 つの大きな中間ファイルに書き込み、すべてのデータを一度にロードしようとします。
+これらの設定を構成すると、ファイルのローテーションが有効になり、データがより小さく管理しやすいチャンクに分割されます。
+これにより、パフォーマンスが向上するだけでなく、数百万件のレコードを含む大規模なテーブルを操作する際のメモリ関連の問題も最小限に抑えられます。
 
-#### Controlling destination items size
-The intermediary files generated during the **normalize** stage are also used in the **load** stage. Therefore, adjusting `file_max_items` and `file_max_bytes` in the **normalize** stage directly impacts the size and number of data chunks sent to the destination, influencing loading behavior and performance.
+#### 出力先アイテムのサイズ制御
 
-### Parallel pipeline config example
-The example below simulates the loading of a large database table with 1,000,000 records. The **config.toml** below sets the parallelization as follows:
-* During extraction, files are rotated each 100,000 items, so there are 10 files with data for the same table.
-* The normalizer will process the data in 3 processes.
-* We use JSONL to load data to duckdb. We rotate JSONL files each 100,000 items so 10 files will be created.
-* We use 11 threads to load the data (10 JSON files + state file).
+**normalize** ステージで生成される中間ファイルは、**load** ステージでも使用されます。
+したがって、**normalize** ステージで `file_max_items` と `file_max_bytes` を調整すると、出力先に送信されるデータチャンクのサイズと数に直接影響し、読み込み動作とパフォーマンスに影響を及ぼします。
+
+### 並列パイプラインの設定例
+
+以下の例は、1,000,000件のレコードを持つ大規模なデータベーステーブルのロードをシミュレートします。
+以下の**config.toml** は、並列化を次のように設定しています。
+* 抽出中は、100,000件ごとにファイルがローテーションされるため、同じテーブルのデータを含むファイルは10個あります。
+* ノーマライザーは3つのプロセスでデータを処理します。
+* duckdbへのデータのロードにはJSONLを使用します。100,000件ごとにJSONLファイルをローテーションするため、10個のファイルが作成されます。
+* データのロードには11個のスレッドを使用します（10個のJSONファイルと状態ファイル）。
 
 <!--@@@DLT_SNIPPET ./performance_snippets/.dlt/config.toml::parallel_config_toml-->
 
@@ -239,87 +297,88 @@ The example below simulates the loading of a large database table with 1,000,000
 
 
 
-### Source decomposition for serial and parallel resource execution
+### シリアルおよび並列リソース実行のためのソース分解
 
-You can decompose a pipeline into strongly connected components with
-`source().decompose(strategy="scc")`. The method returns a list of dlt sources, each containing a
-single component. The method ensures that no resource is executed twice.
+`source().decompose(strategy="scc")` を使用すると、パイプラインを強結合コンポーネントに分解できます。
+このメソッドは、それぞれ単一のコンポーネントを含む dlt ソースのリストを返します。
+このメソッドは、リソースが2回実行されることを防ぎます。
 
-**Serial decomposition:**
+**シリアル分解:**
 
-You can load such sources as tasks serially in the order presented in the list. Such a DAG is safe for
-pipelines that use the state internally.
-[It is used internally by our Airflow mapper to construct DAGs.](https://github.com/dlt-hub/dlt/blob/devel/dlt/helpers/airflow_helper.py)
+リストに示されている順序で、これらのソースをタスクとしてシリアルにロードできます。
+このようなDAGは、状態を内部的に使用するパイプラインにとって安全です。
+[これは、Airflowマッパーによって内部的にDAGを構築するために使用されています。](https://github.com/dlt-hub/dlt/blob/devel/dlt/helpers/airflow_helper.py)
 
-**Parallel decomposition**
+**並列分解**
 
-If you are using only the resource state (which most of the pipelines really should!), you can run
-your tasks in parallel.
+リソース状態のみを使用する場合（ほとんどのパイプラインではそうあるべきです！）、タスクを並列実行できます。
 
-- Perform the `scc` decomposition.
-- Run each component in a pipeline with a different but deterministic `pipeline_name` (same component
-  \- same pipeline; you can use names of selected resources in the source to construct a unique id).
+- `scc` 分解を実行します。
+- パイプライン内の各コンポーネントを、異なるが決定論的な `pipeline_name` で実行します（同じコンポーネントには同じパイプラインを使用します。ソースで選択したリソースの名前を使用して一意の ID を構築できます）。
 
-Each pipeline will have its private state in the destination, and there won't be any clashes. As all
-the components write to the same schema, you may observe that the loader stage is attempting to migrate
-the schema. That should not be a problem, though, as long as your data does not create variant columns.
+各パイプラインは宛先に独自の状態を持ち、競合は発生しません。
+すべてのコンポーネントが同じスキーマに書き込むため、ローダーステージがスキーマの移行を試みているように見える場合があります。
+ただし、データがバリアント列を作成しない限り、これは問題にはなりません。
 
-**Custom decomposition**
+**カスタム分解**
 
-- When decomposing pipelines into tasks, be mindful of shared state.
-- Dependent resources pass data to each other via generators - so they need to run on the same
-  worker. Group them in a task that runs them together - otherwise, some resources will be extracted twice.
-- State is per-pipeline. The pipeline identifier is the pipeline name. A single pipeline state
-  should be accessed serially to avoid losing details on parallel runs.
+- パイプラインをタスクに分解する際は、共有状態に注意してください。
+- 依存リソースはジェネレータを介して相互にデータを受け渡すため、同じワーカーで実行する必要があります。それらをまとめて実行するタスクにグループ化してください。そうしないと、一部のリソースが2回抽出されてしまいます。
+- 状態はパイプラインごとに存在します。パイプライン識別子はパイプライン名です。並列実行時に詳細が失われないように、単一のパイプライン状態には順次アクセスする必要があります。
 
 
-## Running multiple pipelines in parallel
+## 複数のパイプラインを並列に実行する
 
-### Parallelism within a single process
+### 単一プロセス内での並列処理
 
-You can run several pipeline instances in parallel from a single process by placing them in
-separate threads. The most straightforward way is to use `ThreadPoolExecutor` and `asyncio` to execute pipeline methods.
+複数のパイプラインインスタンスを別々のスレッドに配置することで、単一プロセスから並列に実行できます。
+最も簡単な方法は、パイプラインメソッドを実行するために `ThreadPoolExecutor` と `asyncio` を使用することです。
 
 <!--@@@DLT_SNIPPET ./performance_snippets/performance-snippets.py::parallel_pipelines-->
 
 :::tip
-Please note the following:
+以下の点にご注意ください。
 
-1. When running in multiple threads and using [parallel normalize step](#normalize), use the **spawn**
-process start method.
-2. If you created the `Pipeline` object in the worker thread and you use it from another (i.e., the main thread),
-call `pipeline.activate()` to inject the right context into the current thread.
+1. 複数のスレッドで実行し、[並列正規化ステップ](#normalize)を使用する場合は、**spawn** プロセス開始メソッドを使用してください。
+2. ワーカースレッドで `Pipeline` オブジェクトを作成し、別のスレッド（つまりメインスレッド）から使用する場合は、`pipeline.activate()` を呼び出して、現在のスレッドに適切なコンテキストを挿入してください。
 :::
 
 
-### Parallelism across processes or machines
+### プロセスまたはマシン間の並列処理
 
-You can also run pipelines in parallel across multiple machines. Please consult our [deployment guides](../walkthroughs/deploy-a-pipeline) for more information. Please take note of the pitfalls listed below.
+パイプラインを複数のマシン間で並列実行することもできます。
+詳細については、[デプロイメントガイド](../walkthroughs/deploy-a-pipeline)をご覧ください。
+以下の注意事項にご注意ください。
 
-### Pitfalls
+### 落とし穴
 
-Due to the way `dlt` works, there are a few general pitfalls to be aware of:
+`dlt` の動作上、注意すべき一般的な落とし穴がいくつかあります。
 
-1. Do not run pipelines with the same name and working dir in parallel on the same machine. dlt will not be able to manage state and temporary files properly if you do this.
+1. 同じマシン上で、同じ名前と作業ディレクトリを持つパイプラインを並列実行しないでください。これを行うと、dlt は状態ファイルと一時ファイルを適切に管理できません。
 
-2. If you're running multiple pipelines in parallel that write to the same destination dataset and use a staging area, make sure to do one of the following:
-    - Assign a unique subfolder in the staging destination bucket for each pipeline, or
-    - [Disable automatic cleanup of the staging area](../dlt-ecosystem/staging#how-to-prevent-staging-files-truncation) after each load for all pipelines.
+2. 同じ出力先データセットに書き込み、ステージング領域を使用する複数のパイプラインを並列実行する場合は、必ず次のいずれかを実行してください。
+  - 各パイプラインのステージング先バケットに固有のサブフォルダを割り当てる。または
+  - すべてのパイプラインで、各ロード後にステージング領域の自動クリーンアップを無効にする。
 
-    If you do not, files might be deleted by one pipeline that are still required to be loaded by another pipeline running in parallel.
+  これを行わない場合、あるパイプラインでファイルが削除された後でも、並列実行されている別のパイプラインでロードする必要がある可能性があります。
 
-3. If you are using a write disposition that requires a staging dataset on the final destination, you should provide a unqiue staging datasetname for each pipeline, otherwise similar problems as noted above may occur. You can do this with the
-[`staging_dataset_name_layout` setting.](../dlt-ecosystem/staging#staging-dataset)
+3. 最終出力先にステージングデータセットを必要とする書き込み処理を使用している場合は、パイプラインごとに一意のステージングデータセット名を指定する必要があります。そうしないと、上記と同様の問題が発生する可能性があります。
+[`staging_dataset_name_layout` 設定](../dlt-ecosystem/staging#staging-dataset) でこれを行うことができます。
 
-## Keep pipeline working folder in a bucket on constrained environments.
-`dlt` stores extracted data in load packages in order to load them atomically. In case you extract a lot of data at once (ie. backfill) or
-your runtime env has constrained local storage (ie. cloud functions) you can keep your data on a bucket by using [FUSE](https://github.com/libfuse/libfuse) or
-any other option which your cloud provider supplies.
+## 制約のある環境では、パイプラインの作業フォルダをバケットに保存します。
 
-`dlt` users rename when saving files and  "committing" packages (folder rename). Those may be not supported on bucket filesystems. Often
-`rename` is translated into `copy` automatically. In other cases `dlt` will fallback to copy itself.
+`dlt` は、抽出したデータをロードパッケージに保存し、アトミックにロードします。
 
-In case of cloud function and gs bucket mounts, increasing the rename limit for folders is possible:
+大量のデータを一度に抽出する場合（バックフィルなど）、またはランタイム環境のローカルストレージが制限されている場合（クラウド関数など）は、[FUSE](https://github.com/libfuse/libfuse) またはクラウドプロバイダが提供するその他のオプションを使用して、データをバケットに保存できます。
+
+`dlt` は、ファイルの保存時やパッケージのコミット時に名前を変更します（フォルダ名の変更）。
+
+これらの機能は、バケットファイルシステムではサポートされていない可能性があります。
+多くの場合、`rename` は自動的に `copy` に変換されます。
+それ以外の場合は、`dlt` はフォールバックして copy を実行します。
+
+クラウド関数と GS バケットのマウントの場合、フォルダの名前変更制限を増やすことができます。
+
 ```hcl
 volume_mounts {
     mount_path = "/usr/src/ingestion/pipeline_storage"
@@ -336,14 +395,17 @@ volumes {
   }
 }
 ```
-## Handling storage limits
 
-If your storage reaches its limit, you are likely running dlt in a cloud environment with restricted disk space. To prevent issues, mount an external cloud storage location and set the `DLT_DATA_DIR` environment variable to point to it. This ensures that dlt uses the mounted storage as its data directory instead of local disk space.
+## ストレージ制限への対応
+
+ストレージが制限に達した場合、ディスク容量が制限されたクラウド環境でdltを実行している可能性があります。
+問題を回避するには、外部のクラウドストレージをマウントし、`DLT_DATA_DIR`環境変数がそのストレージを指すように設定してください。
+これにより、dltはローカルディスクではなく、マウントされたストレージをデータディレクトリとして使用します。
 
 
-### Setting `DLT_DATA_DIR`
+### `DLT_DATA_DIR` の設定
 
-You can configure `DLT_DATA_DIR` in your environment setup as follows:
+環境設定で `DLT_DATA_DIR` を以下のように設定できます。
 
 ```py
 import os
@@ -356,4 +418,4 @@ os.environ["DLT_DATA_DIR"] = data_dir
 
 # Rest of your pipeline code
 ```
-This directs dlt to use the specified external storage for all data operations, preventing local storage constraints.
+これにより、dlt は指定された外部ストレージをすべてのデータ操作に使用するように指示され、ローカル ストレージの制約が回避されます。

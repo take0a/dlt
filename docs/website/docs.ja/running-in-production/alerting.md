@@ -6,41 +6,37 @@ keywords: [alerting, alerts, slack]
 
 # Alerting
 
-## Alerts
+## アラート
 
-[Monitoring](monitoring.md) and alerting are used together to give a complete picture of the health
-of our data product.
+[モニタリング](monitoring.md) とアラートを組み合わせることで、データ製品の健全性の全体像を把握できます。
 
-An alert is triggered by a specific action:
+アラートは特定のアクションによってトリガーされます。
 
-- What cases do you want to alert?
-- Where should the alert be sent?
-- How can you create a useful message?
+- アラートを通知するケースは？
+- アラートの送信先は？
+- 効果的なメッセージを作成するには？
 
-For example, an actionable alert contains information to help take a follow-up action: what, when, and why
-the pipeline broke (with a link to the error log):
+例えば、実用的なアラートには、パイプラインがいつ、何が、なぜ停止したか（エラーログへのリンク付き）といった、フォローアップアクションの実行に役立つ情報が含まれています:
 
 ![Airflow Slack notification](images/airflow_slack_notification.png)
 
-While we may create all kinds of tests and associated alerts, the first ones are usually alerts
-about the running status of your pipeline. Unfortunately, the outcome of a pipeline is not binary:
-it could succeed, it could fail, it could be late due to extra data, it could be stuck due to a bug,
-it could be not started due to a failed dependency, etc. Due to the complexity of the cases, usually,
-you alert failures and [monitor](monitoring.md) (lack of) success.
+あらゆる種類のテストとそれに関連するアラートを作成できますが、通常は最初にパイプラインの実行状態に関するアラートを作成します。
+残念ながら、パイプラインの結果は2値ではありません。成功する、失敗する、余分なデータのために遅延する、バグのために停止する、依存関係の失敗のために開始されないなど、さまざまな可能性があります。
+ケースの複雑さから、通常は失敗をアラートし、[監視](monitoring.md) (成功の欠如) を監視対象とします。
 
-We could also use alerts as a way to deliver tests. For example, a customer support representative
-must associate each customer call with a customer. We could test that all tickets have a customer in
-our production database. If not, we could alert customer support to collect the necessary
-information.
+アラートはテスト配信の手段としても使用できます。
+たとえば、カスタマーサポート担当者は、各顧客からの通話を顧客に関連付ける必要があります。
+すべてのチケットに本番データベース内の顧客が含まれているかどうかをテストできます。
+含まれていない場合は、カスタマーサポートに必要な情報を収集するようにアラートを送信できます。
 
 ## Sentry
 
-Using `dlt` [tracing](./tracing.md), you can configure [Sentry](https://sentry.io) DSN to start
-receiving rich information on executed pipelines, including encountered errors and exceptions.
+`dlt` [tracing](./tracing.md) を使用すると、[Sentry](https://sentry.io) DSN を構成して、発生したエラーや例外など、実行されたパイプラインに関する豊富な情報を受け取ることができます。
 
 ## Slack
 
-Alerts can be sent to a Slack channel via Slack's incoming webhook URL. The code snippet below demonstrates automated Slack notifications for database table updates using the `send_slack_message` function.
+Slackの受信Webhook URLを介して、Slackチャンネルにアラートを送信できます。
+以下のコードスニペットは、`send_slack_message`関数を使用して、データベーステーブルの更新に関する自動Slack通知を示しています。
 
 ```py
 # Import the send_slack_message function from the dlt library
@@ -66,7 +62,9 @@ for package in load_info.load_packages:
                 )
             )
 ```
-Refer to this [example](../examples/chess_production/) for a practical application of the method in a production environment.
 
-Similarly, Slack notifications can be extended to include information on pipeline execution times, loading durations, schema modifications, and more. For comprehensive details on configuring and sending messages to Slack, please read [here](./running#using-slack-to-send-messages).
+本番環境でのこの手法の実践的な適用例については、こちらの[例](../examples/chess_production/)を参照してください。
+
+同様に、Slack通知を拡張して、パイプラインの実行時間、読み込み時間、スキーマの変更などの情報を含めることもできます。
+Slackへのメッセージの設定と送信に関する詳細は、[こちら](./running#using-slack-to-send-messages)をご覧ください。
 

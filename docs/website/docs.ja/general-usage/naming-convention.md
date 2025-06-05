@@ -4,73 +4,100 @@ description: Control how dlt creates table, column and other identifiers
 keywords: [identifiers, snake case, case sensitive, case insensitive, naming]
 ---
 
-# Naming convention
-dlt creates table and column identifiers from the data. The data source, i.e., a stream of JSON documents, may have identifiers (i.e., key names in a dictionary) with any Unicode characters, of any length, and naming style. On the other hand, destinations require that you follow strict rules when you name tables, columns, or collections.
-A good example is [Redshift](../dlt-ecosystem/destinations/redshift.md) that accepts case-insensitive alphanumeric identifiers with a maximum of 127 characters.
+# 命名規則
 
-`dlt` groups tables from a single [source](source.md) in a [schema](schema.md). Each schema defines a **naming convention** that tells `dlt` how to translate identifiers to the
-namespace that the destination understands. Naming conventions are, in essence, functions that map strings from the source identifier format into the destination identifier format. For example, our **snake_case** (default) naming convention will translate the `DealFlow` source identifier into the `deal_flow` destination identifier.
+dlt はデータからテーブルと列の識別子を作成します。
+データソース（JSON ドキュメントのストリーム）には、任意の Unicode 文字、任意の長さ、任意の命名スタイルの識別子（辞書内のキー名など）を含めることができます。
+一方、宛先では、テーブル、列、またはコレクションに名前を付ける際に厳格なルールに従う必要があります。
+良い例として [Redshift](../dlt-ecosystem/destinations/redshift.md) が挙げられます。これは、最大 127 文字の英数字で、大文字と小文字を区別しない識別子を受け入れます。
 
-You can pick which naming convention to use. `dlt` provides a few to [choose from](#available-naming-conventions). You can [easily add your own](#write-your-own-naming-convention) as well.
+`dlt` は、単一の [ソース](source.md) から [スキーマ](schema.md) 内のテーブルをグループ化します。
+各スキーマは **命名規則** を定義し、`dlt` に識別子を宛先が理解できる名前空間に変換する方法を指示します。
+命名規則とは、本質的には、ソースの識別子形式から宛先の識別子形式に文字列をマッピングする関数です。
+例えば、**snake_case** (デフォルト) 命名規則では、`DealFlow` ソース識別子が `deal_flow` デスティネーション識別子に変換されます。
+
+使用する命名規則を選択できます。`dlt` はいくつかの命名規則を提供しており、[選択可能](#利用可能な命名規則) です。
+[独自の命名規則を簡単に追加](#独自の命名規則を作成) することもできます。
 
 :::tip
-The standard behavior of `dlt` is to **use the same naming convention for all destinations** so users always see the same table and column names in their databases.
+`dlt` の標準的な動作は、**すべての宛先に同じ命名規則を使用する** ことで、ユーザーはデータベース内で常に同じテーブル名と列名を見ることができます。
 :::
 
-### Use default naming convention (snake_case)
-**snake_case** is a case-insensitive naming convention, converting source identifiers into lower-case snake case identifiers with a reduced alphabet.
+### デフォルトの命名規則 (snake_case) を使用します。
 
-- Spaces around identifiers are trimmed.
-- Keeps ASCII alphanumerics and underscores, replaces all other characters with underscores (with the exceptions below).
-- Replaces `+` and `*` with `x`, `-` with `_`, `@` with `a`, and `|` with `l`.
-- Prepends `_` if the name starts with a number.
-- Multiples of `_` are converted into a single `_`.
-- Replaces all trailing `_` with `x`.
+**snake_case** は大文字と小文字を区別しない命名規則で、ソース識別子を、アルファベットを省略した小文字のスネークケース識別子に変換します。
 
-Uses `__` as a nesting separator for tables and flattened column names.
+- 識別子の前後のスペースは切り捨てられます。
+- ASCII 英数字とアンダースコアは保持され、その他の文字はすべてアンダースコアに置き換えられます (以下の例外を除く)。
+- `+` と `*` は `x` に、`-` は `_` に、`@` は `a` に、`|` は `l` に置き換えられます。
+- 名前が数字で始まる場合は、先頭に `_` が付加されます。
+- `_` の倍数は 1 つの `_` に変換されます。
+- 末尾の `_` はすべて `x` に置き換えられます。
+
+テーブル名とフラット化された列名のネスト区切り文字として `__` を使用します。
 
 :::tip
-If you do not like **snake_case**, your next safe option is **sql_ci**, which generates SQL-safe, lowercase, case-insensitive identifiers without any other transformations. To permanently change the default naming convention on a given machine:
-1. Set an environment variable `SCHEMA__NAMING` to `sql_ci_v1` OR
-2. Add the following line to your global `config.toml` (the one in your home dir, i.e., `~/.dlt/config.toml`):
+**snake_case** が気に入らない場合、次に安全な選択肢は **sql_ci** です。これは、SQL セーフで、小文字、大文字と小文字を区別しない識別子を、その他の変換なしで生成します。
+特定のマシンのデフォルトの命名規則を永続的に変更するには、次の操作を行います。
+1. 環境変数 `SCHEMA__NAMING` を `sql_ci_v1` に設定するか、
+2. グローバル `config.toml`（ホームディレクトリにある `~/.dlt/config.toml`）に次の行を追加します。
+
 ```toml
 [schema]
 naming="sql_ci_v1"
 ```
 :::
 
-## Source identifiers vs destination identifiers
-### Pick the right identifier form when defining resources
-`dlt` keeps source (not normalized) identifiers during data [extraction](../reference/explainers/how-dlt-works.md#extract) and translates them during [normalization](../reference/explainers/how-dlt-works.md#normalize). For you, it means:
-1. If you write a [transformer](resource.md#process-resources-with-dlttransformer) or a [mapping/filtering function](resource.md#filter-transform-and-pivot-data), you will see the original data, without any normalization. Use the source identifiers to access the dicts!
-2. If you define a `primary_key` or `cursor` that participates in [cursor field incremental loading](incremental-loading.md#incremental-loading-with-a-cursor-field), use the source identifiers (`dlt` uses them to inspect source data, `Incremental` class is just a filtering function).
-3. When defining any other hints, i.e., `columns` or `merge_key`, you can pick source or destination identifiers. `dlt` normalizes all hints together with your data.
-4. The `Schema` object (i.e., obtained from the pipeline or from `dlt` source via `discover_schema`) **always contains destination (normalized) identifiers**.
+## 送信元識別子と宛先識別子
+### リソースを定義するときは適切な識別子形式を選択する
 
-### Understand the identifier normalization
-Identifiers are translated from source to destination form in the **normalize** step. Here's how `dlt` picks the naming convention:
+`dlt` は、データの [抽出](../reference/explainers/how-dlt-works.md#extract) 時にソース識別子（正規化されていない）を保持し、[正規化](../reference/explainers/how-dlt-works.md#normalize) 時にそれらを変換します。
+これは、次のことを意味します。
+1. [トランスフォーマー](resource.md#process-resources-with-dlttransformer) または [マッピング/フィルタリング関数](resource.md#filter-transform-and-pivot-data) を記述すると、正規化されていない元のデータが表示されます。辞書にアクセスするには、ソース識別子を使用してください。
+2. [カーソルフィールドの増分ロード](incremental-loading.md#incremental-loading-with-a-cursor-field)に参加する `primary_key` または `cursor` を定義する場合は、ソース識別子を使用します（`dlt` はソースデータを検査するためにそれらを使用します。`Incremental` クラスは単なるフィルタリング関数です）。
+3. その他のヒント（`columns` や `merge_key` など）を定義する場合は、ソース識別子または宛先識別子を選択できます。`dlt` はすべてのヒントをデータと一緒に正規化します。
+4. `Schema` オブジェクト（パイプラインから取得されるか、`discover_schema` を介して `dlt` ソースから取得される）には、**常に宛先（正規化された）識別子が含まれます**。
 
-* The default naming convention is **snake_case**.
-* Each destination may define a preferred naming convention in [destination capabilities](destination.md#pass-additional-parameters-and-change-destination-capabilities). Some destinations (i.e., Weaviate) need a specialized naming convention and will override the default.
-* You can [configure a naming convention explicitly](#configure-naming-convention). Such configuration overrides the destination settings.
-* This naming convention is used when new schemas are created. It happens when the pipeline is run for the first time.
-* Schemas preserve the naming convention when saved. Your running pipelines will maintain existing naming conventions if not requested otherwise.
-* `dlt` applies the final naming convention in the `normalize` step. Jobs (files) in the load package now have destination identifiers. The pipeline schema is duplicated, locked, and saved in the load package and will be used by the destination.
+### 識別子の正規化について理解する
+
+識別子は、**normalize** ステップでソース形式から宛先形式に変換されます。
+`dlt` が命名規則を選択する方法は次のとおりです。
+
+* デフォルトの命名規則は **snake_case** です。
+* 各宛先は、[destination capabilities](destination.md#pass-additional-parameters-and-change-destination-capabilities) で優先命名規則を定義できます。一部の宛先 (Weaviate など) では特別な命名規則が必要であり、デフォルトの命名規則がオーバーライドされます。
+* [命名規則を明示的に設定](#configure-naming-convention) できます。この設定は宛先の設定をオーバーライドします。
+* この命名規則は、新しいスキーマが作成されるときに使用されます。これは、パイプラインが初めて実行されるときに行われます。
+* スキーマは保存時に命名規則を保持します。実行中のパイプラインは、特に要求されない限り、既存の命名規則を維持します。
+* `dlt` は、`normalize` ステップで最終的な命名規則を適用します。ロードパッケージ内のジョブ（ファイル）に宛先識別子が追加されました。パイプラインスキーマは複製され、ロックされ、ロードパッケージに保存され、宛先で使用されます。
 
 :::caution
-If you change the naming convention and `dlt` detects a change in the destination identifiers for tables/collections/files that already exist and store data, the normalize process will fail. This prevents an unwanted schema migration. New columns and tables will be created for identifiers that changed.
+命名規則を変更し、`dlt` が既に存在しデータを保存しているテーブル／コレクション／ファイルの宛先識別子の変更を検出すると、正規化プロセスは失敗します。
+これにより、不要なスキーマ移行を防止します。
+変更された識別子に対して、新しい列とテーブルが作成されます。
 :::
 
-### Case-sensitive and insensitive destinations
-Naming conventions declare if the destination identifiers they produce are case-sensitive or insensitive. This helps `dlt` to [generate case-sensitive / insensitive identifiers for the destinations that support both](destination.md#control-how-dlt-creates-table-column-and-other-identifiers). For example, if you pick a case-insensitive naming like **snake_case** or **sql_ci_v1**, with Snowflake, `dlt` will generate all uppercase identifiers that Snowflake sees as case-insensitive. If you pick a case-sensitive naming like **sql_cs_v1**, `dlt` will generate quoted case-sensitive identifiers that preserve identifier capitalization.
+### 大文字と小文字を区別する宛先と区別しない宛先
 
-Note that many destinations are exclusively case-insensitive, of which some preserve the casing of identifiers (i.e., **duckdb**) and some will case-fold identifiers when creating tables (i.e., **Redshift**, **Athena** do lowercase on the names). `dlt` is able to detect resulting identifier [collisions](#avoid-identifier-collisions) and stop the load process before data is mangled.
+命名規則は、生成する宛先識別子が大文字と小文字を区別するか区別しないかを宣言します。
+これにより、`dlt` は [大文字と小文字の両方をサポートする宛先に対して、大文字と小文字を区別する / 区別しない識別子を生成](destination.md#control-how-dlt-creates-table-column-and-other-identifiers) できるようになります。
+例えば、**snake_case** や **sql_ci_v1** のように大文字と小文字を区別しない命名規則を選択した場合、Snowflake では `dlt` は Snowflake が大文字と小文字を区別しないものと見なすすべての大文字の識別子を生成します。
+**sql_cs_v1** のように大文字と小文字を区別する命名規則を選択した場合、`dlt` は識別子の大文字小文字の区別を維持しながら、引用符で囲まれた大文字と小文字を区別する識別子を生成します。
 
-### Identifier shortening
-Identifier shortening happens during normalization. `dlt` takes the maximum length of the identifier from the destination capabilities and will trim the identifiers that are too long. The default shortening behavior generates short deterministic hashes of the source identifiers and places them in the middle of the destination identifier. This (with a high probability) avoids shortened identifier collisions.
+多くの出力先は大文字と小文字を区別しないことに注意してください。その中には、識別子の大文字と小文字を保持するもの（例：**duckdb**）と、テーブル作成時に識別子の大文字と小文字を区別するものがあります（例：**Redshift**、**Athena** は名前を小文字にします）。
+`dlt` は、結果として生じる識別子の [衝突](#avoid-identifier-collisions) を検出し、データが壊れる前にロードプロセスを停止できます。
 
-### Compound (flattened) identifiers
-`dlt` combines several identifiers in order to name nested tables and flattened columns. For example:
+### 識別子の短縮
+
+識別子の短縮は正規化中に行われます。
+`dlt` は、宛先機能から識別子の最大長を取得し、長すぎる識別子を切り詰めます。
+デフォルトの短縮動作では、ソース識別子の短い決定論的ハッシュを生成し、それを宛先識別子の中央に配置します。
+これにより、短縮された識別子の衝突が（高い確率で）回避されます。
+
+### 複合（フラット化）識別子
+
+`dlt` は、ネストされたテーブルやフラット化された列に名前を付けるために、複数の識別子を組み合わせます。
+例:
+
 ```json
 {
   "column":
@@ -79,20 +106,23 @@ Identifier shortening happens during normalization. `dlt` takes the maximum leng
     }
 }
 ```
-generates flattened column name `column__value`. Where `__` is a path separator (in **snake case**). Each component in the combined identifier is normalized
-separately and shortened as a whole.
+
+フラット化された列名 `column__value` を生成します。
+`__` はパス区切り文字（**スネークケース**）です。
+結合された識別子の各コンポーネントは個別に正規化され、全体として短縮されます。
 
 :::note
-Combined identifier is also a valid single identifier. Starting from
-`dlt` version above 1.4.0 normalization is fully idempotent and normalized
-`column__value` will be still `column__value`.
+結合された識別子も有効な単一の識別子です。
+`dlt` バージョン 1.4.0 以降では、正規化は完全にべき等であり、正規化された `column__value` は引き続き `column__value` になります。
 :::
 
 :::caution
-Previously double underscores were contracted into single underscore. That
-prevented using data loaded by `dlt` as a data source without identifier modifications. `dlt` maintains backward compatibility for version >1.4.0 as follows:
+以前は、二重のアンダースコアは単一のアンダースコアに短縮されていました。
+そのため、`dlt` でロードしたデータを識別子を変更せずにデータソースとして使用することができませんでした。
+`dlt` は、バージョン 1.4.0 以降で、以下のように下位互換性を維持しています。
 
-* All schemas stored locally or at destination will be migrated to backward compatible mode by setting a flag `use_break_path_on_normalize` ie.:
+* ローカルまたは出力先に保存されているすべてのスキーマは、フラグ `use_break_path_on_normalize` を設定することで下位互換モードに移行されます。例:
+
 ```yaml
 normalizers:
   names: dlt.common.normalizers.names.snake_case
@@ -100,30 +130,40 @@ normalizers:
   json:
     module: dlt.common.normalizers.json.relational
 ```
-* Backward compatible behavior may be explicitly enabled by setting
-`SCHEMA__USE_BREAK_PATH_ON_NORMALIZE` to `TRUE` or via `config.toml`:
+
+* 後方互換性のある動作は、`SCHEMA__USE_BREAK_PATH_ON_NORMALIZE` を `TRUE` に設定するか、`config.toml` 経由で明示的に有効にすることができます。
+
 ```toml
 [schema]
 use_break_path_on_normalize=true
 ```
 :::
 
-### 🚧 [WIP] Name convention changes are lossy
-`dlt` does not store the source identifiers in the schema so when the naming convention changes (or we increase the maximum identifier length), it is not able to generate a fully correct set of new identifiers. Instead, it will re-normalize already normalized identifiers. We are currently working to store the full identifier lineage - source identifiers will be stored and mapped to the destination in the schema.
+### 🚧 [WIP] 命名規則の変更は損失を伴います。
 
-## Pick your own naming convention
+`dlt` はソース識別子をスキーマに保存しないため、命名規則が変更された場合（または識別子の最大長が増加した場合）、完全に正しい新しい識別子セットを生成することができません。
+代わりに、既に正規化された識別子を再正規化します。
+現在、完全な識別子の系統を保存するための作業を進めており、ソース識別子はスキーマに保存され、宛先にマッピングされます。
 
-### Configure naming convention
-You can use `config.toml`, environment variables, or any other configuration provider to set the naming convention name. The configured naming convention **overrides all other settings**:
-- Changes the naming convention stored in the already created schema.
-- Overrides the destination capabilities preference.
+## 独自の命名規則を選択する
+
+### 命名規則を設定する
+
+`config.toml`、環境変数、またはその他の構成プロバイダを使用して、命名規則名を設定できます。
+設定された命名規則は**他のすべての設定をオーバーライドします**。
+- 既に作成済みのスキーマに保存されている命名規則を変更します。
+- 出力先の機能設定をオーバーライドします。
+
 ```toml
 [schema]
 naming="sql_ci_v1"
 ```
-The configuration above will request **sql_ci_v1** for all pipelines (schemas). An environment variable `SCHEMA__NAMING` set to `sql_ci_v1` has the same effect.
 
-You have the option to set the naming convention per source:
+上記の設定では、すべてのパイプライン（スキーマ）に対して **sql_ci_v1** が要求されます。
+環境変数 `SCHEMA__NAMING` を `sql_ci_v1` に設定しても同様の効果が得られます。
+
+ソースごとに命名規則を設定するオプションがあります:
+
 ```toml
 [sources.zendesk]
 config="prop"
@@ -132,74 +172,87 @@ naming="sql_cs_v1"
 [sources.zendesk.credentials]
 password="pass"
 ```
-The snippet above demonstrates how to apply a certain naming for an example `zendesk` source.
 
-You can use naming conventions that you created yourself or got from other users. In that case, you should pass a full Python import path to the [module that contains the naming convention](#write-your-own-naming-convention):
+上記のスニペットは、`zendesk` ソースの例に特定の命名規則を適用する方法を示しています。
+
+独自に作成した命名規則や他のユーザーから取得した命名規則を使用することもできます。その場合は、[命名規則を含むモジュール](#write-your-own-naming-convention) への完全な Python インポートパスを渡す必要があります。
+
 ```toml
 [schema]
 naming="tests.common.cases.normalizers.sql_upper"
 ```
-`dlt` will import `tests.common.cases.normalizers.sql_upper` and use the `NamingConvention` class found in it as the naming convention.
+
+`dlt` は `tests.common.cases.normalizers.sql_upper` をインポートし、その中の `NamingConvention` クラスを命名規則として使用します。
 
 
-### Available naming conventions
-You can pick from a few built-in naming conventions.
+### 利用可能な命名規則
 
-* `snake_case` - the default.
-* `duck_case` - case-sensitive, allows all Unicode characters like emoji 💥.
-* `direct` - case-sensitive, allows all Unicode characters, does not contract underscores.
-* `sql_cs_v1` - case-sensitive, generates SQL-safe identifiers.
-* `sql_ci_v1` - case-insensitive, generates SQL-safe lowercase identifiers.
+いくつかの組み込み命名規則から選択できます。
+
+* `snake_case` - デフォルト。
+* `duck_case` - 大文字と小文字を区別し、絵文字 💥 などのすべての Unicode 文字を使用できます。
+* `direct` - 大文字と小文字を区別し、すべての Unicode 文字を使用できますが、アンダースコアは省略されません。
+* `sql_cs_v1` - 大文字と小文字を区別し、SQL で安全な識別子を生成します。
+* `sql_ci_v1` - 大文字と小文字を区別せず、SQL で安全な小文字の識別子を生成します。
 
 
-### Ignore naming convention for `dataset_name`
-You control the dataset naming normalization separately. Set `enable_dataset_name_normalization` to `false` to ignore the naming convention for `dataset_name`:
+### `dataset_name` の命名規則を無視する
+
+データセットの命名規則の正規化は別途制御できます。
+`dataset_name` の命名規則を無視するには、`enable_dataset_name_normalization` を `false` に設定します。
 
 ```toml
 [destination.snowflake]
 enable_dataset_name_normalization=false
 ```
 
-In that case, the `dataset_name` would be preserved the same as it was set in the pipeline:
+その場合、`dataset_name` はパイプラインで設定されたとおりに保持されます:
+
 ```py
 import dlt
 
 pipeline = dlt.pipeline(dataset_name="MyCamelCaseName")
 ```
 
-The default value for the `enable_dataset_name_normalization` configuration option is `true`.
+`enable_dataset_name_normalization` 構成オプションのデフォルト値は `true` です。
+
 :::note
-The same setting would be applied to [staging dataset](../dlt-ecosystem/staging#staging-dataset). Thus, if you set `enable_dataset_name_normalization` to `false`, the staging dataset name would also **not** be normalized.
+同じ設定が[ステージングデータセット](../dlt-ecosystem/staging#staging-dataset)にも適用されます。
+したがって、`enable_dataset_name_normalization` を `false` に設定すると、ステージングデータセット名も正規化されません。
 :::
 
 :::caution
-Depending on the destination, certain names may not be allowed. To ensure your dataset can be successfully created, use the default normalization option.
+出力先によっては、特定の名前が許可されない場合があります。
+データセットを正常に作成するには、デフォルトの正規化オプションを使用してください。
 :::
 
-## Avoid identifier collisions
-`dlt` detects various types of identifier collisions and ignores the others.
-1. dlt detects collisions if a case-sensitive naming convention is used on a case-insensitive destination.
-2. dlt detects collisions if a change of naming convention changes the identifiers of tables already created in the destination.
-3. dlt detects collisions when the naming convention is applied to column names of arrow tables.
+## 識別子の衝突を回避する
 
-`dlt` will not detect a collision when normalizing source data. If you have a dictionary, keys will be merged if they collide after being normalized.
-You can create a custom naming convention that does not generate collisions on data, see examples below.
+`dlt` は、様々な種類の識別子の衝突を検出し、その他の衝突は無視します。
+1. 大文字と小文字を区別しない宛先で、大文字と小文字を区別する命名規則が使用されている場合、dlt は衝突を検出します。
+2. 命名規則の変更によって、宛先に既に作成されているテーブルの識別子が変更された場合、dlt は衝突を検出します。
+3. 命名規則が矢印テーブルの列名に適用された場合、dlt は衝突を検出します。
 
-## Write your own naming convention
+`dlt` は、ソースデータを正規化する際に衝突を検出しません。
+辞書がある場合、正規化後にキーが衝突した場合は、キーがマージされます。
+データに衝突が発生しないカスタム命名規則を作成できます。以下の例を参照してください。
 
-Custom naming conventions are classes that derive from `NamingConvention`, which you can import from `dlt.common.normalizers.naming`. We recommend the following module layout:
-1. Each naming convention resides in a separate Python module (file).
-2. The class is always named `NamingConvention`.
+## 独自の命名規則を作成する
 
-In that case, you can use a fully qualified module name in [schema configuration](#configure-naming-convention) or pass the module [explicitly](#configure-naming-convention).
+カスタム命名規則は、`NamingConvention` から派生したクラスで、`dlt.common.normalizers.naming` からインポートできます。以下のモジュールレイアウトを推奨します。
 
-We include [two examples](../examples/custom_naming) of naming conventions that you may find useful:
+1. 各命名規則は、別々の Python モジュール（ファイル）に存在します。
+2. クラス名は常に `NamingConvention` になります。
 
-1. A variant of `sql_ci` that generates identifier collisions with a low (user-defined) probability by appending a deterministic tag to each name.
-2. A variant of `sql_cs` that allows for LATIN (i.e., umlaut) characters.
+この場合、[スキーマ設定](#configure-naming-convention) で完全修飾モジュール名を使用するか、モジュールを [明示的に](#configure-naming-convention) 渡すことができます。
+
+役立つと思われる命名規則の [2つの例](../examples/custom_naming) を以下に示します。
+
+1. 各名前に決定論的なタグを追加することで、低い確率（ユーザー定義）で識別子の衝突を生成する `sql_ci` の派生クラス。
+2. LATIN (ウムラウト) 文字を許可する `sql_cs` のバリアント。
 
 :::note
-Note that the fully qualified name of your custom naming convention will be stored in the schema, and dlt will attempt to import it when the schema is loaded from storage.
-You should distribute your custom naming conventions with your pipeline code or via a pip package from which it can be imported.
+カスタム命名規則の完全修飾名はスキーマに保存され、スキーマがストレージからロードされるときに dlt はそれをインポートしようとすることに注意してください。
+カスタム命名規則は、パイプライン コードと一緒に配布するか、インポート可能な pip パッケージ経由で配布する必要があります。
 :::
 

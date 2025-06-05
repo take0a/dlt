@@ -4,21 +4,21 @@ description: How to monitor a dlt pipeline
 keywords: [monitoring, run monitoring, data monitoring, airflow, github actions]
 ---
 
-# Monitoring
+# モニタリング
 
-Monitoring and [alerting](alerting.md) are used together to provide a more complete picture of the
-health of a data product. With monitoring, we examine much more information than we consider when
-alerting. Monitoring is meant to give a fast, simple overview of the health of the system. How to
-best monitor a `dlt` pipeline will depend on your [deployment method](../walkthroughs/deploy-a-pipeline/).
+モニタリングと[アラート](alerting.md)は、データ製品の健全性についてより包括的な情報を提供するために併用されます。
+モニタリングでは、アラート時に考慮するよりもはるかに多くの情報を検証します。
+モニタリングは、システムの健全性について迅速かつ簡潔な概要を提供することを目的としています。
+`dlt`パイプラインを最適にモニタリングする方法は、[デプロイメント方法](../walkthroughs/deploy-a-pipeline/)によって異なります。
 
-## Run monitoring
+## 実行監視
 
 ### Airflow
 
-In Airflow, at the top level, we can monitor:
+Airflow では、トップレベルで以下の項目を監視できます。
 
-- The tasks scheduled to (not) run.
-- Run history (e.g., success/failure).
+- 実行予定（または実行予定ではない）のタスク。
+- 実行履歴（成功/失敗など）。
 
 Airflow DAGs:
 
@@ -30,10 +30,10 @@ Airflow DAG tasks:
 
 ### GitHub Actions
 
-In GitHub Actions, at the top level, we can monitor:
+GitHub Actions では、トップレベルで以下の項目を監視できます。
 
-- The workflows scheduled to (not) run.
-- Run history (e.g., success/failure).
+- 実行予定（または実行予定ではない）のワークフロー。
+- 実行履歴（成功/失敗など）。
 
 GitHub Actions workflows:
 
@@ -45,31 +45,28 @@ GitHub Actions workflow DAG:
 
 ### Sentry
 
-Using `dlt` [tracing](tracing.md), you can configure [Sentry](https://sentry.io) DSN to start
-receiving rich information on executed pipelines, including encountered errors and exceptions.
+`dlt` [tracing](tracing.md) を使用すると、[Sentry](https://sentry.io) DSN を構成して、発生したエラーや例外など、実行されたパイプラインに関する豊富な情報を受け取ることができます。
 
-## Data monitoring
+## データ監視
 
-Data quality monitoring is concerned with ensuring that quality data arrives at the data warehouse
-on time. The reason we do monitoring instead of alerting for this is because we cannot easily define
-alerts for what could go wrong.
+データ品質監視は、高品質なデータがデータウェアハウスに時間どおりに到着することを保証することを目的としています。アラートではなく監視を行うのは、何が問題になるかを簡単に定義できないためです。
 
-This is why we want to capture enough context to allow a person to decide if the data looks OK or
-requires further investigation when monitoring the data quality. A staple of monitoring are line
-charts and time-series charts that provide a baseline or a pattern that a person can interpret.
+そのため、データ品質を監視する際には、データが正常か、あるいはさらなる調査が必要かを人が判断できるよう、十分なコンテキストを取得する必要があります。
 
-For example, to monitor data loading, consider plotting "count of records by `loaded_at` date/hour",
-"created at", "modified at", or other recency markers.
+監視の定番は、折れ線グラフと時系列グラフであり、人が解釈できるベースラインやパターンを提供します。
 
-### Rows count
-To find the number of rows loaded per table, use the following command:
+例えば、データの読み込みを監視するには、「`loaded_at` 日時別のレコード数」、「作成時刻」、「変更時刻」、またはその他の最新性マーカーをプロットすることを検討してください。
+
+### 行数
+
+テーブルごとにロードされた行数を確認するには、次のコマンドを使用します:
 
 ```sh
 dlt pipeline <pipeline_name> trace
 ```
 
-This command will display the names of the tables that were loaded and the number of rows in each table.
-The above command provides the row count for the Chess source. As shown below:
+このコマンドは、ロードされたテーブルの名前と各テーブルの行数を表示します。
+上記のコマンドは、Chessソースの行数を表示します。以下のようになります:
 
 ```sh
 Step normalize COMPLETED in 2.37 seconds.
@@ -82,7 +79,8 @@ Normalized data for the following tables:
 - retailers: 1342 row(s)
 ```
 
-To load this information back to the destination, you can use the following:
+この情報を宛先に再度読み込むには、以下を使用できます:
+
 ```py
 # Create a pipeline with the specified name, destination, and dataset
 # Run the pipeline
@@ -94,27 +92,27 @@ trace = pipeline.last_trace
 # Load the trace information into a table named "_trace" in the destination
 pipeline.run([trace], table_name="_trace")
 ```
-This process loads several additional tables to the destination, which provide insights into
-the extract, normalize, and load steps. Information on the number of rows loaded for each table,
-along with the `load_id`, can be found in the `_trace__steps__extract_info__table_metrics` table.
-The `load_id` is an epoch timestamp that indicates when the loading was completed. Here's a graphical
-representation of the rows loaded with `load_id` for different tables:
+
+このプロセスでは、複数の追加テーブルが出力先にロードされ、抽出、正規化、ロードの各ステップに関する詳細な情報が得られます。各テーブルにロードされた行数と `load_id` に関する情報は、`_trace__steps__extract_info__table_metrics` テーブルで確認できます。
+`load_id` は、ロードが完了した時刻を示すエポックタイムスタンプです。
+以下は、異なるテーブルに `load_id` でロードされた行をグラフィカルに表したものです。
 
 ![image](https://storage.googleapis.com/dlt-blog-images/docs_monitoring_count_of_rows_vs_load_id.jpg)
 
 ### Data load time
-Data loading time for each table can be obtained by using the following command:
+
+各テーブルのデータ読み込み時間は、次のコマンドを使用して取得できます:
 
 ```sh
 dlt pipeline <pipeline_name> load-package
 ```
 
-The above information can also be obtained from the script as follows:
+上記の情報は、次のようにスクリプトから取得することもできます:
 
 ```py
 info = pipeline.run(source, table_name="table_name", write_disposition='append')
 
 print(info.load_packages[0])
 ```
-> `load_packages[0]` will print the information of the first load package in the list of load packages.
+> `load_packages[0]`はロードパッケージのリストの最初のロードパッケージの情報を出力します。
 

@@ -4,33 +4,37 @@ description: Anonymous usage information with dlt telemetry
 keywords: [telemetry, usage information, opt out]
 ---
 
-# Telemetry
+# テレメトリ
 
-`dlt` collects and reports **anonymous** usage information. This information is essential to figuring out how we should improve the library. Telemetry does not send any personal data. We create a random tracking cookie that is stored in your `~/.dlt` directory. You can disable telemetry at any moment or send it to your own servers instead.
+`dlt` は**匿名**の使用情報を収集し、報告します。
+この情報は、ライブラリの改善方法を決定する上で不可欠です。
+テレメトリは個人データを送信しません。
+ランダムなトラッキング Cookie を作成し、`~/.dlt` ディレクトリに保存します。
+テレメトリはいつでも無効にしたり、独自のサーバーに送信したりできます。
 
-## How to opt out
+## オプトアウトの方法
 
-You can disable telemetry by adding `--disable-telemetry` to any dlt [command](command-line-interface.md).
+任意の dlt [コマンド](command-line-interface.md) に `--disable-telemetry` を追加することで、テレメトリを無効にできます。
 
-This command will disable telemetry both in the current project and globally for the whole machine:
+このコマンドは、現在のプロジェクトとマシン全体の両方でテレメトリを無効にします。
 
 ```sh
 dlt --disable-telemetry
 ```
 
-While this command will also permanently disable telemetry and then initialize the `chess` pipeline:
+このコマンドはテレメトリを永続的に無効にし、`chess` パイプラインを初期化します。
 
 ```sh
 dlt --disable-telemetry init chess duckdb
 ```
 
-You can check the current telemetry status with this command:
+次のコマンドで現在のテレメトリ ステータスを確認できます。
 
 ```sh
 dlt telemetry
 ```
 
-Another way to disable telemetry is to set the `runtime.dlthub_telemetry` option in the `config.toml` file in the `.dlt` folder.
+テレメトリを無効にする別の方法は、`.dlt` フォルダーの `config.toml` ファイルで `runtime.dlthub_telemetry` オプションを設定することです。
 
 ```toml
 [runtime]
@@ -38,15 +42,20 @@ Another way to disable telemetry is to set the `runtime.dlthub_telemetry` option
 dlthub_telemetry=false
 ```
 
-## What we send when
+## 送信内容
 
-Anonymous telemetry is sent when:
+匿名テレメトリは、以下の場合に送信されます。
 
-- Any `dlt` command is executed from the command line. The data contains the command name. In the case of the `dlt init` command, we also send the requested destination and data source names.
-- When `pipeline.run` is called, we send information when the [extract, normalize, and load](explainers/how-dlt-works.md) steps are completed. The data contains the destination name (e.g., `duckdb`), hashes of the dataset name, pipeline name, default schema name, destination fingerprint (which is a hash of selected destination configuration fields), elapsed time, and whether the step succeeded or not.
-- When `dbt` and `airflow` helpers are used
+- コマンドラインから任意の `dlt` コマンドが実行された場合。
 
-Here is an example `dlt init` telemetry message:
+データにはコマンド名が含まれます。
+
+`dlt init` コマンドの場合は、要求された出力先とデータソース名も送信されます。
+- `pipeline.run` が呼び出された場合、[抽出、正規化、ロード](explainers/how-dlt-works.md) ステップが完了した時点で情報が送信されます。
+データには、出力先名 (例: `duckdb`)、データセット名のハッシュ、パイプライン名、デフォルトのスキーマ名、出力先フィンガープリント (選択された出力先設定フィールドのハッシュ)、経過時間、およびステップの成功/失敗が含まれます。
+- `dbt` および `airflow` ヘルパーが使用された場合
+
+`dlt init` テレメトリメッセージの例を次に示します。
 
 ```json
 {
@@ -77,7 +86,7 @@ Here is an example `dlt init` telemetry message:
 }
 ```
 
-Example for `load` pipeline run step:
+`load` パイプライン実行ステップの例:
 
 ```json
 {
@@ -112,30 +121,33 @@ Example for `load` pipeline run step:
 }
 ```
 
-## The message `context`
+## メッセージ `context`
 
-The message `context` contains the following information:
+メッセージ `context` には以下の情報が含まれます。
 
-- `anonymousId`: a random tracking cookie stored in `~/.dlt/.anonymous_id`.
-- `ci_run`: a flag indicating if the message was sent from a CI environment (e.g., `GitHub Actions`, `Travis CI`).
-- `cpu`: contains the number of cores.
-- `exec_info`: contains a list of strings that identify the execution environment: (e.g., `kubernetes`, `docker`, `airflow`).
-- The `library`, `os`, and `python` give us some understanding of the runtime environment of the `dlt`.
+- `anonymousId`: `~/.dlt/.anonymous_id` に保存されるランダムなトラッキング Cookie。
+- `ci_run`: メッセージが CI 環境 (例: `GitHub Actions`、`Travis CI`) から送信されたかどうかを示すフラグ。
+- `cpu`: コア数。
+- `exec_info`: 実行環境を識別する文字列のリスト (例: `kubernetes`、`docker`、`airflow`)。
+- `library`、`os`、`python` は、`dlt` の実行環境に関する情報を提供します。
 
-## Send telemetry data to your own tracker
+## 独自のトラッカーにテレメトリデータを送信
 
-You can set up your own tracker to receive telemetry events. You can create a scalable, globally distributed edge service [using `dlt` and Cloudflare](https://dlthub.com/blog/dlt-segment-migration).
+独自のトラッカーを設定して、テレメトリイベントを受信できます。
+[`dlt` と Cloudflare を使用](https://dlthub.com/blog/dlt-segment-migration)、スケーラブルでグローバルに分散されたエッジサービスを作成できます。
 
-Once your tracker is running, point `dlt` to it. You can use the global `config.toml` to redirect all pipelines on a given machine.
+トラッカーが起動したら、`dlt` をトラッカーに指定します。
+グローバル `config.toml` を使用して、特定のマシン上のすべてのパイプラインをリダイレクトできます。
 
 ```toml
 [runtime]
 dlthub_telemetry_endpoint="telemetry-tracker.services4745.workers.dev"
 ```
 
-### Track events with Segment
+### Segment でイベントを追跡する
 
-You can send anonymous telemetry to your own [Segment](https://segment.com/) account. You need to create an HTTP Server source and generate a WRITE KEY, which you then pass to the `config.toml` like this:
+匿名テレメトリをご自身の [Segment](https://segment.com/) アカウントに送信できます。
+HTTP サーバーソースを作成し、WRITE KEY を生成して、次のように `config.toml` に渡す必要があります。
 
 ```toml
 [runtime]

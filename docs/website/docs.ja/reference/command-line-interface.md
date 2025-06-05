@@ -9,25 +9,27 @@ keywords: [command line interface, cli, dlt init]
 
 <!-- this page is fully generated from the argparse object of dlt, run make update-cli-docs to update it -->
 
-This page contains all commands available in the dlt CLI and is generated
-automatically from the fully populated python argparse object of dlt.
+This page contains all commands available in the dlt CLI and is generated automatically from the fully populated python argparse object of dlt.
+
 :::note
-Flags and positional commands are inherited from the parent command. Position within the command string
-is important. For example if you want to enable debug mode on the pipeline command, you need to add the
-debug flag to the base dlt command:
+フラグと位置指定コマンドは親コマンドから継承されます。
+コマンド文字列内の位置は重要です。
+たとえば、パイプラインコマンドでデバッグモードを有効にするには、ベースとなる dlt コマンドにデバッグフラグを追加する必要があります。
 
 ```sh
 dlt --debug pipeline
 ```
 
-Adding the flag after the pipeline keyword will not work.
+パイプラインキーワードの後に​​フラグを追加しても機能しません。
 :::
 
 ## `dlt`
 
-Creates, adds, inspects and deploys dlt pipelines. Further help is available at https://dlthub.com/docs/reference/command-line-interface.
+DLTパイプラインを作成、追加、検査、デプロイします。
+詳細なヘルプは https://dlthub.com/docs/reference/command-line-interface でご覧いただけます。
 
-**Usage**
+**使用方法**
+
 ```sh
 dlt [-h] [--version] [--disable-telemetry] [--enable-telemetry]
     [--non-interactive] [--debug]
@@ -36,84 +38,87 @@ dlt [-h] [--version] [--disable-telemetry] [--enable-telemetry]
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--version` - Show program's version number and exit
-* `--disable-telemetry` - Disables telemetry before command is executed
-* `--enable-telemetry` - Enables telemetry before command is executed
-* `--non-interactive` - Non interactive mode. default choices are automatically made for confirmations and prompts.
-* `--debug` - Displays full stack traces on exceptions. useful for debugging if the output is not clear enough.
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--version` - プログラムのバージョン番号を表示して終了します
+* `--disable-telemetry` - コマンド実行前にテレメトリを無効にします
+* `--enable-telemetry` - コマンド実行前にテレメトリを有効にします
+* `--non-interactive` - 非対話型モード。確認とプロンプトにはデフォルトの選択が自動的に行われます。
+* `--debug` - 例外発生時のフルスタックトレースを表示します。出力が十分に明確でない場合のデバッグに役立ちます。
 
-**Available subcommands**
-* [`telemetry`](#dlt-telemetry) - Shows telemetry status
-* [`schema`](#dlt-schema) - Shows, converts and upgrades schemas
-* [`pipeline`](#dlt-pipeline) - Operations on pipelines that were ran locally
-* [`init`](#dlt-init) - Creates a pipeline project in the current folder by adding existing verified source or creating a new one from template.
-* [`render-docs`](#dlt-render-docs) - Renders markdown version of cli docs
-* [`deploy`](#dlt-deploy) - Creates a deployment package for a selected pipeline script
+**利用可能なサブコマンド**
+* [`telemetry`](#dlt-telemetry) - テレメトリのステータスを表示します
+* [`schema`](#dlt-schema) - スキーマを表示、変換、アップグレードします
+* [`pipeline`](#dlt-pipeline) - ローカルで実行されたパイプラインに対する操作を実行します
+* [`init`](#dlt-init) - 既存の検証済みソースを追加するか、テンプレートから新しいソースを作成して、現在のフォルダにパイプラインプロジェクトを作成します
+* [`render-docs`](#dlt-render-docs) - CLI ドキュメントの Markdown 版をレンダリングします
+* [`deploy`](#dlt-deploy) - 選択したパイプラインスクリプトのデプロイメントパッケージを作成します
 
 </details>
 
 ## `dlt telemetry`
 
-Shows telemetry status.
+テレメトリのステータスを表示します。
 
-**Usage**
+**使用方法**
+
 ```sh
 dlt telemetry [-h]
 ```
 
-**Description**
+**説明**
 
-The `dlt telemetry` command shows the current status of dlt telemetry. Lern more about telemetry and what we send in our telemetry docs.
+`dlt telemetry` コマンドは、dlt テレメトリの現在のステータスを表示します。
+テレメトリと送信される内容の詳細については、テレメトリのドキュメントをご覧ください。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ## `dlt schema`
 
-Shows, converts and upgrades schemas.
+スキーマを表示、変換、アップグレードします。
 
-**Usage**
+**使用方法**
+
 ```sh
 dlt schema [-h] [--format {json,yaml}] [--remove-defaults] file
 ```
 
-**Description**
+**説明**
 
-The `dlt schema` command will load, validate and print out a dlt schema: `dlt schema path/to/my_schema_file.yaml`.
+`dlt schema` コマンドは、dlt スキーマ `dlt schema path/to/my_schema_file.yaml` を読み込み、検証し、出力します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Positional arguments**
-* `file` - Schema file name, in yaml or json format, will autodetect based on extension
+**位置引数**
+* `file` - スキーマファイル名（yaml または json 形式）。拡張子に基づいて自動検出されます。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--format {json,yaml}` - Display schema in this format
-* `--remove-defaults` - Does not show default hint values
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します。
+* `--format {json,yaml}` - この形式でスキーマを表示します。
+* `--remove-defaults` - デフォルトのヒント値を表示しません。
 
 </details>
 
 ## `dlt pipeline`
 
-Operations on pipelines that were ran locally.
+ローカルで実行されたパイプラインに対する操作。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [-h] [--list-pipelines] [--hot-reload] [--pipelines-dir
     PIPELINES_DIR] [--verbose] [pipeline_name]
@@ -121,262 +126,262 @@ dlt pipeline [-h] [--list-pipelines] [--hot-reload] [--pipelines-dir
     ...
 ```
 
-**Description**
+**説明**
 
-The `dlt pipeline` command provides a set of commands to inspect the pipeline working directory, tables, and data in the destination and check for problems encountered during data loading.
+`dlt pipeline` コマンドは、パイプラインの作業ディレクトリ、テーブル、および宛先のデータを検査し、データのロード中に発生した問題をチェックするための一連のコマンドを提供します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Positional arguments**
-* `pipeline_name` - Pipeline name
+**位置引数**
+* `pipeline_name` - パイプライン名
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--list-pipelines, -l` - List local pipelines
-* `--hot-reload` - Reload streamlit app (for core development)
-* `--pipelines-dir PIPELINES_DIR` - Pipelines working directory
-* `--verbose, -v` - Provides more information for certain commands.
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--list-pipelines, -l` - ローカルパイプラインを一覧表示します
+* `--hot-reload` - streamlit アプリをリロードします（コア開発用）
+* `--pipelines-dir PIPELINES_DIR` - パイプラインの作業ディレクトリ
+* `--verbose, -v` - 特定のコマンドの詳細情報を表示します
 
-**Available subcommands**
-* [`info`](#dlt-pipeline-info) - Displays state of the pipeline, use -v or -vv for more info
-* [`show`](#dlt-pipeline-show) - Generates and launches streamlit app with the loading status and dataset explorer
-* [`failed-jobs`](#dlt-pipeline-failed-jobs) - Displays information on all the failed loads in all completed packages, failed jobs and associated error messages
-* [`drop-pending-packages`](#dlt-pipeline-drop-pending-packages) - Deletes all extracted and normalized packages including those that are partially loaded.
-* [`sync`](#dlt-pipeline-sync) - Drops the local state of the pipeline and resets all the schemas and restores it from destination. the destination state, data and schemas are left intact.
-* [`trace`](#dlt-pipeline-trace) - Displays last run trace, use -v or -vv for more info
-* [`schema`](#dlt-pipeline-schema) - Displays default schema
-* [`drop`](#dlt-pipeline-drop) - Selectively drop tables and reset state
-* [`load-package`](#dlt-pipeline-load-package) - Displays information on load package, use -v or -vv for more info
+**利用可能なサブコマンド**
+* [`info`](#dlt-pipeline-info) - パイプラインの状態を表示します。詳細については -v または -vv を使用してください。
+* [`show`](#dlt-pipeline-show) - 読み込みステータスとデータセットエクスプローラーを備えた Streamlit アプリを生成して起動します。
+* [`failed-jobs`](#dlt-pipeline-failed-jobs) - 完了したパッケージ、失敗したジョブ、および関連するエラーメッセージに含まれる、失敗した読み込みに関する情報を表示します。
+* [`drop-pending-packages`](#dlt-pipeline-drop-pending-packages) - 部分的に読み込まれたパッケージも含め、抽出および正規化されたすべてのパッケージを削除します。
+* [`sync`](#dlt-pipeline-sync) - パイプラインのローカル状態を削除し、すべてのスキーマをリセットして、出力先から復元します。出力先の状態、データ、スキーマはそのまま残ります。
+* [`trace`](#dlt-pipeline-trace) - 前回の実行トレースを表示します。詳細については -v または -vv を使用してください。
+* [`schema`](#dlt-pipeline-schema) - デフォルトのスキーマを表示します。
+* [`drop`](#dlt-pipeline-drop) - 選択したテーブルを削除し、状態をリセットします。
+* [`load-package`](#dlt-pipeline-load-package) - ロードパッケージに関する情報を表示します。詳細については -v または -vv を使用してください。
 
 </details>
 
 ### `dlt pipeline info`
 
-Displays state of the pipeline, use -v or -vv for more info.
+パイプラインの状態を表示します。詳細については -v または -vv を使用してください。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [pipeline_name] info [-h]
 ```
 
-**Description**
+**説明**
 
-Displays the content of the working directory of the pipeline: dataset name, destination, list of
-schemas, resources in schemas, list of completed and normalized load packages, and optionally a
-pipeline state set by the resources during the extraction process.
+パイプラインの作業ディレクトリの内容を表示します。データセット名、出力先、スキーマのリスト、スキーマ内のリソース、完了および正規化されたロードパッケージのリスト、そしてオプションで、抽出プロセス中にリソースによって設定されたパイプラインの状態を表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt pipeline show`
 
-Generates and launches Streamlit app with the loading status and dataset explorer.
+読み込みステータスとデータセット エクスプローラーを備えた Streamlit アプリを生成して起動します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [pipeline_name] show [-h]
 ```
 
-**Description**
+**説明**
 
-Generates and launches Streamlit (https://streamlit.io/) app with the loading status and dataset explorer.
+読み込みステータスとデータセットエクスプローラーを備えたStreamlit (https://streamlit.io/) アプリを生成し、起動します。
 
-This is a simple app that you can use to inspect the schemas and data in the destination as well as your pipeline state and loading status/stats. It should be executed from the same folder from which you ran the pipeline script to access destination credentials.
+これは、出力先のスキーマとデータ、パイプラインの状態、読み込みステータス/統計情報を確認できるシンプルなアプリです。出力先の認証情報にアクセスするには、パイプラインスクリプトを実行したフォルダと同じフォルダから実行する必要があります。
 
-Requires `streamlit` to be installed in the current environment: `pip install streamlit`.
+現在の環境に `streamlit` がインストールされている必要があります: `pip install streamlit`。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt pipeline failed-jobs`
 
-Displays information on all the failed loads in all completed packages, failed jobs and associated error messages.
+すべての完了したパッケージ、失敗したジョブ、および関連するエラー メッセージ内のすべての失敗したロードに関する情報を表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [pipeline_name] failed-jobs [-h]
 ```
 
-**Description**
+**説明**
 
-This command scans all the load packages looking for failed jobs and then displays information on
-files that got loaded and the failure message from the destination.
+このコマンドは、すべてのロードパッケージをスキャンして失敗したジョブを検索し、ロードされたファイルの情報と、ロード先からの失敗メッセージを表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt pipeline drop-pending-packages`
 
-Deletes all extracted and normalized packages including those that are partially loaded.
+部分的にロードされたものも含め、抽出され正規化されたすべてのパッケージを削除します。
 
-**Usage**
+**使用方法**
+
 ```sh
 dlt pipeline [pipeline_name] drop-pending-packages [-h]
 ```
 
-**Description**
+**説明**
 
-Removes all extracted and normalized packages in the pipeline's working dir.
-`dlt` keeps extracted and normalized load packages in the pipeline working directory. When the `run` method is called, it will attempt to normalize and load
-pending packages first. The command above removes such packages. Note that **pipeline state** is not reverted to the state at which the deleted packages
-were created. Using `dlt pipeline ... sync` is recommended if your destination supports state sync.
+パイプラインの作業ディレクトリにある、抽出および正規化されたすべてのパッケージを削除します。
+`dlt` は、抽出および正規化されたロードパッケージをパイプラインの作業ディレクトリに保持します。
+`run` メソッドが呼び出されると、まず保留中のパッケージの正規化とロードを試みます。
+上記のコマンドは、これらのパッケージを削除します。
+**パイプラインの状態** は、削除されたパッケージが作成された時点の状態に戻らないことに注意してください。
+出力先が状態同期をサポートしている場合は、`dlt pipeline ... sync` を使用することをお勧めします。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt pipeline sync`
 
-Drops the local state of the pipeline and resets all the schemas and restores it from destination. The destination state, data and schemas are left intact.
+パイプラインのローカル状態を削除し、すべてのスキーマをリセットして、宛先から復元します。
+宛先の状態、データ、スキーマはそのまま残ります。
 
-**Usage**
+**使用方法**
+
 ```sh
 dlt pipeline [pipeline_name] sync [-h] [--destination DESTINATION]
     [--dataset-name DATASET_NAME]
 ```
 
-**Description**
+**説明**
 
-This command will remove the pipeline working directory with all pending packages, not synchronized
-state changes, and schemas and retrieve the last synchronized data from the destination. If you drop
-the dataset the pipeline is loading to, this command results in a complete reset of the pipeline state.
+このコマンドは、パイプラインの作業ディレクトリ（保留中のパッケージ、同期されていない状態の変更、スキーマを含む）を削除し、出力先から最後に同期されたデータを取得します。
+パイプラインがロードしているデータセットを削除した場合、このコマンドはパイプラインの状態を完全にリセットします。
 
-In case of a pipeline without a working directory, the command may be used to create one from the
-destination. In order to do that, you need to pass the dataset name and destination name to the CLI
-and provide the credentials to connect to the destination (i.e., in `.dlt/secrets.toml`) placed in the
-folder where you execute the `pipeline sync` command.
+パイプラインに作業ディレクトリがない場合、このコマンドを使用して出力先から作業ディレクトリを作成できます。
+これを行うには、データセット名と出力先名をCLIに渡し、`pipeline sync`コマンドを実行するフォルダにある出力先（`.dlt/secrets.toml`）に接続するための認証情報を提供する必要があります。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--destination DESTINATION` - Sync from this destination when local pipeline state is missing.
-* `--dataset-name DATASET_NAME` - Dataset name to sync from when local pipeline state is missing.
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--destination DESTINATION` - ローカルパイプラインの状態が不明な場合に、この出力先から同期します。
+* `--dataset-name DATASET_NAME` - ローカルパイプラインの状態が不明な場合に、同期元のデータセット名を指定します。
 
 </details>
 
 ### `dlt pipeline trace`
 
-Displays last run trace, use -v or -vv for more info.
+最後の実行トレースを表示します。詳細については -v または -vv を使用してください。
 
-**Usage**
+**使用方法**
+
 ```sh
 dlt pipeline [pipeline_name] trace [-h]
 ```
 
-**Description**
+**説明**
 
-Displays the trace of the last pipeline run containing the start date of the run, elapsed time, and the
-same information for all the steps (`extract`, `normalize`, and `load`). If any of the steps failed,
-you'll see the message of the exceptions that caused that problem. Successful `load` and `run` steps
-will display the load info instead.
+パイプラインの最後の実行のトレースを表示します。実行開始日、経過時間、およびすべてのステップ（`extract`、`normalize`、`load`）の同じ情報が含まれます。
+いずれかのステップが失敗した場合は、その問題の原因となった例外のメッセージが表示されます。
+`load` および `run` ステップが成功した場合は、代わりにロード情報が表示されます。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt pipeline schema`
 
-Displays default schema.
+デフォルトのスキーマを表示します。
 
-**Usage**
+**使用方法**
+
 ```sh
 dlt pipeline [pipeline_name] schema [-h] [--format {json,yaml}]
     [--remove-defaults]
 ```
 
-**Description**
+**説明**
 
-Displays the default schema for the selected pipeline.
+選択したパイプラインのデフォルトのスキーマを表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--format {json,yaml}` - Display schema in this format
-* `--remove-defaults` - Does not show default hint values
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--format {json,yaml}` - この形式でスキーマを表示します
+* `--remove-defaults` - デフォルトのヒント値を表示しません
 
 </details>
 
 ### `dlt pipeline drop`
 
-Selectively drop tables and reset state.
+テーブルを選択的に削除し、状態をリセットします。
 
-**Usage**
+**使用方法**
+
 ```sh
 dlt pipeline [pipeline_name] drop [-h] [--destination DESTINATION]
     [--dataset-name DATASET_NAME] [--drop-all] [--state-paths [STATE_PATHS ...]]
     [--schema SCHEMA_NAME] [--state-only] [resources ...]
 ```
 
-**Description**
+**説明**
 
-Selectively drop tables and reset state.
+テーブルを選択的に削除し、状態をリセットします。
 
 ```sh
 dlt pipeline <pipeline name> drop [resource_1] [resource_2]
 ```
 
-Drops tables generated by selected resources and resets the state associated with them. Mainly used
-to force a full refresh on selected tables. In the example below, we drop all tables generated by
-the `repo_events` resource in the GitHub pipeline:
+選択したリソースによって生成されたテーブルを削除し、それらに関連付けられた状態をリセットします。
+主に、選択したテーブルを強制的に完全更新するために使用されます。
+以下の例では、GitHub パイプラインの `repo_events` リソースによって生成されたすべてのテーブルを削除します。
 
 ```sh
 dlt pipeline github_events drop repo_events
 ```
 
-`dlt` will inform you of the names of dropped tables and the resource state slots that will be
-reset:
+`dlt` は、削除されたテーブルの名前とリセットされるリソース状態スロットを通知します。
 
 ```text
 About to drop the following data in dataset airflow_events_1 in destination dlt.destinations.duckdb:
@@ -388,37 +393,38 @@ Source state path(s) to reset:: []
 Do you want to apply these changes? [y/N]
 ```
 
-As a result of the command above the following will happen:
+上記のコマンドを実行すると、以下の処理が実行されます。
 
-1. All the indicated tables will be dropped in the destination. Note that `dlt` drops the nested
-   tables as well.
-2. All the indicated tables will be removed from the indicated schema.
-3. The state for the resource `repo_events` was found and will be reset.
-4. New schema and state will be stored in the destination.
+1. 指定されたすべてのテーブルが、コピー先から削除されます。
+`dlt` はネストされたテーブルも削除することに注意してください。
+2. 指定されたすべてのテーブルが、指定されたスキーマから削除されます。
+3. リソース `repo_events` の状態が検出され、リセットされます。
+4. 新しいスキーマと状態がコピー先に保存されます。
 
-The `drop` command accepts several advanced settings:
+`drop` コマンドは、いくつかの高度な設定を受け付けます。
 
-1. You can use regexes to select resources. Prepend the `re:` string to indicate a regex pattern. The example
-   below will select all resources starting with `repo`:
+1. 正規表現を使用してリソースを選択できます。
+正規表現パターンを示すには、先頭に `re:` 文字列を追加します。
+以下の例では、`repo` で始まるすべてのリソースを選択します。
 
 ```sh
 dlt pipeline github_events drop "re:^repo"
 ```
 
-2. You can drop all tables in the indicated schema:
+2. 指定されたスキーマ内のすべてのテーブルを削除できます:
 
 ```sh
 dlt pipeline chess drop --drop-all
 ```
 
-3. You can indicate additional state slots to reset by passing JsonPath to the source state. In the example
-   below, we reset the `archives` slot in the source state:
+3. ソース状態にJsonPathを渡すことで、リセットする追加の状態スロットを指定できます。
+以下の例では、ソース状態の`archives`スロットをリセットしています。
 
 ```sh
 dlt pipeline chess_pipeline drop --state-paths archives
 ```
 
-This will select the `archives` key in the `chess` source.
+これにより、`chess` ソース内の `archives` キーが選択されます。
 
 ```json
 {
@@ -432,236 +438,236 @@ This will select the `archives` key in the `chess` source.
 }
 ```
 
-**This command is still experimental** and the interface will most probably change.
+**このコマンドはまだ実験的** であり、インターフェースは変更される可能性があります。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Positional arguments**
-* `resources` - One or more resources to drop. can be exact resource name(s) or regex pattern(s). regex patterns must start with re:
+**位置引数**
+* `resources` - 削除する1つ以上のリソース。リソース名（複数可）または正規表現パターン（複数可）を指定できます。正規表現パターンは re: で始まる必要があります。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--destination DESTINATION` - Sync from this destination when local pipeline state is missing.
-* `--dataset-name DATASET_NAME` - Dataset name to sync from when local pipeline state is missing.
-* `--drop-all` - Drop all resources found in schema. supersedes [resources] argument.
-* `--state-paths [STATE_PATHS ...]` - State keys or json paths to drop
-* `--schema SCHEMA_NAME` - Schema name to drop from (if other than default schema).
-* `--state-only` - Only wipe state for matching resources without dropping tables.
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します。
+* `--destination DESTINATION` - ローカルパイプラインの状態が不明な場合、この出力先から同期します。
+* `--dataset-name DATASET_NAME` - ローカルパイプラインの状態が不明な場合、同期元のデータセット名を指定します。
+* `--drop-all` - スキーマ内にあるすべてのリソースを削除します。[resources] 引数よりも優先されます。
+* `--state-paths [STATE_PATHS ...]` - 削除する状態キーまたはJSONパス
+* `--schema SCHEMA_NAME` - 削除するスキーマ名（デフォルトスキーマ以外の場合）。
+* `--state-only` - テーブルを削除せずに、一致するリソースの状態のみを消去します。
 
 </details>
 
 ### `dlt pipeline load-package`
 
-Displays information on load package, use -v or -vv for more info.
+ロード パッケージに関する情報を表示します。詳細については -v または -vv を使用してください。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [pipeline_name] load-package [-h] [load-id]
 ```
 
-**Description**
+**説明**
 
-Shows information on a load package with a given `load_id`. The `load_id` parameter defaults to the
-most recent package. Package information includes its state (`COMPLETED/PROCESSED`) and list of all
-jobs in a package with their statuses, file sizes, types, and in case of failed jobs—the error
-messages from the destination. With the verbose flag set `dlt pipeline -v ...`, you can also see the
-list of all tables and columns created at the destination during the loading of that package.
+指定された `load_id` を持つロードパッケージの情報を表示します。`load_id` パラメータはデフォルトで最新のパッケージに設定されます。
+パッケージ情報には、パッケージの状態（`COMPLETED/PROCESSED`）と、パッケージ内のすべてのジョブのリスト（ステータス、ファイルサイズ、タイプ、そして失敗したジョブの場合は出力先からのエラーメッセージ）が含まれます。
+`dlt pipeline -v ...` で詳細フラグを設定すると、そのパッケージのロード中に出力先に​​作成されたすべてのテーブルと列のリストも表示できます。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Positional arguments**
-* `load-id` - Load id of completed or normalized package. defaults to the most recent package.
+**位置引数**
+* `load-id` - 完了または正規化されたパッケージのロードID。デフォルトは最新のパッケージです。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ## `dlt init`
 
-Creates a pipeline project in the current folder by adding existing verified source or creating a new one from template.
+既存の検証済みソースを追加するか、テンプレートから新しいソースを作成して、現在のフォルダーにパイプライン プロジェクトを作成します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt init [-h] [--list-sources] [--list-destinations] [--location LOCATION]
     [--branch BRANCH] [--eject] [source] [destination]
 ```
 
-**Description**
+**説明**
 
-The `dlt init` command creates a new dlt pipeline script that loads data from `source` to `destination`. When you run the command, several things happen:
+`dlt init` コマンドは、`source` から `destination` にデータをロードする新しい DLT パイプライン スクリプトを作成します。
+コマンドを実行すると、以下の処理が行われます。
 
-1. Creates a basic project structure if the current folder is empty by adding `.dlt/config.toml`, `.dlt/secrets.toml`, and `.gitignore` files.
-2. Checks if the `source` argument matches one of our verified sources and, if so, adds it to your project.
-3. If the `source` is unknown, uses a generic template to get you started.
-4. Rewrites the pipeline scripts to use your `destination`.
-5. Creates sample config and credentials in `secrets.toml` and `config.toml` for the specified source and destination.
-6. Creates `requirements.txt` with dependencies required by the source and destination. If one exists, prints instructions on what to add to it.
+1. 現在のフォルダが空の場合、`.dlt/config.toml`、`.dlt/secrets.toml`、`.gitignore` ファイルを追加して、基本的なプロジェクト構造を作成します。
+2. `source` 引数が検証済みのソースのいずれかと一致するかどうかを確認し、一致する場合はプロジェクトに追加します。
+3. `source` が不明な場合は、汎用テンプレートを使用して開始します。
+4. `destination` を使用するようにパイプライン スクリプトを書き換えます。
+5. 指定されたソースと宛先のサンプル構成と認証情報を `secrets.toml` と `config.toml` に作成します。
+6. ソースとデスティネーションに必要な依存関係を含む `requirements.txt` を作成します。存在する場合は、追加する内容の指示を表示します。
 
-This command can be used several times in the same folder to add more sources, destinations, and pipelines. It will also update the verified source code to the newest
-version if run again with an existing `source` name. You will be warned if files will be overwritten or if the `dlt` version needs an upgrade to run a particular pipeline.
+このコマンドは同じフォルダ内で複数回使用して、ソース、デスティネーション、パイプラインを追加できます。
+また、既存の `source` 名で再度実行すると、検証済みのソースコードが最新バージョンに更新されます。
+ファイルが上書きされる場合、または特定のパイプラインを実行するために `dlt` バージョンのアップグレードが必要な場合は、警告が表示されます。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Positional arguments**
-* `source` - Name of data source for which to create a pipeline. adds existing verified source or creates a new pipeline template if verified source for your data source is not yet implemented.
-* `destination` - Name of a destination ie. bigquery or redshift
+**位置引数**
+* `source` - パイプラインを作成するデータソースの名前。既存の検証済みソースを追加するか、データソースの検証済みソースがまだ実装されていない場合は新しいパイプラインテンプレートを作成します。
+* `destination` - 出力先の名前（例：BigQuery または Redshift）
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--list-sources, -l` - Shows all available verified sources and their short descriptions. for each source, it checks if your local `dlt` version requires an update and prints the relevant warning.
-* `--list-destinations` - Shows the name of all core dlt destinations.
-* `--location LOCATION` - Advanced. uses a specific url or local path to verified sources repository.
-* `--branch BRANCH` - Advanced. uses specific branch of the verified sources repository to fetch the template.
-* `--eject` - Ejects the source code of the core source like sql_database or rest_api so they will be editable by you.
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します。
+* `--list-sources, -l` - 利用可能なすべての検証済みソースとその簡単な説明を表示します。各ソースについて、ローカルの `dlt` バージョンの更新が必要かどうかを確認し、関連する警告を出力します。
+* `--list-destinations` - すべてのコア DLT 出力先の名前を表示します。
+* `--location LOCATION` - 高度な設定。検証済みソースリポジトリへの特定の URL またはローカルパスを使用します。
+* `--branch BRANCH` - 高度な設定。検証済みソースリポジトリの特定のブランチを使用してテンプレートを取得します。
+* `--eject` - sql_database や rest_api などのコア ソースのソース コードが排出され、編集できるようになります。
 
 </details>
 
 ## `dlt render-docs`
 
-Renders markdown version of cli docs.
+cli ドキュメントのマークダウン バージョンをレンダリングします。
 
-**Usage**
+**使用方法**
 ```sh
 dlt render-docs [-h] [--compare] file_name
 ```
 
-**Description**
+**説明**
 
-The `dlt render-docs` command renders markdown version of cli docs by parsing the argparse help output and generating a markdown file.
-If you are reading this on the docs website, you are looking at the rendered version of the cli docs generated by this command.
+`dlt render-docs` コマンドは、argparse ヘルプ出力を解析して Markdown ファイルを生成することで、CLI ドキュメントの Markdown 版をレンダリングします。
+ドキュメント Web サイトでこれを読んでいる場合は、このコマンドによって生成された CLI ドキュメントのレンダリング版を参照していることになります。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Positional arguments**
-* `file_name` - Output file name
+**位置引数**
+* `file_name` - 出力ファイル名
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--compare` - Compare the changes and raise if output would be updated
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--compare` - 変更を比較し、出力が更新される場合は例外を発生します
 
 </details>
 
 ## `dlt deploy`
 
-Creates a deployment package for a selected pipeline script.
+選択したパイプライン スクリプトのデプロイメント パッケージを作成します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt deploy [-h] pipeline-script-path {github-action,airflow-composer} ...
 ```
 
-**Description**
+**説明**
 
-The `dlt deploy` command prepares your pipeline for deployment and gives you step-by-step instructions on how to accomplish it. To enable this functionality, please first execute `pip install "dlt[cli]"` which will add additional packages to the current environment.
+`dlt deploy` コマンドは、パイプラインのデプロイメントを準備し、その手順を段階的に説明します。
+この機能を有効にするには、まず `pip install "dlt[cli]"` を実行して、現在の環境にパッケージを追加してください。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Positional arguments**
-* `pipeline-script-path` - Path to a pipeline script
+**位置引数**
+* `pipeline-script-path` - パイプラインスクリプトへのパス
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
-**Available subcommands**
-* [`github-action`](#dlt-deploy-github-action) - Deploys the pipeline to github actions
-* [`airflow-composer`](#dlt-deploy-airflow-composer) - Deploys the pipeline to airflow
+**利用可能なサブコマンド**
+* [`github-action`](#dlt-deploy-github-action) - パイプラインを github アクションにデプロイします
+* [`airflow-composer`](#dlt-deploy-airflow-composer) - パイプラインを Airflow にデプロイします
 
 </details>
 
 ### `dlt deploy github-action`
 
-Deploys the pipeline to Github Actions.
+パイプラインを Github Actions にデプロイします。
 
-**Usage**
+**使用方法**
 ```sh
 dlt deploy pipeline-script-path github-action [-h] [--location LOCATION]
     [--branch BRANCH] --schedule SCHEDULE [--run-manually] [--run-on-push]
 ```
 
-**Description**
+**説明**
 
-Deploys the pipeline to GitHub Actions.
+パイプラインを GitHub Actions にデプロイします。
 
-GitHub Actions (https://github.com/features/actions) is a CI/CD runner with a large free tier which you can use to run your pipelines.
+GitHub Actions (https://github.com/features/actions) は、パイプラインの実行に使用できる大規模な無料枠を備えた CI/CD ランナーです。
 
-You must specify when the GitHub Action should run using a cron schedule expression. The command also takes additional flags:
-`--run-on-push` (default is False) and `--run-manually` (default is True). Remember to put the cron
-schedule expression in quotation marks.
+GitHub Actions を実行するタイミングは、cron スケジュール式を使用して指定する必要があります。このコマンドは、追加のフラグも受け取ります。
+`--run-on-push` (デフォルトは False) と `--run-manually` (デフォルトは True)。cron スケジュール式は引用符で囲むことを忘れないでください。
 
-For the chess.com API example from our docs, you can deploy it with `dlt deploy chess.py github-action --schedule "*/30 * * * *"`.
+ドキュメントに記載されている chess.com API の例では、`dlt deploy chess.py github-action --schedule "*/30 * * * *"` でデプロイできます。
 
-Follow the guide on how to deploy a pipeline with GitHub Actions in our documentation for more information.
+詳細については、ドキュメントの GitHub Actions を使用したパイプラインのデプロイ方法に関するガイドをご覧ください。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt deploy`](#dlt-deploy).
+[`dlt deploy`](#dlt-deploy) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--location LOCATION` - Advanced. uses a specific url or local path to pipelines repository.
-* `--branch BRANCH` - Advanced. uses specific branch of the deploy repository to fetch the template.
-* `--schedule SCHEDULE` - A schedule with which to run the pipeline, in cron format. example: '*/30 * * * *' will run the pipeline every 30 minutes. remember to enclose the scheduler expression in quotation marks!
-* `--run-manually` - Allows the pipeline to be run manually form github actions ui.
-* `--run-on-push` - Runs the pipeline with every push to the repository.
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--location LOCATION` - 高度な設定。パイプラインリポジトリへの特定のURLまたはローカルパスを使用します。
+* `--branch BRANCH` - 高度な設定。テンプレートを取得するために、デプロイリポジトリの特定のブランチを使用します。
+* `--schedule SCHEDULE` - パイプラインを実行するスケジュール（cron形式）。例: '*/30 * * * *' は、パイプラインを30分ごとに実行します。スケジューラ式は引用符で囲むことを忘れないでください。
+* `--run-manually` - GitHub Actions UIからパイプラインを手動で実行できるようにします。
+* `--run-on-push` - リポジトリへのプッシュごとにパイプラインを実行します。
 
 </details>
 
 ### `dlt deploy airflow-composer`
 
-Deploys the pipeline to Airflow.
+パイプラインを Airflow にデプロイします。
 
-**Usage**
+**使用方法**
 ```sh
 dlt deploy pipeline-script-path airflow-composer [-h] [--location LOCATION]
     [--branch BRANCH] [--secrets-format {env,toml}]
 ```
 
-**Description**
+**説明**
 
-Google Composer (https://cloud.google.com/composer?hl=en) is a managed Airflow environment provided by Google. Follow the guide in our docs on how to deploy a pipeline with Airflow to learn more. This command will:
+Google Composer (https://cloud.google.com/composer?hl=en) は、Google が提供するマネージド Airflow 環境です。詳細については、Airflow を使用してパイプラインをデプロイする方法についてのドキュメントガイドをご覧ください。このコマンドは、次の処理を実行します。
 
+* パイプライン スクリプト用に、カスタマイズ可能な Airflow DAG を作成します。
 
-* create an Airflow DAG for your pipeline script that you can customize. The DAG uses
-the `dlt` Airflow wrapper (https://github.com/dlt-hub/dlt/blob/devel/dlt/helpers/airflow_helper.py#L37) to make this process trivial.
+DAG は、このプロセスを容易にするために `dlt` Airflow ラッパー (https://github.com/dlt-hub/dlt/blob/devel/dlt/helpers/airflow_helper.py#L37) を使用します。
 
-* provide you with the environment variables and secrets that you must add to Airflow.
+* Airflow に追加する必要がある環境変数とシークレットを提供します。
 
-* provide you with a cloudbuild file to sync your GitHub repository with the `dag` folder of your Airflow Composer instance.
+* GitHub リポジトリを Airflow Composer インスタンスの `dag` フォルダと同期するための cloudbuild ファイルを提供します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt deploy`](#dlt-deploy).
+[`dlt deploy`](#dlt-deploy) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--location LOCATION` - Advanced. uses a specific url or local path to pipelines repository.
-* `--branch BRANCH` - Advanced. uses specific branch of the deploy repository to fetch the template.
-* `--secrets-format {env,toml}` - Format of the secrets
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--location LOCATION` - 高度な設定。パイプラインリポジトリへの特定のURLまたはローカルパスを使用します。
+* `--branch BRANCH` - 高度な設定。デプロイリポジトリの特定のブランチを使用してテンプレートを取得します。
+* `--secrets-format {env,toml}` - シークレットのフォーマット
 
 </details>
 

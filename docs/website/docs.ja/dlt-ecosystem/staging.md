@@ -3,42 +3,59 @@ title: Staging
 description: Configure an S3 or GCS bucket for staging before copying into the destination
 keywords: [staging, destination]
 ---
-# Staging
 
-The goal of staging is to bring the data closer to the database engine so that the modification of the destination (final) dataset happens faster and without errors. `dlt`, when asked, creates two staging areas:
-1. A **staging dataset** used by the [merge and replace loads](../general-usage/incremental-loading.md#merge-incremental-loading) to deduplicate and merge data with the destination.
-2. A **staging storage** which is typically an S3/GCP bucket where [loader files](file-formats/) are copied before they are loaded by the destination.
+# ステージング
 
-## Staging dataset
-`dlt` creates a staging dataset when the write disposition of any of the loaded resources requires it. It creates and migrates required tables exactly like for the main dataset. Data in staging tables is truncated when the load step begins and only for tables that will participate in it.
-Such a staging dataset has the same name as the dataset passed to `dlt.pipeline` but with a `_staging` suffix in the name. Alternatively, you can provide your own staging dataset pattern or use a fixed name, identical for all the configured datasets.
+ステージングの目的は、データをデータベースエンジンに近づけることで、宛先（最終）データセットの変更をより迅速かつエラーなく行うことです。
+`dlt` は、要求に応じて2つのステージング領域を作成します。
+
+1. **ステージングデータセット**。[マージロードと置換ロード](../general-usage/incremental-loading.md#merge-incremental-loading)で重複排除と宛先とのデータのマージに使用されます。
+2. **ステージングストレージ**。通常はS3/GCPバケットで、宛先にロードされる前に[ローダーファイル](file-formats/)がコピーされます。
+
+## ステージングデータセット
+
+`dlt` は、ロードされたリソースの書き込み処理でステージングデータセットが必要な場合に作成します。
+メインデータセットとまったく同じように、必要なテーブルを作成して移行します。
+ステージングテーブルのデータは、ロードステップの開始時に、そのステップに参加するテーブルに対してのみ切り捨てられます。
+このようなステージングデータセットの名前は、`dlt.pipeline` に渡されるデータセットと同じで、名前に `_staging` サフィックスが付きます。
+また、独自のステージングデータセットパターンを指定したり、構成されたすべてのデータセットで同一の固定名を使用したりすることもできます。
+
 ```toml
 [destination.postgres]
 staging_dataset_name_layout="staging_%s"
 ```
-The entry above switches the pattern to a `staging_` prefix and, for example, for a dataset with the name **github_data**, `dlt` will create **staging_github_data**.
 
-To configure a static staging dataset name, you can do the following (we use the destination factory):
+上記のエントリは、パターンを `staging_` プレフィックスに切り替えます。たとえば、**github_data** という名前のデータセットの場合、`dlt` は **staging_github_data** を作成します。
+
+静的なステージングデータセット名を設定するには、次のようにします（宛先ファクトリーを使用します）。
+
 ```py
 import dlt
 
 dest_ = dlt.destinations.postgres(staging_dataset_name_layout="_dlt_staging")
 ```
-All pipelines using `dest_` as the destination will use the **staging_dataset** to store staging tables. Make sure that your pipelines are not overwriting each other's tables.
 
-### Cleanup staging dataset automatically
-`dlt` does not truncate tables in the staging dataset at the end of the load. Data that is left after contains all the extracted data and may be useful for debugging.
-If you prefer to truncate it, put the following line in `config.toml`:
+`dest_` を宛先として使用するすべてのパイプラインは、**staging_dataset** を使用してステージングテーブルを保存します。
+パイプラインが互いのテーブルを上書きしていないことを確認してください。
+
+### ステージングデータセットを自動的にクリーンアップします
+
+`dlt` は、ロード終了時にステージングデータセット内のテーブルを切り捨てません。
+ロード後に残るデータには抽出されたすべてのデータが含まれており、デバッグに役立つ場合があります。
+切り捨てる場合は、`config.toml` に次の行を追加してください。
 
 ```toml
 [load]
 truncate_staging_dataset=true
 ```
 
-## Staging storage
-`dlt` allows chaining destinations where the first one (`staging`) is responsible for uploading the files from the local filesystem to the remote storage. It then generates follow-up jobs for the second destination that (typically) copy the files from remote storage into the destination.
+## ステージングストレージ
 
-Currently, only one destination, the [filesystem](destinations/filesystem.md), can be used as staging. The following destinations can copy remote files:
+`dlt` は、最初の宛先 (`staging`) がローカルファイルシステムからリモートストレージへのファイルのアップロードを担当する、宛先の連鎖を可能にします。
+その後、2 番目の宛先に対して、通常はリモートストレージから宛先にファイルをコピーする後続ジョブを生成します。
+
+現在、ステージングとして使用できる宛先は [ファイルシステム](destinations/filesystem.md) のみです。
+以下の宛先がリモートファイルをコピーできます。
 
 1. [Azure Synapse](destinations/synapse#staging-support)
 2. [Athena](destinations/athena#staging-support)
@@ -47,12 +64,17 @@ Currently, only one destination, the [filesystem](destinations/filesystem.md), c
 5. [Redshift](destinations/redshift.md#staging-support)
 6. [Snowflake](destinations/snowflake.md#staging-support)
 
-### How to use
-In essence, you need to set up two destinations and then pass them to `dlt.pipeline`. Below, we'll use `filesystem` staging with [Parquet](./file-formats/parquet) files to load into the `redshift` destination.
+### 使用方法
 
-1. **Set up the S3 bucket and filesystem staging.**
+基本的には、2つの出力先を設定し、それらを `dlt.pipeline` に渡す必要があります。
+以下では、[Parquet](./file-formats/parquet) ファイルを使用して `filesystem` ステージングを使用し、`redshift` 出力先にロードします。
 
-    Please follow our guide in the [filesystem destination documentation](destinations/filesystem.md). Test the staging as a standalone destination to make sure that files go where you want them. In your `secrets.toml`, you should now have a working `filesystem` configuration:
+1. **S3 バケットとファイルシステムのステージングを設定します。**
+
+    [ファイルシステムの保存先に関するドキュメント](destinations/filesystem.md)のガイドに従ってください。
+    ステージングをスタンドアロンの保存先としてテストし、ファイルが目的の場所に確実に保存されることを確認してください。
+    これで、`secrets.toml` に、`filesystem` 設定が適切に保存されているはずです。
+
     ```toml
     [destination.filesystem]
     bucket_url = "s3://[your_bucket_name]" # replace with your bucket name
@@ -62,21 +84,25 @@ In essence, you need to set up two destinations and then pass them to `dlt.pipel
     aws_secret_access_key = "please set me up!" # copy the secret access key here
     ```
 
-2. **Set up the Redshift destination.**
+2. **Redshift の宛先を設定します。**
 
-    Please follow our guide in the [redshift destination documentation](destinations/redshift.md). In your `secrets.toml`, you added:
+    [Redshift の宛先ドキュメント](destinations/redshift.md)のガイドに従ってください。`secrets.toml` に以下を追加してください。
+
     ```toml
     # Keep it at the top of your TOML file, before any section starts
     destination.redshift.credentials="redshift://loader:<password>@localhost/dlt_data?connect_timeout=15"
     ```
 
-3. **Authorize the Redshift cluster to access the staging bucket.**
+3. **Redshift クラスターがステージングバケットにアクセスできるようにします。**
 
-    By default, `dlt` will forward the credentials configured for `filesystem` to the `Redshift` COPY command. If you are fine with this, move to the next step.
+    デフォルトでは、`dlt` は `filesystem` に設定された認証情報を `Redshift` COPY コマンドに転送します。
+    これで問題がなければ、次のステップに進みます。
 
-4. **Chain staging to destination and request Parquet file format.**
+4. **ステージングを宛先にチェーンし、Parquet ファイル形式をリクエストします。**
 
-    Pass the `staging` argument to `dlt.pipeline`. It works like the destination `argument`:
+    `dlt.pipeline` に `staging` 引数を渡します。
+    これは宛先の `argument` と同様に機能します。
+
     ```py
     # Create a dlt pipeline that will load
     # chess player data to the redshift destination
@@ -88,22 +114,25 @@ In essence, you need to set up two destinations and then pass them to `dlt.pipel
         dataset_name='player_data'
     )
     ```
-    `dlt` will automatically select an appropriate loader file format for the staging files. Below, we explicitly specify the Parquet file format (just to demonstrate how to do it):
+
+    `dlt` はステージングファイルに適したローダーファイル形式を自動的に選択します。以下では、Parquet ファイル形式を明示的に指定しています（方法を示すため）。
+
     ```py
     info = pipeline.run(chess_source(), loader_file_format="parquet")
     ```
 
-5. **Run the pipeline script.**
+5. **パイプラインスクリプトを実行します。**
 
-    Run the pipeline script as usual.
+    パイプラインスクリプトを通常どおり実行します。
 
 :::tip
-Please note that `dlt` does not delete loaded files from the staging storage after the load is complete, but it truncates previously loaded files.
+`dlt` は、ロードが完了した後、ロードされたファイルをステージング ストレージから削除しませんが、以前にロードされたファイルを切り捨てることに注意してください。
 :::
 
-### How to prevent staging files truncation
+### ステージングファイルの切り捨てを防ぐ方法
 
-Before `dlt` loads data to the staging storage, it truncates previously loaded files. To prevent this and keep the whole history of loaded files, you can use the following parameter:
+`dlt` は、ステージングストレージにデータをロードする前に、以前にロードしたファイルを切り捨てます。
+これを防止し、ロードされたファイルの履歴全体を保持するには、次のパラメータを使用します。
 
 ```toml
 [destination.redshift]
@@ -111,7 +140,7 @@ truncate_tables_on_staging_destination_before_load=false
 ```
 
 :::caution
-The [Athena](destinations/athena#staging-support) destination only truncates non-iceberg tables with `replace` merge_disposition.
-Therefore, the parameter `truncate_tables_on_staging_destination_before_load` only controls the truncation of corresponding files for these tables.
+[Athena](destinations/athena#staging-support) 宛先は、`replace` merge_disposition を持つ非アイスバーグテーブルのみを切​​り捨てます。
+したがって、パラメータ `truncate_tables_on_staging_destination_before_load` は、これらのテーブルに対応するファイルの切り捨てのみを制御します。
 :::
 

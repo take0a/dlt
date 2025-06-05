@@ -4,13 +4,12 @@ description: Understanding the tables created in the destination database
 keywords: [destination tables, loaded data, data structure, schema, table, nested table, load package, load id, lineage, staging dataset, versioned dataset]
 ---
 
-# Destination tables
+# 宛先テーブル
 
-When you run a [pipeline](pipeline.md), dlt creates tables in the destination database and loads the data
-from your [source](source.md) into these tables. In this section, we will take a closer look at what
-destination tables look like and how they are organized.
+[パイプライン](pipeline.md)を実行すると、DLTは宛先データベースにテーブルを作成し、[ソース](source.md)からこれらのテーブルにデータをロードします。
+このセクションでは、宛先テーブルがどのように見えるか、そしてどのように構成されているかを詳しく見ていきます。
 
-We start with a simple dlt pipeline:
+まず、シンプルなDLTパイプラインから始めます。
 
 ```py
 import dlt
@@ -30,33 +29,34 @@ load_info = pipeline.run(data, table_name="users")
 
 :::note
 
-Here we are using the [DuckDb destination](../dlt-ecosystem/destinations/duckdb.md), which is an in-memory database. Other database destinations
-will behave similarly and have similar concepts.
+ここでは、インメモリデータベースである[DuckDb destination](../dlt-ecosystem/destinations/duckdb.md)を使用しています。他のデータベースの destination も同様の動作をし、同様の概念を持ちます。
 
 :::
 
-Running this pipeline will create a database schema in the destination database (DuckDB) along with a table named `users`. Quick tip: you can use the `show` command of the `dlt pipeline` CLI [to see the tables](../general-usage/dataset-access/streamlit) in the destination database.
+このパイプラインを実行すると、宛先データベース（DuckDB）にデータベーススキーマと「users」という名前のテーブルが作成されます。
+ヒント：宛先データベースのテーブルを確認するには、`dlt pipeline` CLI の `show` コマンドを使用できます（../general-usage/dataset-access/streamlit）。
 
-## Database schema
+## データベーススキーマ
 
-The database schema is a collection of tables that represent the data you loaded into the database.
-The schema name is the same as the `dataset_name` you provided in the pipeline definition.
-In the example above, we explicitly set the `dataset_name` to `mydata`. If you don't set it,
-it will be set to the pipeline name with a suffix `_dataset`.
+データベーススキーマは、データベースにロードしたデータを表すテーブルの集合です。
+スキーマ名は、パイプライン定義で指定した「dataset_name」と同じです。
+上記の例では、「dataset_name」を明示的に「mydata」に設定しています。
+設定しない場合は、パイプライン名にサフィックス「_dataset」が付加された名前が設定されます。
 
-Be aware that the schema referred to in this section is distinct from the [dlt Schema](schema.md).
-The database schema pertains to the structure and organization of data within the database, including table
-definitions and relationships. On the other hand, the "dlt Schema" specifically refers to the format
-and structure of normalized data within the dlt pipeline.
+このセクションで参照されているスキーマは、[dltスキーマ](schema.md)とは異なることに注意してください。
+データベーススキーマは、テーブル定義やリレーションシップなど、データベース内のデータの構造と構成に関係します。
+一方、「dltスキーマ」は、dltパイプライン内の正規化されたデータの形式と構造を具体的に指します。
 
-## Tables
+## テーブル
 
-Each [resource](resource.md) in your pipeline definition will be represented by a table in
-the destination. In the example above, we have one resource, `users`, so we will have one table, `mydata.users`,
-in the destination. Here, `mydata` is the schema name, and `users` is the table name. Here also, we explicitly set
-the `table_name` to `users`. When `table_name` is not set, the table name will be set to the resource name.
+パイプライン定義内の各 [リソース](resource.md) は、出力先にあるテーブルで表されます。
 
-For example, we can rewrite the pipeline above as:
+上記の例では、リソースが 1 つ (`users`) なので、出力先にはテーブルが 1 つ (`mydata.users`) あります。
+ここで、`mydata` はスキーマ名、`users` はテーブル名です。
+ここでも、`table_name` を明示的に `users` に設定しています。
+`table_name` が設定されていない場合、テーブル名はリソース名に設定されます。
+
+例えば、上記のパイプラインを次のように書き換えることができます。
 
 ```py
 @dlt.resource
@@ -74,19 +74,18 @@ pipeline = dlt.pipeline(
 load_info = pipeline.run(users)
 ```
 
-The result will be the same; note that we do not explicitly pass `table_name="users"` to `pipeline.run`, and the table is implicitly named `users` based on the resource name (e.g., `users()` decorated with `@dlt.resource`).
+結果は同じになります。`table_name="users"` を `pipeline.run` に明示的に渡さず、リソース名に基づいてテーブルに暗黙的に `users` という名前が付けられることに注意してください (例: `users()` に `@dlt.resource` が付加されます)。
 
 :::note
 
-Special tables are created to track the pipeline state. These tables are prefixed with `_dlt_`
-and are not shown in the `show` command of the `dlt pipeline` CLI. However, you can see them when
-connecting to the database directly.
+パイプラインの状態を追跡するために、特別なテーブルが作成されます。
+これらのテーブルには「_dlt_」というプレフィックスが付いており、「dlt pipeline」CLIの「show」コマンドでは表示されません。ただし、データベースに直接接続すると表示されます。
 
 :::
 
-## Nested tables
+## ネストされたテーブル
 
-Now let's look at a more complex example:
+では、より複雑な例を見てみましょう:
 
 ```py
 import dlt
@@ -117,7 +116,9 @@ pipeline = dlt.pipeline(
 load_info = pipeline.run(data, table_name="users")
 ```
 
-Running this pipeline will create two tables in the destination, `users` (**root table**) and `users__pets` (**nested table**). The `users` table will contain the top-level data, and the `users__pets` table will contain the data nested in the Python lists. Here is what the tables may look like:
+このパイプラインを実行すると、出力先に `users` (**ルートテーブル**) と `users__pets` (**ネストテーブル**) の 2 つのテーブルが作成されます。
+`users` テーブルには最上位レベルのデータが含まれ、`users__pets` テーブルには Python リストにネストされたデータが含まれます。
+テーブルは次のようになります:
 
 **mydata.users**
 
@@ -134,30 +135,37 @@ Running this pipeline will create two tables in the destination, `users` (**root
 | 2 | Spot | dog | 9uxh36VU9lqKpw | wX3f5vn801W16A | 1 |
 | 3 | Fido | dog | pe3FVtCWz8VuNA | rX8ybgTeEmAmmA | 0 |
 
-When inferring a database schema, dlt maps the structure of Python objects (i.e., from parsed JSON files) into nested tables and creates references between them.
+データベーススキーマを推論する際、dlt は Python オブジェクト（つまり、解析済みの JSON ファイル）の構造をネストされたテーブルにマッピングし、それらの間の参照を作成します。
 
-This is how it works:
+動作は次のとおりです。
 
-1. Each row in all (root and nested) data tables created by dlt contains a unique column named `_dlt_id` (**row key**).
-2. Each nested table contains a column named `_dlt_parent_id` referencing a particular row (`_dlt_id`) of a parent table (**parent key**).
-3. Rows in nested tables come from the Python lists: `dlt` stores the position of each item in the list in `_dlt_list_idx`.
-4. For nested tables that are loaded with the `merge` write disposition, we add a **root key** column `_dlt_root_id`, which references the child table to a row in the root table.
+1. dlt によって作成されたすべてのデータテーブル（ルートおよびネストされた）の各行には、`_dlt_id` という一意の列（**行キー**）が含まれます。
+2. 各ネストされたテーブルには、親テーブル（**親キー**）の特定の行（`_dlt_id`）を参照する `_dlt_parent_id` という列が含まれます。
+3. ネストされたテーブルの行は Python リストから取得されます。`dlt` はリスト内の各項目の位置を `_dlt_list_idx` に格納します。
+4. `merge` 書き込み処理でロードされたネストされたテーブルには、子テーブルからルートテーブルの行を参照する `_dlt_root_id` という**ルートキー**列を追加します。
 
-[Learn more about nested references, row keys, and parent keys](schema.md#nested-references-root-and-nested-tables)
+[ネストされた参照、行キー、親キーの詳細](schema.md#nested-references-root-and-nested-tables)
 
-## Naming convention: tables and columns
+## 命名規則：テーブルと列
 
-During a pipeline run, dlt [normalizes both table and column names](schema.md#naming-convention) to ensure compatibility with the destination database's accepted format. All names from your source data will be transformed into snake_case and will only include alphanumeric characters. Please be aware that the names in the destination database may differ somewhat from those in your original input.
+パイプライン実行中、dlt はテーブル名と列名の両方を正規化し（schema.md#naming-convention）、宛先データベースで許容される形式との互換性を確保します。
+ソースデータの名前はすべてスネークケースに変換され、英数字のみで構成されます。
+宛先データベースの名前は、元の入力と多少異なる場合がありますのでご注意ください。
 
-### Variant columns
-If your data has inconsistent types, `dlt` will dispatch the data to several **variant columns**. For example, if you have a resource (i.e., a JSON file) with a field named `answer` and your data contains boolean values, you will get a column named `answer` of type `BOOLEAN` in your destination. If, for some reason, on the next load, you get integer and string values in `answer`, the inconsistent data will go to `answer__v_bigint` and `answer__v_text` columns respectively.
-The general naming rule for variant columns is `<original name>__v_<type>` where `original_name` is the existing column name (with data type clash) and `type` is the name of the data type stored in the variant.
+### バリアント列
 
-## Load packages and load IDs
+データの型が一致しない場合、`dlt` はデータを複数の **バリアント列** に振り分けます。
+例えば、`answer` というフィールドを持つリソース（JSON ファイルなど）があり、データにブール値が含まれている場合、出力先には `BOOLEAN` 型の `answer` という列が作成されます。
+何らかの理由で、次回のロード時に `answer` に整数値と文字列値が含まれる場合、不一致なデータはそれぞれ `answer__v_bigint` 列と `answer__v_text` 列に振り分けられます。
+バリアント列の一般的な命名規則は `<original name>__v_<type>` です。ここで、`original_name` は既存の列名（データ型が衝突する列）、`type` はバリアントに格納されているデータ型の名前です。
 
-Each execution of the pipeline generates one or more load packages. A load package typically contains data retrieved from all the [resources](glossary.md#resource) of a particular [source](glossary.md#source). These packages are uniquely identified by a `load_id`. The `load_id` of a particular package is added to the top data tables (referenced as `_dlt_load_id` column in the example above) and to the special `_dlt_loads` table with a status of 0 (when the load process is fully completed).
+## ロードパッケージとロードID
 
-To illustrate this, let's load more data into the same destination:
+パイプラインを実行するたびに、1つ以上のロードパッケージが生成されます。
+ロードパッケージには通常、特定の[ソース](glossary.md#source)のすべての[リソース](glossary.md#resource)から取得されたデータが含まれます。
+これらのパッケージは、`load_id` によって一意に識別されます。特定のパッケージの`load_id`は、上位のデータテーブル（上記の例では `_dlt_load_id` 列）と、特別な`_dlt_loads`テーブルに追加され、ステータスは 0 になります（ロードプロセスが完全に完了した場合）。
+
+これを説明するために、同じ宛先にさらにデータをロードしてみましょう。
 
 ```py
 data = [
@@ -169,7 +177,9 @@ data = [
 ]
 ```
 
-The rest of the pipeline definition remains the same. Running this pipeline will create a new load package with a new `load_id` and add the data to the existing tables. The `users` table will now look like this:
+パイプライン定義の残りの部分は変更ありません。
+このパイプラインを実行すると、新しい `load_id` を持つ新しいロードパッケージが作成され、既存のテーブルにデータが追加されます。
+`users` テーブルは次のようになります:
 
 **mydata.users**
 
@@ -179,7 +189,7 @@ The rest of the pipeline definition remains the same. Running this pipeline will
 | 2 | Bob | rX8ybgTeEmAmmA | 1234562350.98417 |
 | 3 | Charlie | h8lehZEvT3fASQ | **1234563456.12345** |
 
-The `_dlt_loads` table will look like this:
+`_dlt_loads` テーブルは次のようになります:
 
 **mydata._dlt_loads**
 
@@ -188,23 +198,39 @@ The `_dlt_loads` table will look like this:
 | 1234562350.98417 | quick_start | 0 | 2023-09-12 16:45:51.17865+00 | aOEb...Qekd/58= |
 | **1234563456.12345** | quick_start | 0 | 2023-09-12 16:46:03.10662+00 | aOEb...Qekd/58= |
 
-The `_dlt_loads` table tracks complete loads and allows chaining transformations on top of them. Many destinations do not support distributed and long-running transactions (e.g., Amazon Redshift). In that case, the user may see the partially loaded data. It is possible to filter such data out: any row with a `load_id` that does not exist in `_dlt_loads` is not yet completed. The same procedure may be used to identify and delete data for packages that never got completed.
+`_dlt_loads` テーブルは、完了したロードを追跡し、それらに基づいて連鎖変換を可能にします。
+多くの出力先は、分散トランザクションや長時間実行トランザクションをサポートしていません (例: Amazon Redshift)。
+その場合、ユーザーには部分的にロードされたデータが表示される可能性があります。
+このようなデータはフィルタリング可能です。`_dlt_loads` に存在しない `load_id` を持つ行は、まだ完了していません。
+同じ手順を使用して、完了していないパッケージのデータを特定して削除できます。
 
-For each load, you can test and [alert](../running-in-production/alerting.md) on anomalies (e.g., no data, too much loaded to a table). There are also some useful load stats in the `Load info` tab of the [Streamlit app](../general-usage/dataset-access/streamlit) mentioned above.
+各ロードについて、テストを行い、異常 (例: データなし、テーブルへのロード量が多すぎるなど) が発生した場合に [アラート](../running-in-production/alerting.md) を生成できます。
+前述の [Streamlit アプリ](../general-usage/dataset-access/streamlit) の `Load info` タブには、役立つロード統計情報もいくつかあります。
 
-You can add [transformations](../dlt-ecosystem/transformations/) and chain them together using the `status` column. You start the transformation for all the data with a particular `load_id` with a status of 0 and then update it to 1. The next transformation starts with the status of 1 and is then updated to 2. This can be repeated for every additional transformation.
+[変換](../dlt-ecosystem/transformations/)を追加し、`status`列を使用してそれらを連結することができます。
+特定の`load_id`を持つすべてのデータに対して、ステータスが0の変換を開始し、その後ステータスを1に更新します。
+次の変換はステータス1から開始され、その後ステータス2に更新されます。
+これは、追加の変換ごとに繰り返すことができます。
 
-### Data lineage
+### データリネージ
 
-Data lineage can be super relevant for architectures like the [data vault architecture](https://www.data-vault.co.uk/what-is-data-vault/) or when troubleshooting. The data vault architecture is a data warehouse that large organizations use when representing the same process across multiple systems, which adds data lineage requirements. Using the pipeline name and `load_id` provided out of the box by `dlt`, you are able to identify the source and time of data.
+データリネージは、[データボールトアーキテクチャ](https://www.data-vault.co.uk/what-is-data-vault/)のようなアーキテクチャや、トラブルシューティングにおいて非常に重要です。
+データボールトアーキテクチャは、大規模な組織が複数のシステムにまたがる同じプロセスを表現する際に使用するデータウェアハウスであり、データリネージの要件が追加されます。
+`dlt` によってすぐに提供されるパイプライン名と `load_id` を使用することで、データのソースと時刻を特定できます。
 
-You can [save](../running-in-production/running.md#inspect-and-save-the-load-info-and-trace) complete lineage info for a particular `load_id` including a list of loaded files, error messages (if any), elapsed times, schema changes. This can be helpful, for example, when troubleshooting problems.
+特定の `load_id` について、ロードされたファイルのリスト、エラーメッセージ（ある場合）、経過時間、スキーマの変更など、完全なリネージ情報を[保存](../running-in-production/running.md#inspect-and-save-the-load-info-and-trace)できます。
+これは、たとえば問題のトラブルシューティングに役立ちます。
 
-## Staging dataset
+## ステージングデータセット
 
-So far, we've been using the `append` write disposition in our example pipeline. This means that each time we run the pipeline, the data is appended to the existing tables. When you use the [merge write disposition](incremental-loading.md), dlt creates a staging database schema for staging data. This schema is named `<dataset_name>_staging` [by default](../dlt-ecosystem/staging#staging-dataset) and contains the same tables as the destination schema. When you run the pipeline, the data from the staging tables is loaded into the destination tables in a single atomic transaction.
+これまで、サンプルパイプラインでは `append` 書き込み処理を使用してきました。
+これは、パイプラインを実行するたびに、データが既存のテーブルに追加されることを意味します。
+[merge 書き込み処理](incremental-loading.md) を使用すると、dlt はステージングデータ用のステージングデータベーススキーマを作成します。
+このスキーマは [デフォルトで](../dlt-ecosystem/staging#staging-dataset) `<dataset_name>_staging` という名前で、宛先スキーマと同じテーブルが含まれています。
+パイプラインを実行すると、ステージングテーブルのデータが単一のアトミックトランザクションで宛先テーブルにロードされます。
 
-Let's illustrate this with an example. We change our pipeline to use the `merge` write disposition:
+例を挙げて説明しましょう。
+パイプラインを変更して、`merge` 書き込み処理を使用するようにします。
 
 ```py
 import dlt
@@ -225,10 +251,10 @@ pipeline = dlt.pipeline(
 load_info = pipeline.run(users)
 ```
 
-Running this pipeline will create a schema in the destination database with the name `mydata_staging`.
-If you inspect the tables in this schema, you will find the `mydata_staging.users` table identical to the `mydata.users` table in the previous example.
+このパイプラインを実行すると、宛先データベースに「mydata_staging」という名前のスキーマが作成されます。
+このスキーマ内のテーブルを調べると、「mydata_staging.users」テーブルが、前の例の「mydata.users」テーブルと同一であることがわかります。
 
-Here is what the tables may look like after running the pipeline:
+パイプライン実行後のテーブルは次のようになります。
 
 **mydata_staging.users**
 
@@ -245,15 +271,15 @@ Here is what the tables may look like after running the pipeline:
 | 2 | Bob 2 | rX8ybgTeEmAmmA | 2345672350.98417 |
 | 3 | Charlie | h8lehZEvT3fASQ | 1234563456.12345 |
 
-Notice that the `mydata.users` table now contains the data from both the previous pipeline run and the current one.
+`mydata.users` テーブルには、前回のパイプライン実行と現在のパイプライン実行の両方のデータが含まれていることに注意してください。
 
-## Dev mode (versioned) datasets
+## 開発モード（バージョン管理）データセット
 
-When you set the `dev_mode` argument to `True` in the `dlt.pipeline` call, dlt creates a versioned dataset.
-This means that each time you run the pipeline, the data is loaded into a new dataset (a new database schema).
-The dataset name is the same as the `dataset_name` you provided in the pipeline definition with a datetime-based suffix.
+`dlt.pipeline` 呼び出しで `dev_mode` 引数を `True` に設定すると、dlt はバージョン管理されたデータセットを作成します。
+つまり、パイプラインを実行するたびに、データは新しいデータセット（新しいデータベーススキーマ）にロードされます。
+データセット名は、パイプライン定義で指定した `dataset_name` に日時ベースのサフィックスが付いたものになります。
 
-We modify our pipeline to use the `dev_mode` option to see how this works:
+`dev_mode` オプションを使用するようにパイプラインを変更し、その動作を確認します。
 
 ```py
 import dlt
@@ -272,30 +298,26 @@ pipeline = dlt.pipeline(
 load_info = pipeline.run(data, table_name="users")
 ```
 
-Every time you run this pipeline, a new schema will be created in the destination database with a datetime-based suffix. The data will be loaded into tables in this schema.
-For example, the first time you run the pipeline, the schema will be named `mydata_20230912064403`, the second time it will be named `mydata_20230912064407`, and so on.
+このパイプラインを実行するたびに、宛先データベースに日付時刻ベースのサフィックスを持つ新しいスキーマが作成されます。
+データはこのスキーマのテーブルにロードされます。
+たとえば、パイプラインを初めて実行したとき、スキーマの名前は「mydata_20230912064403」になり、2回目には「mydata_20230912064407」になります。
 
-## Loading data into existing tables not created by dlt
+## dlt によって作成されていない既存のテーブルへのデータのロード
 
-You can also load data from `dlt` into tables that already exist in the destination dataset and were not created by `dlt`.
-There are a few things to keep in mind when doing this:
+`dlt` から、出力先データセットに既に存在するが `dlt` によって作成されていないテーブルにデータをロードすることもできます。
+この操作を行う際には、いくつか留意すべき点があります。
 
-If you load data into a table that exists but does not contain any data, in most cases, your load will succeed without problems.
-`dlt` will create the needed columns and insert the incoming data. `dlt` will only be aware of columns that exist on the
-discovered or provided internal schema, so if you have columns in your destination that are not anticipated by `dlt`, they
-will remain in the destination but stay unknown to `dlt`. This generally will not be a problem.
+存在するもののデータが含まれないテーブルにデータをロードする場合、ほとんどの場合、ロードは問題なく成功します。
+`dlt` は必要な列を作成し、入力データを挿入します。
+`dlt` は、検出または提供された内部スキーマに存在する列のみを認識します。そのため、出力先に `dlt` が予期しない列がある場合、それらの列は出力先に残りますが、`dlt` には認識されません。これは通常、問題にはなりません。
 
-If your destination table already exists and contains columns that have the same name as columns discovered by `dlt` but
-do not have matching datatypes, your load will fail, and you will have to fix the column on the destination table first,
-or change the column name in your incoming data to something else to avoid a collision.
+宛先テーブルが既に存在し、`dlt` によって検出された列と同じ名前を持つもののデータ型が一致しない列が含まれている場合、ロードは失敗します。そのため、まず宛先テーブルの列を修正するか、入力データの列名を別の名前に変更して衝突を回避する必要があります。
 
-If your destination table exists and already contains data, your load might also initially fail, since `dlt` creates
-special `non-nullable` columns that contain required mandatory metadata. Some databases will not allow you to create
-`non-nullable` columns on tables that have data, since the initial value for these columns of the existing rows cannot
-be inferred. You will have to manually create these columns with the correct type on your existing tables and
-make them `nullable`, then fill in values for the existing rows. Some databases may allow you to create a new column
-that is `non-nullable` and take a default value for existing rows in the same command. The columns you will need to
-create are:
+宛先テーブルが存在し、既にデータが含まれている場合も、`dlt` は必須メタデータを含む特別な `non-nullable` 列を作成するため、ロードは最初は失敗する可能性があります。
+一部のデータベースでは、既存の行のこれらの列の初期値を推測できないため、データが存在するテーブルに `non-nullable` 列を作成できません。
+既存のテーブルに適切な型の列を手動で作成し、それらを `nullable` に設定してから、既存の行に値を入力する必要があります。
+一部のデータベースでは、同じコマンドで `non-nullable` の新しい列を作成し、既存の行のデフォルト値を取得できます。
+作成する必要がある列は次のとおりです。
 
 | name | type |
 | --- | --- |
