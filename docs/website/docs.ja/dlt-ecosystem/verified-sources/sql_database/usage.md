@@ -57,8 +57,8 @@ def query_adapter_callback(
 
 上記のスニペットでは、いくつか興味深いことを行っています:
 
-1.`sa.text`でテキストクエリを作成します
-2. 増分列を選択する条件をデフォルトの`ge`から`greater`に変更します。(f" {incremental.cursor_path} > :start_value")
+1. `sa.text`でテキストクエリを作成します
+2. 増分列を選択する条件をデフォルトの`ge`から`greater`に変更します。<!-- (f" {incremental.cursor_path} > :start_value") -->
 3. 追加の計算列を追加します: `1 as add_int, 'const' as add_text`。ここで他のテーブルを結合することもできます。
 
 `table_adapter_callback` で追加した列を明示的に入力することをお勧めします:
