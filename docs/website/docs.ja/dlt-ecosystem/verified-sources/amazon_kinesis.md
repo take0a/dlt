@@ -121,7 +121,6 @@ AWS Kinesis [検証済みソース](https://github.com/dlt-hub/verified-sources/
 @dlt.resource(
     name=lambda args: args["stream_name"],
     primary_key="_kinesis_msg_id",
-    standalone=True,
 )
 def kinesis_stream(
     stream_name: str = dlt.config.value,

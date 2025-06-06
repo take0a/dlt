@@ -68,7 +68,7 @@ PROGRESS=enlighten python chess_pipeline.py
 PROGRESS=log python chess_pipeline.py
 ```
 
-[コード内でプログレス バーを自由に構成できます](../general-usage/pipeline.md#display-the-loading-progress)。
+[コード内でプログレス バーを自由に構成できます](../general-usage/pipeline.md#monitor-the-loading-progress)。
 
 ## 3. データとテーブルを確認する
 

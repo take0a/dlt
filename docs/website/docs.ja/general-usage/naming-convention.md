@@ -54,7 +54,7 @@ naming="sql_ci_v1"
 `dlt` は、データの [抽出](../reference/explainers/how-dlt-works.md#extract) 時にソース識別子（正規化されていない）を保持し、[正規化](../reference/explainers/how-dlt-works.md#normalize) 時にそれらを変換します。
 これは、次のことを意味します。
 1. [トランスフォーマー](resource.md#process-resources-with-dlttransformer) または [マッピング/フィルタリング関数](resource.md#filter-transform-and-pivot-data) を記述すると、正規化されていない元のデータが表示されます。辞書にアクセスするには、ソース識別子を使用してください。
-2. [カーソルフィールドの増分ロード](incremental-loading.md#incremental-loading-with-a-cursor-field)に参加する `primary_key` または `cursor` を定義する場合は、ソース識別子を使用します（`dlt` はソースデータを検査するためにそれらを使用します。`Incremental` クラスは単なるフィルタリング関数です）。
+2. [カーソルフィールドの増分ロード](incremental/cursor.md)に参加する `primary_key` または `cursor` を定義する場合は、ソース識別子を使用します（`dlt` はソースデータを検査するためにそれらを使用します。`Incremental` クラスは単なるフィルタリング関数です）。
 3. その他のヒント（`columns` や `merge_key` など）を定義する場合は、ソース識別子または宛先識別子を選択できます。`dlt` はすべてのヒントをデータと一緒に正規化します。
 4. `Schema` オブジェクト（パイプラインから取得されるか、`discover_schema` を介して `dlt` ソースから取得される）には、**常に宛先（正規化された）識別子が含まれます**。
 

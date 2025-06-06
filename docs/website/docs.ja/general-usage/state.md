@@ -10,7 +10,7 @@ keywords: [state, metadata, dlt.current.resource_state, dlt.current.source_state
 
 ## リソース内のパイプラインの状態の読み取りと書き込み
 
-リソースの状態を読み書きします。以下では、状態を使用してチェスの試合のアーカイブのリストを作成し、それを使用して [重複したリクエストを防止](incremental-loading.md#advanced-state-usage-storing-a-list-of-processed-entities) します。
+リソースの状態を読み書きします。以下では、状態を使用してチェスの試合のアーカイブのリストを作成し、それを使用して [重複したリクエストを防止](incremental/advanced-state.md#advanced-state-usage-storing-a-list-of-processed-entities) します。
 
 ```py
 @dlt.resource(write_disposition="append")
@@ -60,9 +60,9 @@ def players_games(chess_url, player, start_month=None, end_month=None):
 
 ## パイプラインの状態を使用する場合
 
-- `dlt` は内部的に状態を使用して、[インクリメンタルロードの最後の値](incremental-loading.md#incremental_loading-with-last-value)を実装します。このユースケースは、パイプライン状態を使用するニーズの約 90% をカバーするはずです。
-- リストが 10 万要素より大幅に大きくない場合は、[既に要求されたエンティティのリストを保存します](incremental-loading.md#advanced-state-usage-storing-a-list-of-processed-entities)。
-- 標準のインクリメンタルな構造で実装できない場合は、[最後の値の大きな辞書を保存](incremental-loading.md#advanced-state-usage-tracking-the-last-value-for-all-search-terms-in-twitter-api)します。
+- `dlt` は内部的に状態を使用して、[インクリメンタルロードの最後の値](incremental/cursor.md)を実装します。このユースケースは、パイプライン状態を使用するニーズの約 90% をカバーするはずです。
+- リストが 10 万要素より大幅に大きくない場合は、[既に要求されたエンティティのリストを保存します](incremental/advanced-state.md#advanced-state-usage-storing-a-list-of-processed-entities)。
+- 標準のインクリメンタルな構造で実装できない場合は、[最後の値の大きな辞書を保存](incremental/advanced-state.md#advanced-state-usage-tracking-the-last-value-for-all-search-terms-in-twitter-api)します。
 - カスタムフィールドのディクショナリ、動的構成、およびその他のソーススコープの状態を保存します。
 
 ## 数百万レコードにまで増加する可能性がある場合は、パイプライン状態を使用しないでください。

@@ -199,7 +199,7 @@ def load_github() -> None:
 
 2. `resource_defaults`: すべての[リソース](#resource-configuration)のデフォルト設定が含まれます。この例では、すべてのリソースが以下のように定義されます:
     - `id` を [主キー](../../../general-usage/resource#define-schema)とする
-    - [write disposition](../../../general-usage/incremental-loading#choosing-a-write-disposition)に `merge` を指定して、宛先の既存データをマージする
+    - [write disposition](../../../general-usage/incremental-loading.md#choosing-a-write-disposition)に `merge` を指定して、宛先の既存データをマージする
     - ページあたりより多くの結果を取得するため、各リクエストで `per_page=100` クエリパラメータを送信します。
 
 3. `resources`: ロードする[リソース](#resource-configuration)のリスト。ここでは、GitHub API のエンドポイントである[repository issues](https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28#list-repository-issues) と [issue comments](https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#list-issue-comments) に対応する `issues ` と `issue_comments` という２つのリソースがあります。各問題のコメントを取得するには問題番号が必要であることに注意してください。この番号は `issues` リソースから取得されます。詳細については、[リソース関係](#define-resource-relationships) セクションを参照してください。
@@ -981,14 +981,7 @@ config: RESTAPIConfig = {
 一部の API では、新しいデータまたは変更されたデータのみを取得する方法が提供されています (ほとんどの場合、`updated_at`、`created_at` などのタイムスタンプ フィールドや増分 ID を使用します)。
 これは [インクリメンタルなローディング](../../../general-usage/incremental-loading.md) と呼ばれ、読み込み時間と転送されるデータ量を削減できるため非常に便利です。
 
-APIエンドポイントが増分読み込みをサポートしている場合、次の2つの方法を使用して、新しいデータまたは変更されたデータのみを読み込むようにdltを構成できます:
-
-1. [エンドポイント構成](#endpoint-configuration)の`params`セクションで特別なパラメータを定義します。
-2. エンドポイント構成で `incremental` フィールドを指定します。
-
-最初の方法から始めましょう。
-
-### `params` でインクリメンタルローディング
+Let's continue with our imaginary blog API example to understand incremental loading with query parameters.
 
 次のようなエンドポイント「https://api.example.com/posts」があるとします:
 
@@ -1007,7 +1000,131 @@ APIエンドポイントが増分読み込みをサポートしている場合�
 }
 ```
 
-このエンドポイントの増分読み込みを有効にするには、次のエンドポイント構成を使用します:
+When the API endpoint supports incremental loading, you can configure dlt to load only the new or changed data using these three methods:
+
+1. Using [placeholders for incremental loading](#using-placeholders-for-incremental-loading)
+2. Defining a special parameter in the `params` section of the [endpoint configuration](#endpoint-configuration) (DEPRECATED)
+3. Using the `incremental` field in the [endpoint configuration](#endpoint-configuration) with the `start_param` field (DEPRECATED)
+
+:::caution
+The last two methods are deprecated and will be removed in a future dlt version.
+:::
+
+### Using placeholders for incremental loading
+
+The most flexible way to configure incremental loading is to use placeholders in the request configuration along with the `incremental` section.
+Here's how it works:
+
+1. Define the `incremental` section in the [endpoint configuration](#endpoint-configuration) to specify the cursor path (where to find the incremental value in the response) and initial value (the value to start the incremental loading from).
+2. Use the placeholder `{incremental.start_value}` in the request configuration to reference the incremental value.
+
+Let's take the example from the previous section and configure it using placeholders:
+
+```py
+{
+    "path": "posts",
+    "data_selector": "results",
+    "params": {
+        "created_since": "{incremental.start_value}",  # Uses cursor value in query parameter
+    },
+    "incremental": {
+        "cursor_path": "created_at",
+        "initial_value": "2024-01-25T00:00:00Z",
+    },
+}
+```
+
+When you first run this pipeline, dlt will:
+1. Replace `{incremental.start_value}` with `2024-01-25T00:00:00Z` (the initial value)
+2. Make a GET request to `https://api.example.com/posts?created_since=2024-01-25T00:00:00Z`
+3. Parse the response (e.g., posts with created_at values like "2024-01-26", "2024-01-27", "2024-01-28")
+4. Track the maximum value found in the "created_at" field (in this case, "2024-01-28")
+
+On the next pipeline run, dlt will:
+1. Replace `{incremental.start_value}` with "2024-01-28" (the last seen maximum value)
+2. Make a GET request to `https://api.example.com/posts?created_since=2024-01-28`
+3. The API will only return posts created on or after January 28th
+
+Let's break down the configuration:
+1. We explicitly set `data_selector` to `"results"` to select the list of posts from the response. This is optional; if not set, dlt will try to auto-detect the data location.
+2. We define the `created_since` parameter in `params` section and use the placeholder `{incremental.start_value}` to reference the incremental value.
+
+Placeholders are versatile and can be used in various request components. Here are some examples:
+
+#### In JSON body (for POST requests)
+
+If the API lets you filter the data by a range of dates (e.g. `fromDate` and `toDate`), you can use the placeholder in the JSON body:
+
+```py
+{
+    "path": "posts/search",
+    "method": "POST",
+    "json": {
+        "filters": {
+            "fromDate": "{incremental.start_value}",  # In JSON body
+            "toDate": "2024-03-25"
+        },
+        "limit": 1000
+    },
+    "incremental": {
+        "cursor_path": "created_at",
+        "initial_value": "2024-01-25T00:00:00Z",
+    },
+}
+```
+
+#### In path parameters
+
+Some APIs use path parameters to filter the data:
+
+```py
+{
+    "path": "posts/since/{incremental.start_value}/list",  # In URL path
+    "incremental": {
+        "cursor_path": "created_at",
+        "initial_value": "2024-01-25",
+    },
+}
+```
+
+#### In request headers
+
+It's not so common, but you can also use placeholders in the request headers:
+
+```py
+{
+    "path": "posts",
+    "headers": {
+        "X-Since-Timestamp": "{incremental.start_value}"  # In custom header
+    },
+    "incremental": {
+        "cursor_path": "created_at",
+        "initial_value": "2024-01-25T00:00:00Z",
+    },
+}
+```
+
+You can also use different placeholder variants depending on your needs:
+
+| Placeholder | Description |
+| ----------- | ----------- |
+| `{incremental.start_value}` | The value to use as the starting point for this request (either the initial value or the last tracked maximum value) |
+| `{incremental.initial_value}` | Always uses the initial value specified in the configuration |
+| `{incremental.last_value}` | The last seen value (same as start_value in most cases, see the [incremental loading](../../../general-usage/incremental/cursor.md) guide for more details) |
+| `{incremental.end_value}` | The end value if specified in the configuration |
+
+
+### Legacy method: Incremental loading in `params` (DEPRECATED)
+
+:::caution
+DEPRECATED: This method is deprecated and will be removed in a future version. Use the [placeholder method](#using-placeholders-for-incremental-loading) instead.
+:::
+
+:::note
+This method only works for query string parameters. For other request parts (path, JSON body, headers), use the [placeholder method](#using-placeholders-for-incremental-loading).
+:::
+
+For query string parameters, you can also specify incremental loading directly in the `params` section:
 
 ```py
 {
@@ -1023,13 +1140,7 @@ APIエンドポイントが増分読み込みをサポートしている場合�
 }
 ```
 
-パイプラインを実行すると、dlt は取得したすべての投稿の最後の `created_at` を追跡し、それを次のリクエストの `created_since` パラメータとして使用します。
-したがって、このケースでは、次のリクエストは `https://api.example.com/posts?created_since=2024-01-28` に対して行われ、`2024-01-28` 以降に作成された新しい投稿のみが取得されます。
-
-構成を詳しく見ていきましょう。
-
-1. レスポンスから投稿のリストを選択するために、`data_selector` を `"results"` に明示的に設定します。これはオプションです。設定されていない場合、dlt はデータの場所を自動検出しようとします。
-2. `created_since` パラメータを、次のフィールドを持つ増分パラメータとして定義します:
+Above we define the `created_since` parameter as an incremental parameter as:
 
 ```py
 {
@@ -1041,13 +1152,19 @@ APIエンドポイントが増分読み込みをサポートしている場合�
 }
 ```
 
+The fields are:
+
 - `type`: パラメータ定義のタイプ。この場合、`incremental` に設定する必要があります。
 - `cursor_path`: リスト内の各アイテム内のフィールドへの JSONPath。このフィールドの値は、次のリクエストで使用されます。上記の例では、アイテムは `{"id": 1, "title": "Post 1", "created_at": "2024-01-26"}` のようになっているため、作成時間を追跡するには、`cursor_path` を `"created_at"` に設定します。JSONPath は、レスポンスのルートからではなく、アイテム (dict) のルートから始まることに注意してください。
 - `initial_value`: カーソルの初期値。これはインクリメンタルローディングの状態を初期化する値です。この場合、`2024-01-25` です。値の型は、データ項目内のフィールドの型と一致する必要があります。
 
-### `incremental` フィールドを使用したインクリメンタルローディング
+### Incremental loading using the `incremental` field (DEPRECATED)
 
-別の方法としては、[エンドポイント設定](#endpoint-configuration)の `incremental` フィールドを使用する方法があります。この設定は、インクリメンタルローディングの開始パラメータと値だけでなく、終了パラメータと値も指定できるため、上記の方法よりも強力です。
+:::caution
+DEPRECATED: This method is deprecated and will be removed in a future dlt version. Use the [placeholder method](#using-placeholders-for-incremental-loading) instead.
+:::
+
+Another alternative method is to use the `incremental` field in the [endpoint configuration](#endpoint-configuration) while specifying names of the query string parameters to be used as start and end conditions.
 
 上記と同じ例を取り上げ、`incremental`フィールドを使用して設定してみましょう:
 
@@ -1062,8 +1179,6 @@ APIエンドポイントが増分読み込みをサポートしている場合�
     },
 }
 ```
-
-クエリパラメータ名 `created_since` を `params` セクションではなく `start_param` フィールドに指定することに注意してください。
 
 `incremental`フィールドの利用可能な完全な設定は次のとおりです。:
 
@@ -1089,9 +1204,9 @@ APIエンドポイントが増分読み込みをサポートしている場合�
 - `end_value` (str): インクリメンタルローディングを停止するカーソルの終了値。これはオプションであり、開始条件のみを追跡する必要がある場合は省略できます。このフィールドを設定する場合は、`initial_value` も設定する必要があります。
 - `convert` (callable): カーソル値をクエリ パラメータに必要な形式に変換する呼び出し可能オブジェクト。たとえば、UNIX タイムスタンプを ISO 8601 の日付に変換したり、日付を `created_at+gt+{date}` に変換したりできます。
 
-詳細については、[インクリメンタルローディング](../../../general-usage/incremental-loading.md#incremental-loading-with-a-cursor-field)ガイドを参照してください。
+詳細については、[インクリメンタルローディング](../../../general-usage/incremental/cursor.md)ガイドを参照してください。
 
-インクリメンタルローディングで問題が発生した場合は、インクリメンタルローディングガイドの[トラブルシューティング セクション](../../../general-usage/incremental-loading.md#troubleshooting)を参照してください。
+インクリメンタルローディングで問題が発生した場合は、インクリメンタルローディングガイドの[トラブルシューティング セクション](../../../general-usage/incremental/troubleshooting.md)を参照してください。
 
 ### APIを呼び出す前に増分値を変換する
 
@@ -1196,7 +1311,7 @@ from dlt.sources.rest_api import RESTAPIConfig
 
 #### インクリメンタルローディングが機能しない
 
-インクリメンタルなローディングの問題については、[トラブルシューティング ガイド](../../../general-usage/incremental-loading.md#troubleshooting)を参照してください。
+インクリメンタルなローディングの問題については、[トラブルシューティング ガイド](../../../general-usage/incremental/troubleshooting.md)を参照してください。
 
 #### HTTP 404 エラーが発生する
 
@@ -1206,7 +1321,7 @@ from dlt.sources.rest_api import RESTAPIConfig
 
 401（Unauthorized）エラーが発生した場合、これは次のことを示している可能性があります:
 
-- 認証資格情報が正しくありません。`secrets.toml` 内の資格情報を確認してください。詳細については、[シークレットと構成](../../../general-usage/credentials/setup#understanding-the-exceptions)を参照してください。
+- 認証資格情報が正しくありません。`secrets.toml` 内の資格情報を確認してください。詳細については、[シークレットと構成](../../../general-usage/credentials/setup#troubleshoot-configuration-errors)を参照してください。
 - 認証タイプが正しくありません。適切な方法については、API ドキュメントを参照してください。詳細については、[認証](#authentication) セクションを参照してください。一部の API では、[カスタム認証方法](../../../general-usage/http/rest-client.md#custom-authentication) が必要になる場合があります。
 
 ### 一般的なガイドライン

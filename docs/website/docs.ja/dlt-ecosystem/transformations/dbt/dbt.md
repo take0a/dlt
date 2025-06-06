@@ -1,5 +1,5 @@
 ---
-title: Transforming data with dbt
+title: Transform data with dbt
 description: Transforming the data loaded by a dlt pipeline with dbt
 keywords: [transform, dbt, runner]
 ---

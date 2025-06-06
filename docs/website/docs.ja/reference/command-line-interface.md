@@ -33,7 +33,7 @@ DLTパイプラインを作成、追加、検査、デプロイします。
 ```sh
 dlt [-h] [--version] [--disable-telemetry] [--enable-telemetry]
     [--non-interactive] [--debug]
-    {telemetry,schema,pipeline,init,render-docs,deploy} ...
+    {telemetry,studio,schema,pipeline,init,render-docs,deploy,ai} ...
 ```
 
 <details>
@@ -50,11 +50,13 @@ dlt [-h] [--version] [--disable-telemetry] [--enable-telemetry]
 
 **利用可能なサブコマンド**
 * [`telemetry`](#dlt-telemetry) - テレメトリのステータスを表示します
+* [`studio`](#dlt-studio) - Starts the dlt studio marimo app
 * [`schema`](#dlt-schema) - スキーマを表示、変換、アップグレードします
 * [`pipeline`](#dlt-pipeline) - ローカルで実行されたパイプラインに対する操作を実行します
 * [`init`](#dlt-init) - 既存の検証済みソースを追加するか、テンプレートから新しいソースを作成して、現在のフォルダにパイプラインプロジェクトを作成します
 * [`render-docs`](#dlt-render-docs) - CLI ドキュメントの Markdown 版をレンダリングします
 * [`deploy`](#dlt-deploy) - 選択したパイプラインスクリプトのデプロイメントパッケージを作成します
+* [`ai`](#dlt-ai) - Use ai-powered development tools and utilities
 
 </details>
 
@@ -81,6 +83,35 @@ dlt telemetry [-h]
 
 **オプション**
 * `-h, --help` - このヘルプメッセージを表示して終了します
+
+</details>
+
+## `dlt studio`
+
+Starts the dlt studio marimo app.
+
+**Usage**
+```sh
+dlt studio [-h]
+```
+
+**Description**
+
+The `dlt studio` command starts the dlt studio app. You can use the studio:
+
+* to list and inspect local pipelines
+* browse the full pipeline schema and all hints
+* browse the data in the destination
+* inspect the pipeline state.
+
+<details>
+
+<summary>Show Arguments and Options</summary>
+
+Inherits arguments from [`dlt`](#dlt).
+
+**Options**
+* `-h, --help` - Show this help message and exit
 
 </details>
 
@@ -668,6 +699,63 @@ DAG は、このプロセスを容易にするために `dlt` Airflow ラッパ�
 * `--location LOCATION` - 高度な設定。パイプラインリポジトリへの特定のURLまたはローカルパスを使用します。
 * `--branch BRANCH` - 高度な設定。デプロイリポジトリの特定のブランチを使用してテンプレートを取得します。
 * `--secrets-format {env,toml}` - シークレットのフォーマット
+
+</details>
+
+## `dlt ai`
+
+Use AI-powered development tools and utilities.
+
+**Usage**
+```sh
+dlt ai [-h] {setup} ...
+```
+
+**Description**
+
+The `dlt ai` command provides commands to configure your LLM-enabled IDE and MCP server.
+
+<details>
+
+<summary>Show Arguments and Options</summary>
+
+Inherits arguments from [`dlt`](#dlt).
+
+**Options**
+* `-h, --help` - Show this help message and exit
+
+**Available subcommands**
+* [`setup`](#dlt-ai-setup) - Generate ide-specific configuration and rules files
+
+</details>
+
+### `dlt ai setup`
+
+Generate IDE-specific configuration and rules files.
+
+**Usage**
+```sh
+dlt ai setup [-h] [--location LOCATION] [--branch BRANCH]
+    {cursor,continue,cline,claude_desktop}
+```
+
+**Description**
+
+Get AI rules files and configuration into your local project for the selected IDE.
+Files are fetched from https://github.com/dlt-hub/verified-sources by default.
+
+<details>
+
+<summary>Show Arguments and Options</summary>
+
+Inherits arguments from [`dlt ai`](#dlt-ai).
+
+**Positional arguments**
+
+**Options**
+* `-h, --help` - Show this help message and exit
+* `--location LOCATION` - Advanced. specify git url or local path to rules files and config.
+* `--branch BRANCH` - Advanced. specify git branch to fetch rules files and config.
 
 </details>
 

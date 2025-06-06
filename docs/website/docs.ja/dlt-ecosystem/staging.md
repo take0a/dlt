@@ -10,7 +10,7 @@ keywords: [staging, destination]
 `dlt` は、要求に応じて2つのステージング領域を作成します。
 
 1. **ステージングデータセット**。[マージロードと置換ロード](../general-usage/incremental-loading.md#merge-incremental-loading)で重複排除と宛先とのデータのマージに使用されます。
-2. **ステージングストレージ**。通常はS3/GCPバケットで、宛先にロードされる前に[ローダーファイル](file-formats/)がコピーされます。
+1. A **staging dataset** used by the [merge](../general-usage/merge-loading.md) and [replace](../general-usage/full-loading.md) loads to deduplicate and merge data with the destination.
 
 ## ステージングデータセット
 

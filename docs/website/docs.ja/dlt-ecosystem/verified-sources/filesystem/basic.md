@@ -137,7 +137,7 @@ SFTP 認証オプションの詳細については、[SFTP のセクション](.
 
 ### dlt パイプラインに資格情報を追加する
 
-ファイルシステムソースに資格情報を提供するには、 dlt で[可能な任意の方法](../../../general-usage/credentials/setup#available-config-providers) を使用できます。
+ファイルシステムソースに資格情報を提供するには、 dlt で[可能な任意の方法](../../../general-usage/credentials/setup) を使用できます。
 最も簡単な方法の 1 つは、構成ファイルを使用することです。作業ディレクトリの `.dlt` フォルダーには、`config.toml` と `secrets.toml` の2 つのファイルが含まれています。パスワードやアクセストークンなどの機密情報は `secrets.toml` にのみ入れる必要がありますが、バケットへのパスなどのその他の構成は `config.toml` に指定できます。
 
 <Tabs

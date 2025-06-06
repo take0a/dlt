@@ -1,5 +1,5 @@
 ---
-title: Viewing your data with Streamlit
+title: View data with Streamlit
 description: Viewing your data with streamlit
 keywords: [data, dataset, streamlit]
 ---

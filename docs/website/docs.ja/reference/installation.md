@@ -25,7 +25,7 @@ pip --version
 ```sh
 sudo apt update
 sudo apt install python3.10
-sudo apt install python3.10-venv
+pip install uv
 ```
 
   </TabItem>
@@ -36,6 +36,7 @@ macOS では、[Homebrew](https://brew.sh) を使用して Python 3.10 をイン
 ```sh
 brew update
 brew install python@3.10
+pip install uv
 ```
 
   </TabItem>
@@ -45,6 +46,7 @@ brew install python@3.10
 
 ```sh
 C:\> pip3 install -U pip
+C:\> pip3 install uv
 ```
 
   </TabItem>
@@ -58,16 +60,16 @@ Python プロジェクトを作成するときは、[仮想環境](https://docs.
 
   <TabItem value="ubuntu">
 
-作業フォルダに新しい仮想環境を作成します。これにより、仮想環境が保存される `./env` ディレクトリが作成されます:
+作業フォルダに新しい仮想環境を作成します。これにより、仮想環境が保存される `./venv` ディレクトリが作成されます:
 
 ```sh
-python -m venv ./env
+uv venv --python 3.10
 ```
 
 仮想環境をアクティブ化します:
 
 ```sh
-source ./env/bin/activate
+source .venv/bin/activate
 ```
 
   </TabItem>
@@ -76,28 +78,28 @@ source ./env/bin/activate
 作業フォルダに新しい仮想環境を作成します。これにより、仮想環境が保存される `./env` ディレクトリが作成されます:
 
 ```sh
-python -m venv ./env
+uv venv --python 3.10
 ```
 
 仮想環境をアクティブ化します:
 
 ```sh
-source ./env/bin/activate
+source .venv/bin/activate
 ```
 
   </TabItem>
   <TabItem value="windows">
 
-作業フォルダに新しい仮想環境を作成します。これにより、仮想環境が保存される `./env` ディレクトリが作成されます:
+作業フォルダに新しい仮想環境を作成します。これにより、仮想環境が保存される `./venv` ディレクトリが作成されます:
 
 ```bat
-C:\> python -m venv ./env
+C:\> uv venv --python 3.10
 ```
 
 仮想環境をアクティブ化します:
 
 ```bat
-C:\> .\env\Scripts\activate
+C:\> .\venv\Scripts\activate
 ```
 
   </TabItem>
@@ -108,19 +110,19 @@ C:\> .\env\Scripts\activate
 仮想環境に `dlt` の最新バージョンをインストールまたはアップグレードするには、次のコマンドを実行します:
 
 ```sh
-pip install -U dlt
+uv pip install -U dlt
 ```
 
 以下に、追加のインストール例をいくつか示します:
 
 DuckDB サポート付きの dlt をインストールするには:
 ```sh
-pip install "dlt[duckdb]"
+uv pip install "dlt[duckdb]"
 ```
 
 特定のバージョンの dlt をインストールするには (たとえば、0.5.0 より前のバージョン):
 ```sh
-pip install "dlt<0.5.0"
+uv pip install "dlt<0.5.0"
 ```
 
 ### 3.1. Pixi または Conda で dlt をインストールする

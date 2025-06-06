@@ -1,11 +1,9 @@
 ---
-title: Add incremental configuration to SQL resources
+title: Incremental loading guide
 description: Incremental SQL data loading strategies
 keywords: [how to, load data incrementally from SQL]
 slug: sql-incremental-configuration
 ---
-
-# SQL リソースに増分設定を追加する
 
 増分読み込みとは、新規または変更されたデータのみを読み込み、既に読み込まれている古いレコードは読み込まない操作です。
 例えば、銀行は最新の取引のみを読み込み、企業は新規または変更されたユーザー情報でデータベースを更新します。

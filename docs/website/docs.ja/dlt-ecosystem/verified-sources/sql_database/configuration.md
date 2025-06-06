@@ -1,5 +1,5 @@
 ---
-title: Configuring the SQL Database source
+title:  Configuration
 description: configuring the pipeline script, connection, and backend settings in the sql_database source
 keywords: [sql connector, sql database pipeline, sql database]
 ---
@@ -10,7 +10,7 @@ import Header from '../_source-info-header.md';
 
 <Header/>
 
-## SQL データベースソースの構成
+## ロードするテーブルの選択
 
 `dlt` ソースは、簡単にカスタマイズできるソース関数とリソース関数で構成された Python スクリプトです。SQL データベース検証済みソースには、次の組み込みソースとリソースがあります:
 
@@ -19,14 +19,17 @@ import Header from '../_source-info-header.md';
 
 ソースとリソースの詳細については、こちらをご覧ください: [一般的な使用法: ソース](../../../general-usage/source.md) および [一般的な使用法: リソース](../../../general-usage/resource.md).
 
-:::note NOTE
-To see complete list of source arguments for `sql_database` [refer to the this section](#arguments-for-sql_database-source).
-:::
-
 ### 使用例:
 
 :::tip
-私たちのソースは完全にハッキング可能なものになる予定です。ソースやリソースのソース コードを自由に変更して、ニーズに合わせてカスタマイズしてください。
+We intend our sources to be fully hackable. `dlt init` command allows you to eject the source code of the core source and modify it
+according to your needs. For example
+
+```sh
+ dlt init sql_database duckdb --eject
+ ```
+
+will create `sql_database` folder with the source code that you can import and use.
 :::
 
 1. **データベースからすべてのテーブルをロードする**
@@ -141,6 +144,74 @@ To see complete list of source arguments for `sql_database` [refer to the this s
    `config.toml` で指定されたテーブル名と列名は、大文字と小文字が区別されるため、SQL データベース内の対応するものと完全に一致する必要があります。
    :::
 
+## Incremental loading
+
+Efficient data management often requires loading only new or updated data from your SQL databases, rather than reprocessing the entire dataset. This is where incremental loading comes into play.
+
+Incremental loading uses a cursor column (e.g., timestamp or auto-incrementing ID) to load only data newer than a specified initial value, enhancing efficiency by reducing processing time and resource use. Read [here](../../../walkthroughs/sql-incremental-configuration) for more details on incremental loading with `dlt`.
+
+### How to configure
+1. **Choose a cursor column**: Identify a column in your SQL table that can serve as a reliable indicator of new or updated rows. Common choices include timestamp columns or auto-incrementing IDs.
+1. **Set an initial value**: Choose a starting value for the cursor to begin loading data. This could be a specific timestamp or ID from which you wish to start loading data.
+1. **Deduplication**: When using incremental loading, the system automatically handles the deduplication of rows based on the primary key (if available) or row hash for tables without a primary key.
+1. **Set end_value for backfill**: Set `end_value` if you want to backfill data from a certain range.
+1. **Order returned rows**: Set `row_order` to `asc` or `desc` to order returned rows.
+
+:::info Special characters in the cursor column name
+If your cursor column name contains special characters (e.g., `$`) you need to escape it when passing it to the `incremental` function. For example, if your cursor column is `example_$column`, you should pass it as `"'example_$column'"` or `'"example_$column"'` to the `incremental` function: `incremental("'example_$column'", initial_value=...)`.
+:::
+
+### Examples
+
+1. **Incremental loading with the resource `sql_table`**.
+
+  Consider a table "family" with a timestamp column `last_modified` that indicates when a row was last modified. To ensure that only rows modified after midnight (00:00:00) on January 1, 2024, are loaded, you would set the `last_modified` timestamp as the cursor as follows:
+
+  ```py
+  import dlt
+  from dlt.sources.sql_database import sql_table
+  from dlt.common.pendulum import pendulum
+
+  # Example: Incrementally loading a table based on a timestamp column
+  table = sql_table(
+     table='family',
+     incremental=dlt.sources.incremental(
+         'last_modified',  # Cursor column name
+         initial_value=pendulum.DateTime(2024, 1, 1, 0, 0, 0)  # Initial cursor value
+     )
+  )
+
+  pipeline = dlt.pipeline(destination="duckdb")
+  extract_info = pipeline.extract(table, write_disposition="merge")
+  print(extract_info)
+  ```
+
+  Behind the scene, the loader generates a SQL query filtering rows with `last_modified` values greater or equal to the incremental value. In the first run, this is the initial value (midnight (00:00:00) January 1, 2024).
+  In subsequent runs, it is the latest value of `last_modified` that `dlt` stores in [state](../../../general-usage/state).
+
+2. **Incremental loading with the source `sql_database`**.
+
+  To achieve the same using the `sql_database` source, you would specify your cursor as follows:
+
+  ```py
+  import dlt
+  from dlt.sources.sql_database import sql_database
+
+  source = sql_database().with_resources("family")
+  # Using the "last_modified" field as an incremental field using initial value of midnight January 1, 2024
+  source.family.apply_hints(incremental=dlt.sources.incremental("updated", initial_value=pendulum.DateTime(2022, 1, 1, 0, 0, 0)))
+
+  # Running the pipeline
+  pipeline = dlt.pipeline(destination="duckdb")
+  load_info = pipeline.run(source, write_disposition="merge")
+  print(load_info)
+  ```
+
+  :::info
+    * When using "merge" write disposition, the source table needs a primary key, which `dlt` automatically sets up.
+    * `apply_hints` is a powerful method that enables schema modifications after resource creation, like adjusting write disposition and primary keys. You can choose from various tables and use `apply_hints` multiple times to create pipelines with merged, appended, or replaced resources.
+  :::
+
 ## 接続の設定
 
 ### 接続文字列の形式
@@ -169,7 +240,7 @@ To see complete list of source arguments for `sql_database` [refer to the this s
 
 #### 1. `secrets.toml` または環境変数として設定する (推奨)
 
-`dlt` でサポートされている [任意の方法](../../../general-usage/credentials/setup#available-config-providers) を使用して資格情報を設定できます。`.dlt/secrets.toml` または環境変数を使用することをお勧めします。`secrets.toml` 内で資格情報を設定する方法については、[セットアップ](./setup) の手順 2 を参照してください。資格情報の受け渡しの詳細については、[こちら](../../../general-usage/credentials/setup) を参照してください。
+`dlt` でサポートされている [任意の方法](../../../general-usage/credentials/setup) を使用して資格情報を設定できます。`.dlt/secrets.toml` または環境変数を使用することをお勧めします。`secrets.toml` 内で資格情報を設定する方法については、[セットアップ](./setup) の手順 2 を参照してください。資格情報の受け渡しの詳細については、[こちら](../../../general-usage/credentials/setup) を参照してください。
 
 #### 2. スクリプト内で直接渡す
 
@@ -358,56 +429,3 @@ print(info)
 ```
 
 上記のデータセットとローカル PostgreSQL インスタンスを使用すると、`ConnectorX` バックエンドは `PyArrow` バックエンドよりも 2 倍高速になります。
-
-## `sql_database` ソースの引数
-
-`sql_database` ソースでは次の引数を使用できます。
-    
-    `credentials` (Union[ConnectionStringCredentials, Engine, str]): データベース資格情報または `sqlalchemy.Engine` インスタンス。
-    
-    `schema` (Optional[str]): ロードするデータベーススキーマ名（デフォルトと異なる場合）。
-
-    `metadata` (Optional[MetaData]): オプションの `sqlalchemy.MetaData` インスタンス。これを使用する場合、`schema` 引数は無視されます。
-
-    `table_names` (Optional[List[str]]): ロードするテーブル名のリスト。デフォルトでは、スキーマ内のすべてのテーブルがロードされます。
-
-    `chunk_size` (int): 1回のバッチで生成される行数。SQL Alchemy はチャンクサイズの2倍のサイズの追加内部行バッファを作成します。
-    
-    `backend` (TableBackend): テーブルデータを生成するバックエンドの種類。"sqlalchemy"、"pyarrow"、"pandas"、"connectorx" のいずれかです。
-
-        - "sqlalchemy" はバッチを Python 辞書のリストとして生成します。"pyarrow" と "connectorx" はバッチをアローテーブルとして生成します。"pandas" は panda frame として生成します。
-
-        - "sqlalchemy" はデフォルトであり、追加の依存関係は必要ありません。
-
-        - "pyarrow" は正しいデータ型で安定した出力先スキーマを作成します。
-
-        - "connectorx" は通常最も高速ですが、"chunk_size" を無視するため、大きなテーブルを扱う場合は自分で処理する必要があります。
-    
-    `detect_precision_hints` (bool): 非推奨です。`reflection_level` を使用してください。ソーステーブルの列に基づいて、ターゲットスキーマでサポートされているデータ型の列精度とスケールヒントを設定します。これはデフォルトで無効になっています。
-    
-    `reflection_level`: (ReflectionLevel): ソースデータベーススキーマからどの程度の情報を反映するかを指定します。
-
-        - "minimal": テーブル名、NULL値許容、主キーのみが反映されます。データ型はデータから推測されます。これがデフォルトのオプションです。
-
-        - "full": データ型は "minimal" に加算されて反映されます。`dlt` は必要に応じて、データを反映された型に変換します。
-
-        - "full_with_precision": サポートされているデータ型（例：decimal、text、binary）の精度とスケールを設定します。big integer型とregular integer型を作成します。
-    
-    `defer_table_reflect` (bool): データ出力時にのみテーブルスキーマに接続し、反映します。table_names を明示的に渡す必要があります。
-    Airflow で実行する場合は、このオプションを有効にしてください。dlt 0.4.4 以降で利用可能です。
-
-    `table_adapter_callback`: (呼び出し可能): 反映される各テーブルを受け取ります。選択される列のリストを変更するために使用できます。
-
-    `backend_kwargs` (**kwargs): テーブルバックエンドに渡されるキーワード。例えば、"conn" は connectorx に特殊な接続文字列を渡すために使用されます。
-
-    `include_views` (bool): テーブルだけでなくビューも反映します。`table_names` に含まれるビュー名は、この設定に関わらず常に含まれることに注意してください。デフォルトでは false に設定されています。
-
-    `type_adapter_callback`(Optional[Callable]): 列を反映する際の型推論をオーバーライドするために呼び出し可能。
-    引数は単一の sqlalchemy データ型（`TypeEngine` インスタンス）であり、別の sqlalchemy データ型を返すか、`None`（型はデータから推測されます）を返す必要があります。
-
-    `query_adapter_callback`(Optional[Callable[Select, Table], Select]): テーブルからデータを取得するために使用される SELECT クエリをオーバーライドするための呼び出し可能オブジェクトです。コールバックは sqlalchemy の `Select` と、対応する `Table`、'Incremental`、および `Engine` オブジェクトを受け取り、変更された `Select` または `Text` を返す必要があります。
-
-    `resolve_foreign_keys` (bool): 同じスキーマ内の外部キーを `references` テーブルヒントに変換します。
-    参照されているすべてのテーブルが反映されるため、追加のデータベース呼び出しが発生する可能性があります。
-
-    `engine_adapter_callback` (Callable[[Engine], Engine]): 接続を開くために使用される Engine インスタンスを設定、変更するためのコールバックです。トランザクション分離レベルを設定します。

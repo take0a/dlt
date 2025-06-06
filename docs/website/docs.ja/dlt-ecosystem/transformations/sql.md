@@ -1,5 +1,5 @@
 ---
-title: Transforming data with SQL
+title: Transform data with SQL
 description: Transforming the data loaded by a dlt pipeline with the dlt SQL client
 keywords: [transform, sql]
 ---
@@ -30,15 +30,15 @@ pipeline = dlt.pipeline(destination="duckdb", dataset_name="crm")
 with pipeline.sql_client() as client:
     client.execute_sql(
         """ CREATE OR REPLACE TABLE aggregated_sales AS
-            SELECT 
+            SELECT
                 category,
                 region,
                 SUM(amount) AS total_sales,
                 AVG(amount) AS average_sales
-            FROM 
+            FROM
                 sales
-            GROUP BY 
-                category, 
+            GROUP BY
+                category,
                 region;
     """)
 ```

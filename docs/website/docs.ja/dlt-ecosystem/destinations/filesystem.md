@@ -129,7 +129,7 @@ endpoint_url = "https://<account_id>.r2.cloudflarestorage.com" # copy your endpo
 
 #### 構成を追加する
 
-`fsspec` に追加の引数を渡すには、toml 設定で `kwargs` と `client_kwargs` を指定します。
+`fsspec` に追加の引数を渡すには、`toml` 設定で `kwargs` と `client_kwargs` を指定します。
 
 ```toml
 [destination.filesystem.kwargs]
@@ -143,6 +143,16 @@ verify="public.crt"
 追加の引数を環境変数経由で渡すには、**文字列化された辞書** を使用します:
 `DESTINATION__FILESYSTEM__KWARGS='{"use_ssl": true, "auto_mkdir": true}`
 
+You can also override default `fsspec` settings used by `dlt`:
+```toml
+[destination.filesystem.kwargs]
+use_listings_cache=false  # listing cache disabled by default as you typically add files
+listings_expiry_time=60.0
+skip_instance_cache=false  # instance cache enabled by default, it is thread isolated anyway
+```
+There's however no good reason to do that, except debugging `fsspec` internal problems. You could try
+to enable listing cache but this cache is not shared across threads which `dlt` load steps uses to
+parallelize writes. You may get unpredictable cache invalidation behavior.
 
 ### Google storage
 
@@ -644,10 +654,10 @@ layout="{table_name}/{load_id}.{file_id}.{ext}"
 
 ## サポートされている表形式
 
-以下の[表形式](./delta-iceberg.md)を選択できます:
+以下の表形式を選択できます:
 
-* Delta table
-* Iceberg
+* [Delta table](./delta-iceberg.md)
+* [Iceberg](./iceberg.md)
 
 ## dlt の状態の同期
 
@@ -658,6 +668,16 @@ layout="{table_name}/{load_id}.{file_id}.{ext}"
 :::note
 インクリメンタルロードを使用する場合など、ロードによって新しい状態が生成されると、宛先の `_dlt_pipeline_state` フォルダーに新しい状態ファイルが作成されます。データの蓄積を防ぐために、状態クリーンアップ メカニズムによって古い状態ファイルが自動的に削除され、デフォルトでは最新の 100 個のみが保持されます。このクリーンアップ プロセスは、保持するパイプライン状態ファイルの最大数 (デフォルトは 100) を決定するファイル システム構成 `max_state_files` を使用してカスタマイズまたは無効にできます。この値を 0 または負の数に設定すると、古い状態のクリーンアップが無効になります。
 :::
+
+## Data access
+`filesystem` implements [`sql_client`](../../general-usage/dataset-access/sql-client.md#the-filesystem-sql-client) which provides read only
+SQL access to files and iceberg/delta tables with duckdb dialect. By default views that are created are "frozen" to minimize reading form bucket.
+You can enable views autorefesh:
+
+```toml
+[destination.filesystem]
+always_refresh_views=true
+```
 
 ## トラブルシューティング
 

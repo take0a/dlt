@@ -221,14 +221,14 @@ def repo_events() -> Iterator[TDataItems]:
 
 ```py
 @dlt.resource(name='table_name', write_disposition='replace')
-def generate_rows(nr):
+def generate_var_rows(nr):
     for i in range(nr):
         yield {'id': i, 'example_string': 'abc'}
 
-for row in generate_rows(10):
+for row in generate_var_rows(10):
     print(row)
 
-for row in generate_rows(20):
+for row in generate_var_rows(20):
     print(row)
 ```
 
@@ -290,10 +290,10 @@ print(list([1,2] | pokemon()))
 
 ### スタンドアロンリソースを宣言する
 
-スタンドアロン リソースは、config と secrets の値を受け入れるモジュール (内部関数ではない) のトップレベルの関数で定義されます。さらに、`standalone` フラグが指定されている場合は、装飾された関数のシグネチャと docstring が保持されます。`dlt.resource` は装飾された関数をラップするだけで、ユーザーは実際のリソースを取得するためにラッパーを呼び出す必要があります。以下では、使用前に呼び出す必要がある `filesystem` リソースを宣言します。
+スタンドアロン リソースは、config と secrets の値を受け入れるモジュール (内部関数ではない) のトップレベルの関数で定義されます。ここで、`dlt.resource` は装飾された関数をラップするだけで、ユーザーは実際のリソースを取得するためにラッパーを呼び出す必要があります。以下では、使用前に呼び出す必要がある `filesystem` リソースを宣言します。
 
 ```py
-@dlt.resource(standalone=True)
+@dlt.resource
 def fs_resource(bucket_url=dlt.config.value):
   """List and yield files in `bucket_url`."""
   ...
@@ -302,10 +302,10 @@ def fs_resource(bucket_url=dlt.config.value):
 pipeline.run(fs_resource("s3://my-bucket/reports"), table_name="reports")
 ```
 
-スタンドアロンは、デコレートされた関数に渡される引数に応じて動的な名前を持つ場合があります。たとえば:
+リソースは、デコレートされた関数に渡される引数に応じて動的な名前を持つ場合があります。たとえば:
 
 ```py
-@dlt.resource(standalone=True, name=lambda args: args["stream_name"])
+@dlt.resource(name=lambda args: args["stream_name"])
 def kinesis(stream_name: str):
     ...
 
@@ -629,7 +629,7 @@ pipeline.run(
 
 ```py
 @dlt.resource(name='table_name', write_disposition='replace')
-def generate_rows(nr):
+def generate_var_rows(nr):
     for i in range(nr):
         yield {'id': i, 'example_string': 'abc'}
 
@@ -639,9 +639,9 @@ pipeline = dlt.pipeline(
     dataset_name="rows_data"
 )
 # load an individual resource
-pipeline.run(generate_rows(10))
+pipeline.run(generate_var_rows(10))
 # load a list of resources
-pipeline.run([generate_rows(10), generate_rows(20)])
+pipeline.run([generate_var_rows(10), generate_var_rows(20)])
 ```
 
 ### 特定のリソースのローダーファイル形式を選択する
@@ -650,7 +650,7 @@ pipeline.run([generate_rows(10), generate_rows(20)])
 
 ```py
 @dlt.resource(file_format="parquet")
-def generate_rows(nr):
+def generate_var_rows(nr):
     for i in range(nr):
         yield {'id': i, 'example_string': 'abc'}
 ```

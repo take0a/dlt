@@ -48,7 +48,7 @@ requirements.txt
     - `config.toml`: このファイルには、dlt プロジェクトの構成設定が含まれています。
 
 :::note
-パイプラインを本番環境にデプロイする場合、すべての構成をファイルで管理するのは不便な場合があります。この場合、代わりに環境変数を使用してシークレットと構成を保存することをお勧めします。dlt で利用可能な [構成プロバイダー](../general-usage/credentials/setup#available-config-providers) の詳細をご覧ください。
+パイプラインを本番環境にデプロイする場合、すべての構成をファイルで管理するのは不便な場合があります。この場合、代わりに環境変数を使用してシークレットと構成を保存することをお勧めします。dlt で利用可能な [構成プロバイダー](../general-usage/credentials/setup#choose-where-to-store-configuration) の詳細をご覧ください。
 :::
 
 ## 2. パイプラインの作成
@@ -167,7 +167,17 @@ files = filesystem(
 ご覧のとおり、`filesystem` のすべてのパラメータはコード内で直接指定することも、構成から取得することもできます。
 
 :::tip
-dlt は、ID ベースやデフォルトの認証情報など、クラウド ストレージを使用した認証のさまざまな方法をサポートしています。パイプラインに認証情報を追加する方法の詳細については、[構成とシークレットのセクション](../general-usage/credentials/complex_types#aws-credentials) を参照してください。
+`dlt` は、ID ベースやデフォルトの認証情報など、クラウド ストレージを使用した認証のさまざまな方法をサポートしています。パイプラインに認証情報を追加する方法の詳細については、[構成とシークレットのセクション](../general-usage/credentials/complex_types#aws-credentials) を参照してください。
+:::
+
+:::tip
+`filesystem` source uses the same configuration layout as filesystem destination so you can refer to:
+
+1. [bucket access setup and examples](../dlt-ecosystem/destinations/filesystem.md#set-up-the-destination-and-credentials)
+2. [additional fsspec and client options](../dlt-ecosystem/destinations/filesystem.md#adding-additional-configuration) like ssl setup.
+
+Just remember that examples are prepared for destination configuration. Replace **destination** category section with **sources**.
+
 :::
 
 ## 4. パイプラインの実行
@@ -338,7 +348,7 @@ from dlt.common.typing import TDataItems
 from dlt.sources.filesystem import filesystem
 
 # Define a standalone transformer to read data from a JSON file.
-@dlt.transformer(standalone=True)
+@dlt.transformer
 def read_json(items: Iterator[FileItemDict]) -> Iterator[TDataItems]:
     for file_obj in items:
         with file_obj.open() as f:

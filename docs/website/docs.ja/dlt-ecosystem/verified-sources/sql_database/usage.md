@@ -197,4 +197,4 @@ Airflowで実行する場合:
 
 1. `dlt` [Airflow Helper](../../../walkthroughs/deploy-a-pipeline/deploy-with-airflow-composer.md#2-modify-dag-file) を使用して、`sql_database` ソースからタスクを作成します。(テーブル抽出を並列で実行する場合は、ソースから DAG への変換時に `decompose = "parallel-isolated"` を設定することで実行できます。コード例については、[こちら](../../../walkthroughs/deploy-a-pipeline/deploy-with-airflow-composer#2-modify-dag-file) を参照してください。)
 2. `defer_table_reflect` 引数を使用して実行時にテーブルを反映します。
-3. [Airflow intervals](../../../general-usage/incremental-loading.md#using-airflow-schedule-for-backfill-and-incremental-loading) を使用してデータをロードするには、`allow_external_schedulers` を設定します。
+3. [Airflow intervals](../../../general-usage/incremental/cursor.md#using-airflow-schedule-for-backfill-and-incremental-loading) を使用してデータをロードするには、`allow_external_schedulers` を設定します。

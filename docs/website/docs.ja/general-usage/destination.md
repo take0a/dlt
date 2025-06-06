@@ -44,7 +44,7 @@ keywords: [destination, load data, configure destination, name destination]
 
 資格情報やその他の必要なパラメータを、TOML ファイル、環境変数、またはその他の [設定プロバイダ](credentials/setup) を介して構成に渡すことをお勧めします。これにより、たとえば、デプロイ後に本番環境への切り替えが簡単になります。
 
-以下のように[デフォルトの設定セクションレイアウト](credentials/setup#structure-of-secrets.toml-and-config.toml)を使用することをお勧めします。:
+以下のように[デフォルトの設定セクションレイアウト](credentials/advanced#organize-configuration-and-secrets-with-sections)を使用することをお勧めします。:
 <!--@@@DLT_SNIPPET ./snippets/destination-toml.toml::default_layout-->
 
 または環境変数を介して:

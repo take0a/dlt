@@ -97,7 +97,7 @@ sasl_password="example_secret"
 この関数は指定されたKafkaトピックからメッセージを取得します.
 
 ```py
-@dlt.resource(name="kafka_messages", table_name=lambda msg: msg["_kafka"]["topic"], standalone=True)
+@dlt.resource(name="kafka_messages", table_name=lambda msg: msg["_kafka"]["topic"])
 def kafka_consumer(
     topics: Union[str, List[str]],
     credentials: Union[KafkaCredentials, Consumer] = dlt.secrets.value,

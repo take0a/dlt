@@ -54,3 +54,6 @@ Microsoft SQL Server の変更追跡のサポートについては、[dlt+](../.
 [DuckDB](https://duckdb.org/) など、非公式の方言が多数存在することに注意してください。
 :::
 
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

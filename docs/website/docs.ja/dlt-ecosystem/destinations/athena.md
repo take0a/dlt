@@ -92,11 +92,48 @@ Athenaワークグループは次のように提供できます。:
 athena_work_group="my_workgroup"
 ```
 
-You can force all tables to be in iceberg format:
+You can force all tables to be in iceberg format and control Iceberg tables layout in the bucket:
 ```toml
 [destination.athena]
-force_iceberg = true
-`
+force_iceberg=true
+table_location_layout="{dataset_name}/{table_name}"
+```
+where `dataset_name` and `table_name` will be replaced by actual names.
+
+:::tip
+Use random Iceberg table location when encountering conflicts
+In case your table is created in location that already exists, you can add random location tag with:
+
+```toml
+[destination.athena]
+table_location_layout="{dataset_name}/{table_name}_{location_tag}"
+```
+We observed the following error message:
+**com.amazonaws.services.s3.model.AmazonS3Exception: The specified key does not exist**
+when table with given name was deleted and re-created - but not always. Adding location tag
+prevents this error from showing up.
+:::
+
+You can change the default catalog name
+```toml
+[destination.athena]
+aws_data_catalog="awsdatacatalog"
+```
+
+and provide any other `PyAthena` connection setting
+```toml
+[destination.athena.conn_properties]
+poll_interval=2
+```
+
+When `dlt` executes SQL queries that look up table names in the `INFORMATION_SCHEMA`
+it can be more effective to filter the tables in the code instead of doing it in the query.
+The threshold for this is usually 1000 tables, but we learned that for Athena a better default is
+90. You can change this threshold with the following setting:
+```toml
+[destination.athena]
+info_tables_query_threshold=90
+```
 
 ## 書き込み処理
 

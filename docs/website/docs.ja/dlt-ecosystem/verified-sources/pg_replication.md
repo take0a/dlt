@@ -150,7 +150,6 @@ RDS で Postgres ユーザーを設定するには、次の手順に従います
 ```py
 @dlt.resource(
     name=lambda args: args["slot_name"] + "_" + args["pub_name"],
-    standalone=True,
 )
 def replication_resource(
     slot_name: str,

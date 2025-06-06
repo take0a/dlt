@@ -1,61 +1,36 @@
 ---
-title: Accessing loaded data in Python
-description: Conveniently accessing the data loaded to any destination in python
+title: Access datasets in Python
+description: Conveniently access the data loaded to any destination in Python
 keywords: [destination, schema, data, access, retrieval]
 ---
 
 # Python でロードされたデータにアクセスする
 
-このガイドでは、`dlt` Python ライブラリを使用して、出力先にロードされたデータにアクセスし、操作する方法について説明します。パイプラインを実行してデータをロードした後、`ReadableDataset` クラスと `ReadableRelation` クラスを使用して、プログラムでデータを操作できます。
-
-**注:** `ReadableDataset` オブジェクトと `ReadableRelation` オブジェクトは**遅延読み込み** です。これらのオブジェクトは、DataFrame へのデータのフェッチやデータの反復処理など、必要なアクションが実行された場合にのみ、データのクエリと取得を行います。つまり、これらのオブジェクトを作成しただけではデータがメモリにロードされず、コードの効率が向上します。
+This guide explains how to access and manipulate data that has been loaded into your destination using the `dlt` Python library. After running your pipelines and loading data, you can use the `pipeline.dataset()` and data frame expressions, Ibis or SQL to query the data and read it as records, Pandas frames or Arrow tables.
 
 ## クイックスタートの例
 
 パイプラインからデータを取得し、Pandas DataFrame または PyArrow テーブルにロードする方法の完全な例を以下に示します。
 
-```py
-# Assuming you have a Pipeline object named 'pipeline'
-# and you have loaded data to a table named 'items' in the destination
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::quick_start_example-->
 
-# Step 1: Get the readable dataset from the pipeline
-dataset = pipeline.dataset()
-
-# Step 2: Access a table as a ReadableRelation
-items_relation = dataset.items  # Or dataset["items"]
-
-# Step 3: Fetch the entire table as a Pandas DataFrame
-df = items_relation.df()
-
-# Alternatively, fetch as a PyArrow Table
-arrow_table = items_relation.arrow()
-```
 
 ## はじめに
 
 `Pipeline` オブジェクト（ここでは `pipeline` と呼びます）があると仮定すると、`ReadableDataset` を取得し、`ReadableRelation` オブジェクトとしてテーブルにアクセスできます。
 
-### `ReadableDataset` にアクセスする
+**Note:** The `ReadableDataset` and `ReadableRelation` objects are **lazy-loading**. They will only query and retrieve data when you perform an action that requires it, such as fetching data into a DataFrame or iterating over the data. This means that simply creating these objects does not load data into memory, making your code more efficient.
 
-```py
-# Get the readable dataset from the pipeline
-dataset = pipeline.dataset()
 
-# print the row counts of all tables in the destination as dataframe
-print(dataset.row_counts().df())
-```
+### Access the dataset
 
-### `ReadableRelation` としてテーブルにアクセスする
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::getting_started-->
+
+### データセットとしてテーブルにアクセスする
 
 データセット内のテーブルには、属性アクセスまたはアイテムアクセスのいずれかを使用してアクセスできます。
 
-```py
-# Using attribute access
-items_relation = dataset.items
-
-# Using item access
-items_relation = dataset["items"]
-```
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::accessing_tables-->
 
 ## データの読み取り
 
@@ -69,21 +44,15 @@ items_relation = dataset["items"]
 
 #### As a Pandas DataFrame
 
-```py
-df = items_relation.df()
-```
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::fetch_entire_table_df-->
 
 #### As a PyArrow Table
 
-```py
-arrow_table = items_relation.arrow()
-```
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::fetch_entire_table_arrow-->
 
 #### As a list of Python tuples
 
-```py
-items_list = items_relation.fetchall()
-```
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::fetch_entire_table_fetchall-->
 
 ## 遅延読み込み動作
 
@@ -95,41 +64,29 @@ items_list = items_relation.fetchall()
 
 ### Iterate as Pandas DataFrames
 
-```py
-for df_chunk in items_relation.iter_df(chunk_size=500):
-    # Process each DataFrame chunk
-    pass
-```
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::iterating_df_chunks-->
 
 ### Iterate as PyArrow Tables
 
-```py
-for arrow_chunk in items_relation.iter_arrow(chunk_size=500):
-    # Process each PyArrow chunk
-    pass
-```
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::iterating_arrow_chunks-->
 
 ### Iterate as lists of tuples
 
-```py
-for items_chunk in items_relation.iter_fetch(chunk_size=500):
-    # Process each chunk of tuples
-    pass
-```
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::iterating_fetch_chunks-->
 
 ReadableRelation で利用可能なメソッドは、SQL クライアントから返されるカーソルで利用可能なメソッドに対応しています。詳細については、[SQL クライアント](./sql-client.md#supported-methods-on-the-cursor) ガイドを参照してください。
+
+## Connection Handling
+
+For every call that actually fetches data from the destination, such as `df()`, `arrow()`, `fetchall()` etc., the dataset will open a connection and close it after it has been retrieved or the iterator is completed. You can keep the connection open for multiple requests with the dataset context manager:
+
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::context_manager-->
 
 ## 特別なクエリ
 
 `row_counts` メソッドを使用すると、出力先にあるすべてのテーブルの行数を DataFrame として取得できます。
 
-```py
-# print the row counts of all tables in the destination as dataframe
-print(dataset.row_counts().df())
-
-# or as tuples
-print(dataset.row_counts().fetchall())
-```
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::row_counts-->
 
 ## クエリの変更
 
@@ -144,32 +101,17 @@ arrow_table = items_relation.limit(50).arrow()
 
 #### `head()` を使用して最初の 5 つのレコードを取得する
 
-```py
-df = items_relation.head().df()
-```
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::head_records-->
 
 ### Select specific columns
 
-```py
-# Select only 'col1' and 'col2' columns
-items_list = items_relation.select("col1", "col2").fetchall()
-
-# Alternate notation with brackets
-items_list = items_relation[["col1", "col2"]].fetchall()
-
-# Only get one column
-items_list = items_relation["col1"].fetchall()
-
-```
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::select_columns-->
 
 ### チェーン操作
 
 `select`、`limit`、その他のメソッドを組み合わせることができます。
 
-```py
-# Select columns and limit the number of records
-arrow_table = items_relation.select("col1", "col2").limit(50).arrow()
-```
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::chain_operations-->
 
 ## ibis 式を使ったクエリの変更
 
@@ -181,47 +123,7 @@ pip install ibis-framework
 
 次に、dlt は内部的に `ibis.UnboundTable` を `ReadableIbisRelation` オブジェクトでラップし、ibis 式を使用してリレーションのクエリを変更できるようにします:
 
-```py
-# now that ibis is installed, we can get a dataset with ibis relations
-dataset = pipeline.dataset()
-
-# get two relations
-items_relation = dataset["items"]
-order_relation = dataset["orders"]
-
-# join them using an ibis expression
-joined_relation = items_relation.join(order_relation, items_relation.id == order_relation.item_id)
-
-# now we can use the ibis expression to filter the data
-filtered_relation = joined_relation.filter(order_relation.status == "completed")
-
-# we can inspect the query that will be used to read the data
-print(filtered_relation.query)
-
-# and finally fetch the data as a pandas dataframe, the same way we would do with a normal relation
-df = filtered_relation.df()
-
-# a few more examples
-
-# filter for rows where the id is in the list of ids
-items_relation.filter(items_relation.id.isin([1, 2, 3])).df()
-
-# limit and offset
-items_relation.limit(10, offset=5).arrow()
-
-# mutate columns by adding a new colums that always is 10 times the value of the id column
-items_relation.mutate(new_id=items_relation.id * 10).df()
-
-# sort asc and desc
-import ibis
-items_relation.order_by(ibis.desc("id"), ibis.asc("price")).limit(10)
-
-# group by and aggregate
-items_relation.group_by("item_group").having(items_table.count() >= 1000).aggregate(sum_id=items_table.id.sum()).df()
-
-# subqueries
-items_relation.filter(items_table.category.isin(beverage_categories.name)).df()
-```
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::ibis_expressions-->
 
 使用可能な式の詳細については、[ibis for sql users](https://ibis-project.org/tutorials/ibis-for-sql-users) ページを参照してください。
 
@@ -231,41 +133,33 @@ items_relation.filter(items_table.category.isin(beverage_categories.name)).df()
 
 ## サポートされている出力先
 
-`dlt` でサポートされているすべての SQL およびファイルシステムの出力先は、このデータアクセスインターフェースを利用できます。ファイルシステムの出力先の場合、`dlt` は [内部的に **DuckDB** を使用](./sql-client.md#the-filesystem-sql-client)、Parquet または JSONL ファイルから動的にビューを作成します。これにより、SQL データベースと同じインターフェースを使用して、ファイルに保存されたデータをクエリできます。この方法でバケットやファイルシステム内のデータに頻繁にアクセスする場合は、JSONL ではなく Parquet としてデータをロードすることをお勧めします。**DuckDB** は、クエリの実行に実際に必要なデータ部分のみをロードできるためです。
+All SQL and filesystem destinations supported by `dlt` can utilize this data access interface.
+
+### Reading data from filesystem
+For filesystem destinations, `dlt` [uses **DuckDB** under the hood](./sql-client.md#the-filesystem-sql-client) to create views on iceberg and delta tables or from Parquet, JSONL and csv files. This allows you to query data stored in files using the same interface as you would with SQL databases. If you plan on accessing data in buckets or the filesystem a lot this way, it is advised to load data into delta or iceberg tables, as **DuckDB** is able to only load the parts of the data actually needed for the query to work.
+
+:::tip
+By default `dlt` will not autorefresh views created on iceberg tables and files when new data is loaded. This prevents wasting resources on
+file globbing and reloading iceberg metadata for every query. You can [change this behavior](sql-client.md#control-data-freshness) with `always_refresh_views` flag.
+
+Note: `delta` tables are by default on autorefresh which is implemented by delta core and seems to be pretty efficient.
+:::
 
 ## Examples
 
 ### 1つのレコードをタプルとして取得する
 
-```py
-record = items_relation.fetchone()
-```
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::fetch_one-->
 
 ### 多数のレコードをタプルとして取得する
 
-```py
-records = items_relation.fetchmany(chunk_size=10)
-```
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::fetch_many-->
 
 ### 制限と列選択を使用してデータを反復処理します
 
 **注:** ファイルシステムテーブルを反復処理する場合、基盤となる DuckDB は、テーブルが基にしている Parquet ファイルのサイズに応じて異なるチャンクサイズを返すことがあります。
 
-```py
-
-# Dataframes
-for df_chunk in items_relation.select("col1", "col2").limit(100).iter_df(chunk_size=20):
-    ...
-
-# Arrow tables
-for arrow_table in items_relation.select("col1", "col2").limit(100).iter_arrow(chunk_size=20):
-    ...
-
-# Python tuples
-for records in items_relation.select("col1", "col2").limit(100).iter_fetch(chunk_size=20):
-    # Process each modified DataFrame chunk
-    ...
-```
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::iterating_with_limit_and_select-->
 
 ## 高度な使用法
 
@@ -273,11 +167,7 @@ for records in items_relation.select("col1", "col2").limit(100).iter_fetch(chunk
 
 データセットに対してカスタム SQL クエリを直接使用して `ReadableRelation` を作成できます。
 
-```py
-# Join 'items' and 'other_items' tables
-custom_relation = dataset("SELECT * FROM items JOIN other_items ON items.id = other_items.id")
-arrow_table = custom_relation.arrow()
-```
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::custom_sql-->
 
 :::note
 `dataset()` でカスタム SQL クエリを使用する場合、`limit` や `select` などのメソッドは機能しません。フィルタリングや列選択は SQL クエリに直接含めてください。
@@ -288,16 +178,7 @@ arrow_table = custom_relation.arrow()
 
 `iter_arrow` メソッドと `iter_df` メソッドは、`ReadableRelation` 全体をチャンク単位で反復処理するジェネレーターであるため、別の（または同じ）`dlt` パイプラインのリソースとして使用できます。
 
-```py
-# Create a readable relation with a limit of 1m rows
-limited_items_relation = dataset.items.limit(1_000_000)
-
-# Create a new pipeline
-other_pipeline = dlt.pipeline(pipeline_name="other_pipeline", destination="duckdb")
-
-# We can now load these 1m rows into this pipeline in 10k chunks
-other_pipeline.run(limited_items_relation.iter_arrow(chunk_size=10_000), table_name="limited_items")
-```
+<!--@@@DLT_SNIPPET ./dataset_snippets/dataset_snippets.py::loading_to_pipeline-->
 
 [Arrow テーブルまたは DataFrame を使用して Python でデータを変換する](../../dlt-ecosystem/transformations/python) の詳細をご覧ください。
 

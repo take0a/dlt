@@ -40,7 +40,7 @@ import Header from '../_source-info-header.md';
     あるいは、接続文字列を使用して認証することもできます:
 
     ```toml
-    [sources.sql_database.credentials]
+    [sources.sql_database]
     credentials="mysql+pymysql://rfamro@mysql-rfam-public.ebi.ac.uk:4497/Rfam"
     ```
 
@@ -70,7 +70,7 @@ import Header from '../_source-info-header.md';
     python sql_database_pipeline.py
     ```
 
-    このコマンドを実行すると、手順 1 で作成したサンプル スクリプト `sql_database_pipeline.py` が実行されます。これを正常に実行するには、ロードするデータベースやテーブルの名前を渡す必要があります。詳細については、[sql_database ソースの構成に関するセクション](./configuration#configuring-the-sql-database-source)を参照してください。
+    このコマンドを実行すると、手順 1 で作成したサンプル スクリプト `sql_database_pipeline.py` が実行されます。これを正常に実行するには、ロードするデータベースやテーブルの名前を渡す必要があります。詳細については、[sql_database ソースの構成に関するセクション](./configuration#select-tables-to-load)を参照してください。
 
 
 6. すべてが期待通りにロードされていることを確認してください

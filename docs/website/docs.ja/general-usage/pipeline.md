@@ -6,7 +6,7 @@ keywords: [pipeline, source, full refresh, dev mode]
 
 # パイプライン
 
-[パイプライン](glossary.md#pipeline)は、Python コードから[宛先](glossary.md#destination)にデータを移動する接続です。パイプラインは、`dlt` [ソース](source.md)または[リソース](resource.md)のほか、ジェネレーター、非同期ジェネレーター、リスト、および任意の反復可能オブジェクトを受け入れます。
+[パイプライン](glossary.md#pipeline)は、Python コードから[宛先](glossary.md#destination)にデータを移動します。パイプラインは、`dlt` [ソース](source.md)または[リソース](resource.md)のほか、ジェネレーター、非同期ジェネレーター、リスト、および任意の反復可能オブジェクトを受け入れます。
 パイプラインが実行されると、すべてのリソースが評価され、データが宛先に読み込まれます。
 
 例:
@@ -38,7 +38,6 @@ print(info)
 - `write_disposition` は、テーブルにデータを書き込む方法を制御します。デフォルトは「append」です。
   - `append` は常にテーブルの末尾に新しいデータを追加します。
   - `replace` は既存のデータを新しいデータに置き換えます。
-  - `skip` はデータの読み込みを防止します。
   - `merge` は、`primary_key` と `merge_key` のヒントに基づいてデータの重複を排除し、マージします。
 - `table_name` は、テーブル名を推測できない場合、つまりリソー​​スやジェネレータ関数の名前から推測できない場合に指定します。
 
@@ -148,7 +147,7 @@ pipeline.run(airtable_emojis().with_resources("📆 Schedule"), refresh="drop_re
 
 ### `drop_data` を使用してテーブルを選択的に切り捨て、リソースの状態をリセットする
 
-`drop_resources` と同じですが、スキーマからテーブルを削除する代わりに、テーブルからデータのみが削除されます (つまり、SQL 宛先では `TRUNCATE <table_name>` によって)。選択したリソースのリソース状態も消去されます。[インクリメンタルリソース](incremental-loading.md#incremental-loading-with-a-cursor-field) の場合、これによりカーソル状態がリセットされ、`initial_value` からデータが完全に再ロードされます。
+`drop_resources` と同じですが、スキーマからテーブルを削除する代わりに、テーブルからデータのみが削除されます (つまり、SQL 宛先では `TRUNCATE <table_name>` によって)。選択したリソースのリソース状態も消去されます。[インクリメンタルリソース](incremental/cursor.md) の場合、これによりカーソル状態がリセットされ、`initial_value` からデータが完全に再ロードされます。
 
 この場合、スキーマは変更されません。
 
@@ -161,7 +160,7 @@ pipeline.run(airtable_emojis().with_resources("📆 Schedule"), refresh="drop_da
 
 上記では、`extract` ステップの前に "📆 Schedule" の増分状態がリセットされ、データが完全に再取得されます。`load` ステップが開始する直前に、"_schedule" が切り捨てられ、新しい (完全な) テーブル データが挿入/コピーされます。
 
-## ローディングの進行状況を表示する
+## ローディングの進行状況を監視する
 
 パイプラインに進行状況モニターを追加できます。通常、その役割は、パイプラインの実行が進行中であることをユーザーに視覚的に確認することです。dltは、すぐに使用できる4つの進行状況モニターをサポートしています:
 

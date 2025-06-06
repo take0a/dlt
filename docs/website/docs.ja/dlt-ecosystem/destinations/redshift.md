@@ -124,6 +124,12 @@ has_case_sensitive_identifiers=true
 
 Redshift は、ファイルのステージング先として s3 をサポートしています。`dlt` は parquet 形式のファイルを s3 にアップロードし、そのデータを直接 db にコピーするように Redshift に要求します。bucket_url と認証情報を使用して s3 バケットを設定する方法については、[S3 ドキュメント](./filesystem.md#aws-s3) を参照してください。`dlt` Redshift ローダーは、特に指定がない限り、s3 に提供された AWS 認証情報を使用して s3 バケットにアクセスします (以下の構成オプションを参照)。parquet ファイルの代わりに、ステージング ファイル形式として jsonl を指定することもできます。これを行うには、パイプラインの `run` コマンドの `loader_file_format` 引数を `jsonl` に設定します。
 
+:::note
+If the S3 bucket is in a different region than your Redshift cluster:
+- You must set `region_name` in `[destination.filesystem.credentials]` in your `config.toml` file to ensure proper access
+- For Parquet files, cross-region COPY operations are not supported by Redshift, so the region setting will be ignored
+:::
+
 ## 識別子名と大文字と小文字の区別
 
 * 最大127文字

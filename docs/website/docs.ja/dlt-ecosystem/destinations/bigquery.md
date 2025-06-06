@@ -231,6 +231,13 @@ BigQuery のパーティション分割の詳細については、[公式ドキ�
 
 * `cluster` - クラスター列を作成します。テーブルごとに複数の列がサポートされており、新しいテーブルが作成される場合のみです。
 
+:::caution
+**Deprecation Notice:**
+Per-column `cluster` hints are deprecated and will be removed in a future release.  
+**To migrate, use the `cluster` argument of the `bigquery_adapter` instead.**  
+See the [example below](#use-an-adapter-to-apply-hints-to-a-resource) for how to specify clustering columns with the adapter.
+:::
+
 ### テーブルと列の識別子
 
 BigQuery はデフォルトで大文字と小文字を区別する識別子を使用しており、`dlt` もこれを前提としています。使用するデータセットに大文字と小文字を区別しない識別子がある場合 (データセットの作成時にそのようなオプションがあります)、大文字と小文字を区別しない [命名規則](../../general-usage/naming-convention.md#case-sensitive-and-insensitive-destinations) を使用するか、識別子の衝突が適切に検出されるように `dlt` にその旨を伝えるようにしてください。
@@ -251,7 +258,7 @@ should_set_case_sensitivity_on_new_dataset=true
 
 ## ステージングサポート
 
-BigQuery は、ファイルのステージング先として GCS をサポートしています。`dlt` は parquet 形式のファイルを GCS にアップロードし、BigQuery にそのデータを直接データベースにコピーするよう要求します。bucket_url と認証情報を使用して GCS バケットを設定する方法については、[Google Storage ファイルシステムのドキュメント](./filesystem.md#google-storage) を参照してください。GCS と Redshift デプロイメントに同じサービス アカウントを使用する場合、BigQuery がバケットから読み取ることができるように追加の認証を提供する必要はありません。
+BigQuery は、ファイルのステージング先として GCS をサポートしています。`dlt` は parquet 形式のファイルを GCS にアップロードし、BigQuery にそのデータを直接データベースにコピーするよう要求します。bucket_url と認証情報を使用して GCS バケットを設定する方法については、[Google Storage ファイルシステムのドキュメント](./filesystem.md#google-storage) を参照してください。GCS と BigQuery デプロイメントに同じサービス アカウントを使用する場合、BigQuery がバケットから読み取ることができるように追加の認証を提供する必要はありません。
 
 parquet ファイルの代わりに、ステージング ファイル形式として jsonl を指定することもできます。そのためには、パイプラインの `run` コマンドの `loader_file_format` 引数を `jsonl` に設定します。
 

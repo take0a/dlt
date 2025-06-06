@@ -1,5 +1,5 @@
 ---
-title: The SQL Client
+title: Access data with dlt sql client
 description: Technical details about the destination sql client
 keywords: [data, dataset, sql]
 ---
@@ -77,8 +77,28 @@ with pipeline.sql_client() as client:
 ファイルシステム SQL クライアントを使用する際に知っておくべきこと、または留意すべき点がいくつかあります:
 
 - 実際にクエリを実行する SQL データベースはメモリ内データベースであるため、変更を伴うクエリを実行しても、フォルダやバケットには保存されません。
-- この SQL クライアントを動作させるには、データを `JSONL` ファイルまたは `Parquet` ファイルとしてロードする必要があります。この場合、`DuckDB` はフォルダまたはバケットからクエリ実行に必要なバイト数のみを読み取ることができるため、最適なパフォーマンスを得るには `Parquet` ファイルを使用する必要があります。
+- You must have loaded your data as `JSONL`, `Parquet`, `CSV` files or `delta`/`iceberg` tables for this SQL client to work. For optimal performance, you should use `Parquet` files or open table formats, as `DuckDB` is able to only read the bytes needed to execute your query from a folder or bucket in this case.
 - SQL クライアントでフィルタリング、並べ替え、またはテーブル全体のロードを実行する場合、テーブルが大きい場合は、メモリ内 `DuckDB` インスタンスがバケットまたはフォルダから大量のデータをダウンロードしてクエリを実行する必要があることに注意してください。
 - バケット上のデータにアクセスする場合、`dlt` はバケットに接続できるように、認証情報を `DuckDB` に一時的に保存します。
 - 現時点では、バケットとテーブル形式の組み合わせの一部は完全にサポートされていない可能性があります。
 
+### Control data freshness
+`sqlclient` creates views in which the data is immutable (each next query will access the same data). Such "snapshots" are created by:
+* globbing the table files once - when view is created
+* using the newest iceberg metadata to create view
+
+Updating views may be costly (globbing, re-reading iceberg metadata) so your best option is to create new `sql_client` (or `pipeline.dataset()`) instance
+when you need fresh data. Alternatively you can enable autorefresh mode which will re-create view on each query:
+
+```py
+from dlt.destination import filesystem
+
+pipeline = dlt.pipeline(destination=filesystem(always_refresh_views=True), dataset_name="my_dataset")
+with pipeline.sql_client() as client:
+    with client.execute_query("SELECT * FROM my_table") as cursor:
+        print(cursor.fetchall())
+        # pipeline.run() here and get updated data
+        print(cursor.fetchall())
+```
+
+Note: `delta` tables are by default on autorefresh which is implemented by delta core and seems to be pretty efficient.

@@ -230,7 +230,7 @@ dlt pipeline -v github_issues_incremental info
 もっと詳しく知る:
 
 - [リソース](../general-usage/resource)を宣言し、Pythonデコレータを使用して[ソース](../general-usage/source)にグループ化します。
-- [インクリメンタルローディングの「最後の値」を設定します。](../general-usage/incremental-loading#incremental_loading-with-last-value)
+- [インクリメンタルローディングの「最後の値」を設定します。](../general-usage/incremental/cursor.md)
 - [ロード後にパイプラインを検査します。](../walkthroughs/run-a-pipeline#4-inspect-a-load-process)
 - [`dlt` コマンドラインインターフェース。](../reference/command-line-interface)
 
@@ -249,7 +249,7 @@ dlt pipeline -v github_issues_incremental info
 
 [GitHub API](https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28#list-repository-issues) の **since** パラメータと `updated_at.last_value` を使用して、渡した日付より**後**に更新された問題のみを返すように GitHub に指示する方法に注意してください。`updated_at.last_value` は、前回の実行からの最後の `updated_at` 値を保持します。
 
-[マージ書き込み処理の詳細](../general-usage/incremental-loading#merge-incremental_loading)を参照してください。
+[マージ書き込み処理の詳細](../general-usage/merge-loading.md)を参照してください。
 
 ## ページネーションヘルパーの使用
 
@@ -580,8 +580,8 @@ repo_name = "dlt-hub/dlt"
 
 1. これまではパイプラインをローカルで実行していました。[パイプラインをクラウドにデプロイして実行する](../walkthroughs/deploy-a-pipeline/)方法を学習します。
 2. [dltの使用](../general-usage)セクションを読んで、dltの仕組みについてさらに詳しく学びましょう:
-    - [インクリメンタルローディングで「最後の値」を設定する](../general-usage/incremental-loading#incremental_loading-with-last-value).
-    - データ読み込み戦略について学習します: [追加、置換、およびマージ](../general-usage/incremental-loading)。
+    - [インクリメンタルローディングで「最後の値」を設定する](../general-usage/incremental/cursor.md).
+    - Learn about data loading strategies: append, [replace](../general-usage/full-loading.md), and [merge](../general-usage/merge-loading.md).
     - [トランスフォーマーをリソースに接続](../general-usage/resource#feeding-data-from-one-resource-into-another)して、追加のデータを読み込んだり、データを拡充したりします。
     - [データ スキーマをカスタマイズします。主キーとマージ キーを設定し、列の NULL 値許容性を定義し、データ型を指定します](../general-usage/resource#define-schema)。
     - [データからリソースを動的に作成します](../general-usage/source#create-resources-dynamically)。

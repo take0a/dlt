@@ -1,19 +1,14 @@
 ---
-title: Accessing loaded data
-description: How to access your loaded datasets
+title: Access loaded data
+description: How to access your loaded data
 keywords: [datasets, data, access]
 ---
 import DocCardList from '@theme/DocCardList';
 
-# ロードされたデータへのアクセス
+# Access loaded data
 
-パイプラインの実行が1回以上成功すると、ロードされたデータを様々な方法で確認したりアクセスしたりできます。
+You can access data that got loaded with `dlt.pipeline` in many different ways. When using Python, you
+have all popular options available: data frames, SQL queries or Ibis expressions. 
 
-* シンプルな [`streamlit` アプリ](./streamlit.md) を使用すると、Web アプリでローカルにデータを表示できます。
-* [Python インターフェース](./dataset.md) を使用すると、シンプルなデータセットオブジェクトまたは SQL インターフェースを使用して、Python タプル、`arrow` テーブル、または `pandas` データフレームとして Python でデータにアクセスできます。`DuckDB` を介してファイルシステムの宛先で SQL コマンドを実行したり、任意のテーブルから別のパイプラインにデータを転送したりすることもできます。
-* [`ibis` インターフェース](./ibis-backend.md) を使用すると、ロードされたデータを強力な [ibis-framework](https://ibis-project.org/) ライブラリに渡すことができます。
-* 最後に、[データの品質を監視し、確保するための](./data-quality-dashboard.md) アドバイスをいくつか紹介します。
-
-# Learn more
 <DocCardList />
 

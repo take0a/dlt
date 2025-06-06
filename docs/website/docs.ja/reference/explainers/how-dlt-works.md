@@ -44,7 +44,7 @@ pipeline.run(
 pipeline.extract(data)
 ```
 
-抽出フェーズでは、dlt は[ソース](../../dlt-ecosystem/verified-sources)からハードドライブの新しい [ロードパッケージ](../../general-usage/destination-tables#load-packages-and-load-ids)にデータを完全に抽出します。このパッケージには一意の ID が割り当てられ、ソースから受信した生データが含まれます。さらに、[スキーマヒントを提供](../../general-usage/resource#define-schema)して、一部の列のデータ型を定義したり、主キーや一意のインデックスを追加したりすることもできます。このフェーズは、[インクリメンタルカーソルフィールド](../../general-usage/resource#sample-from-large-data)を使用して 1 回の実行で抽出される項目の数を[制限](../../general-usage/resource#sample-from-large-data)して、[並列化](../../reference/performance#extract)でパフォーマンスを調整することでも制御できます。また、フィルターとマップを適用して個人データを[難読化](../../general-usage/customising-pipelines/pseudonymizing_columns)または[削除](../../general-usage/customising-pipelines/removing_columns)したり、[トランスフォーマー](../../examples/transformers)を使用して派生データを作成したりすることもできます。
+抽出フェーズでは、dlt は[ソース](../../dlt-ecosystem/verified-sources)からハードドライブの新しい [ロードパッケージ](../../general-usage/destination-tables#load-packages-and-load-ids)にデータを完全に抽出します。このパッケージには一意の ID が割り当てられ、ソースから受信した生データが含まれます。さらに、[スキーマヒントを提供](../../general-usage/resource#define-schema)して、一部の列のデータ型を定義したり、主キーや一意のインデックスを追加したりすることもできます。このフェーズは、[インクリメンタルカーソルフィールド](../../general-usage/incremental/cursor.md))を使用して 1 回の実行で抽出される項目の数を[制限](../../general-usage/resource#sample-from-large-data)して、[並列化](../../reference/performance#extract)でパフォーマンスを調整することでも制御できます。また、フィルターとマップを適用して個人データを[難読化](../../general-usage/customising-pipelines/pseudonymizing_columns)または[削除](../../general-usage/customising-pipelines/removing_columns)したり、[トランスフォーマー](../../examples/transformers)を使用して派生データを作成したりすることもできます。
 
 ### 正規化
 

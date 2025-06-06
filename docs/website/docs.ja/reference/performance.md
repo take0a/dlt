@@ -155,7 +155,7 @@ DLT_USE_JSON=simplejson
 ### CPUとメモリの使用状況の監視
 
 `psutil` パッケージがインストールされていることを確認してください（Airflow はデフォルトでインストールします）。
-その後、`config.toml` で [progress](../general-usage/pipeline.md#display-the-loading-progress) を `log` に設定することで、定期的に統計情報をダンプできます。
+その後、`config.toml` で [progress](../general-usage/pipeline.md#monitor-the-loading-progress) を `log` に設定することで、定期的に統計情報をダンプできます。
 
 ```toml
 progress="log"
