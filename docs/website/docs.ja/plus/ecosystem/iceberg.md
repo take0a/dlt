@@ -6,45 +6,52 @@ keywords: [Iceberg, pyiceberg]
 
 # Iceberg
 
-Apache Iceberg is an open table format designed for high-performance analytics on large datasets. It supports ACID transactions, schema evolution, and time travel.
+Apache Iceberg は、大規模データセットの高性能分析向けに設計されたオープンテーブル形式です。
+ACID トランザクション、スキーマ進化、タイムトラベルをサポートしています。
 
-The Iceberg destination in dlt allows you to load data into Iceberg tables using the [pyiceberg](https://py.iceberg.apache.org/) library. It supports multiple catalog types and both local and cloud storage backends.
+dlt の Iceberg 出力先を使用すると、[pyiceberg](https://py.iceberg.apache.org/) ライブラリを使用して Iceberg テーブルにデータをロードできます。
+複数のカタログタイプと、ローカルおよびクラウドストレージバックエンドの両方をサポートしています。
 
-## Features
+## 機能
 
-* Compatible with SQL and REST catalogs (Lakekeeper, Polaris)
-* Automatic schema evolution and table creation
-* All write dispositions supported
-* Works with local filesystems and cloud storage (S3, Azure, GCS)
-* Exposes data via DuckDB views using `pipeline.dataset()`
-* Supports partitioning
+* SQLおよびRESTカタログ（Lakekeeper、Polaris）と互換性があります
+* 自動スキーマ進化とテーブル作成
+* あらゆる書き込み処理をサポート
+* ローカルファイルシステムとクラウドストレージ（S3、Azure、GCS）で動作します
+* `pipeline.dataset()` を使用してDuckDBビュー経由でデータを公開
+* パーティショニングをサポート
 
-##  Prerequisites
-Make sure you have installed the necessary dependencies:
+##  前提条件
+
+必要な依存関係がインストールされていることを確認してください。
+
 ```sh
 pip install dlt[filesystem,pyiceberg]>=1.9.1
 pip install dlt-plus>=0.9.1
 ```
 
-## Configuration
+## 構成
 
-### Overview
+### 概要
 
-To configure Iceberg destination you need to choose and configure the catalog. The role of iceberg catalog is to:
+Iceberg の宛先を設定するには、カタログを選択して設定する必要があります。
+Iceberg カタログの役割は次のとおりです。
 
-* store metadata and coordinate transactions (required)
-* generate and hand credentials to pyiceberg client (credentials vending)
-* generate and hand locations for newly generated tables (rest catalogs)
+* メタデータを保存し、トランザクションを調整する（必須）
+* 認証情報を生成し、pyiceberg クライアントに渡す（認証情報ベンダー）
+* 新しく生成されたテーブルの場所を生成し、渡す（REST カタログ）
 
-Currently, the Iceberg destination supports two catalog types:
-* SQL-based catalog. Ideal for local development; stores metadata in SQLite or PostgreSQL
-* REST catalog. Used in production with systems like Lakekeeper or Polaris
+現在、Iceberg の宛先は 2 種類のカタログをサポートしています。
+* SQL ベースのカタログ。ローカル開発に最適で、メタデータを SQLite または PostgreSQL に保存します。
+* REST カタログ。Lakekeeper や Polaris などのシステムで本番環境で使用されます。
 
-### SQL catalog
+### SQL カタログ
 
-The SQL catalog is ideal for development and testing. It does not provide credential or location vending, so these must be configured manually. It supports local storage paths, such as a file-based SQLite database, and is generally used for working with local filesystems.
+SQL カタログは開発とテストに最適です。
+認証情報や位置情報の自動提供は提供されないため、手動で設定する必要があります。
+ファイルベースの SQLite データベースなどのローカルストレージパスをサポートしており、通常はローカルファイルシステムの操作に使用されます。
 
-To configure a SQL catalog, provide the following parameters:
+SQL カタログを設定するには、次のパラメータを指定します。
 
 <Tabs
   groupId="filesystem-type"
@@ -117,31 +124,36 @@ export DESTINATION__ICEBERG__CAPABILITIES__TABLE_LOCATION_LAYOUT={dataset_name}/
 
 </Tabs>
 
-* `catalog_type=sql` - this indicates, that you will use SQL-based catalog.
-* `credentials=dialect+database_type://username:password@server:port/database_name` -  the connection string for your catalog database.
-This can be any SQLAlchemy-compatible database such as SQLite or PostgreSQL. For local development, a simple SQLite file like `sqlite:///catalog.db` works well. dlt will create it automatically if it doesn't exist.
-* `filesystem.bucket_url` - the physical location where Iceberg table data is stored.
-This can be a local directory or any cloud storage supported by the [filesystem destination](../../dlt-ecosystem/destinations/filesystem.md). If you’re using cloud storage, be sure to include the appropriate credentials as explained in the
-[credentials setup guide](../../dlt-ecosystem/destinations/filesystem.md#set-up-the-destination-and-credentials). For local filesystems, no additional credentials are needed.
-* `capabilities.register_new_tables=true` - enables automatic registration of tables found in storage but missing in the catalog.
-* `capabilities.table_location_layout` - controls the directory structure for Iceberg table files.
-It supports two modes:
-  * absolute - you provide a full URI that matches the catalog’s warehouse path, optionally including deeper subpaths.
-  * relative - a path that’s appended to the catalog’s warehouse root. This is especially useful with catalogs like Lakekeeper.
+* `catalog_type=sql` - これは、SQLベースのカタログを使用することを示します。
+* `credentials=dialect+database_type://username:password@server:port/database_name` - カタログデータベースへの接続文字列。
+SQLiteやPostgreSQLなど、SQLAlchemy互換のデータベースであればどれでも構いません。
+ローカル開発の場合は、`sqlite:///catalog.db`のようなシンプルなSQLiteファイルで十分です。
+もし存在しない場合は、dltが自動的に作成します。
+* `filesystem.bucket_url` - Icebergテーブルデータが保存される物理的な場所。
+これは、ローカルディレクトリ、または[ファイルシステムの保存先](../../dlt-ecosystem/destinations/filesystem.md)でサポートされているクラウドストレージであればどれでも構いません。
+クラウドストレージを使用している場合は、[認証情報設定ガイド](../../dlt-ecosystem/destinations/filesystem.md#set-up-the-destination-and-credentials) に記載されている適切な認証情報を必ず含めてください。
+ローカルファイルシステムの場合、追加の認証情報は必要ありません。
+* `capabilities.register_new_tables=true` - ストレージには存在するがカタログには存在しないテーブルの自動登録を有効にします。
+* `capabilities.table_location_layout` - Iceberg テーブルファイルのディレクトリ構造を制御します。
+次の 2 つのモードをサポートしています。
+  * 絶対 - カタログのウェアハウスパスに一致する完全な URI を指定します。オプションでより深いサブパスを含めることもできます。
+  * 相対 - カタログのウェアハウスルートに追加されるパス。これは、Lakekeeper などのカタログで特に便利です。
 
-The SQL catalog stores one table of the following schema:
+SQL カタログには、次のスキーマの 1 つのテーブルが格納されます:
 
 | catalog_name | table_namespace     | table_name  | metadata_location                                 | previous_metadata_location                                                          |
 |--------------|---------------------|-------------|---------------------------------------------------|---------------------------------------------------------------------------------------|
 | default      | jaffle_shop_dataset | orders | path/to/files                                     | path/to/files |
 | default      | jaffle_shop_dataset | _dlt_loads  | path/to/files  | path/to/files |
 
-### Lakekeeper catalog
+### Lakekeeper カタログ
 
-[Lakekeeper](https://docs.lakekeeper.io/) is an open-source, production-grade Iceberg catalog. It’s easy to set up, plays well with any cloud storage, and lets you build real
-data platforms without needing to set up heavy-duty infrastructure. Lakeleeper also supports vended credentials, credential vending, removing the need to pass long-lived secrets directly to dlt.
+[Lakekeeper](https://docs.lakekeeper.io/) は、オープンソースで本番環境レベルの Iceberg カタログです。
+セットアップが簡単で、あらゆるクラウドストレージと連携し、高負荷なインフラストラクチャを構築することなく、本格的なデータプラットフォームを構築できます。
+Lakeleeper は、認証情報のベンダー化（クレデンシャルベンダー）もサポートしているため、長期間有効なシークレットを DLT に直接渡す必要がなくなります。
 
-To configure Lakekeeper, you need to specify both catalog and storage parameters. The catalog handles metadata and credential vending, while the `bucket_url` must align with the warehouse configured in Lakekeeper.
+Lakekeeper を構成するには、カタログとストレージの両方のパラメータを指定する必要があります。
+カタログはメタデータと認証情報のベンダー化を処理し、`bucket_url` は Lakekeeper で構成されたウェアハウスと一致する必要があります。
 
 <Tabs
   groupId="filesystem-type"
@@ -215,30 +227,32 @@ export DESTINATION__ICEBERG__CAPABILITIES__TABLE_LOCATION_LAYOUT=lakekeeper-ware
 
 </Tabs>
 
-* `catalog_type=rest` - specifies that you're using a REST-based catalog implementation.
-* `credentials.credential` - your Lakekeeper key or token used to authenticate with the catalog.
-* `credentials.uri` - the URL of your Lakekeeper catalog endpoint.
-* `credentials.warehouse` - the name of the warehouse configured in Lakekeeper, which defines the root location for all data tables.
-* `credentials.properties.scope=lakekeeper` - the scope required for authentication.
-* `credentials.properties.oauth2-server-uri` -- he URL of your OAuth2 token endpoint used for Lakekeeper authentication.
-* `filesystem.bucket_url` - the physical storage location for Iceberg table files. This can be any supported cloud storage backend listed in the [filesystem destination](../../dlt-ecosystem/destinations/filesystem.md).
+* `catalog_type=rest` - REST ベースのカタログ実装を使用していることを指定します。
+* `credentials.credential` - カタログ認証に使用する Lakekeeper キーまたはトークン。
+* `credentials.uri` - Lakekeeper カタログエンドポイントの URL。
+* `credentials.warehouse` - Lakekeeper で構成されたウェアハウスの名前。すべてのデータテーブルのルートの場所を定義します。
+* `credentials.properties.scope=lakekeeper` - 認証に必要なスコープ。
+* `credentials.properties.oauth2-server-uri` - Lakekeeper 認証に使用する OAuth2 トークンエンドポイントの URL。
+* `filesystem.bucket_url` - Iceberg テーブルファイルの物理的な保存場所。[ファイルシステムの保存先](../../dlt-ecosystem/destinations/filesystem.md) にリストされている、サポートされている任意のクラウドストレージバックエンドを指定できます。
 
 :::warning
-Currently, the following buckets and credentials combinations are well-tested:
+現在、以下のバケットと認証情報の組み合わせが十分にテストされています。
 
-* s3: STS and signer, s3 express
-* azure: both access key and tenant-id (principal) based auth
-* google storage
+* S3: STS と署名者、S3 Express
+* Azure: アクセスキーとテナント ID（プリンシパル）ベースの認証の両方
+* Google ストレージ
 :::
 
-* `capabilities.table_location_layout` -- controls the directory structure for Iceberg table files.
-It supports two modes:
-  * absolute - you provide a full URI that matches the catalog’s warehouse path, optionally including deeper subpaths.
-  * relative - a path that’s appended to the catalog’s warehouse root. This is especially useful with catalogs like Lakekeeper.
+* `capabilities.table_location_layout` -- Iceberg テーブルファイルのディレクトリ構造を制御します。
+2 つのモードをサポートします。
+  * 絶対パス - カタログのウェアハウスパスに一致する完全な URI を指定します。オプションで、より深いサブパスも含めることができます。
+  * 相対パス - カタログのウェアハウスルートに付加されるパスです。これは、Lakekeeper のようなカタログで特に便利です。
 
 ### Polaris catalog
 
-[Polaris](https://polaris.apache.org/) -- is an open-source, fully-featured catalog for Iceberg. Its configuration is similar to Lakekeeper, with some differences in credential scopes and URI.
+[Polaris](https://polaris.apache.org/) は、Iceberg 用のオープンソースでフル機能のカタログです。
+設定は Lakekeeper に似ていますが、認証情報のスコープと URI に若干の違いがあります。
+
 <Tabs
   groupId="filesystem-type"
   defaultValue="yml"
@@ -308,24 +322,28 @@ export DESTINATION__ICEBERG__CAPABILITIES__TABLE_LOCATION_LAYOUT={dataset_name}/
 
 </Tabs>
 
-For more information, refer to the [Lakekeeper section above](#lakekeeper-catalog).
+詳細については、[上記の Lakekeeper セクション](#lakekeeper-catalog) を参照してください。
 
-## Write dispositions
+## 書き込み処理
 
-All [write dispositions](../../general-usage/incremental-loading.md) are supported.
+すべての[書き込み処理](../../general-usage/incremental-loading.md)がサポートされています。
 
-## Data access
+## データアクセス
 
-The Iceberg destination integrates with `pipeline.dataset()` to give users queryable access to their data.
-When invoked, this creates an in-memory DuckDB database with views pointing to Iceberg tables.
+Iceberg 宛先は `pipeline.dataset()` と統合され、ユーザーがデータにクエリ可能なアクセスを提供します。
+呼び出されると、Iceberg テーブルを参照するビューを含むインメモリ DuckDB データベースが作成されます。
 
-The created views reflect the latest available snapshot. To ensure fresh data during development, use the `always_refresh_views` option. Views are materialized only on demand, based on query usage.
+作成されたビューは、利用可能な最新のスナップショットを反映します。
+開発中に最新のデータを確保するには、`always_refresh_views` オプションを使用してください。
+ビューは、クエリの使用状況に基づいて、必要に応じてのみ生成されます。
 
-## Credentials for data access
-By default, credentials for accessing data are vended by the catalog, and per-table secrets are created automatically. This works best with cloud storage providers like AWS S3 using STS credentials.
-However, due to potential performance limitations with temporary credentials, we recommend defining the filesystem explicitly when working with `dataset()` or dlt+ transformations.
-This approach allows for native DuckDB filesystem access, persistent secrets, and faster data access. For example, when using AWS S3 as the storage location
-for your Iceberg tables, you can provide explicit credentials in the destination configuration in `filesystem` section:
+## データアクセスのための認証情報
+
+デフォルトでは、データにアクセスするための認証情報はカタログによって提供され、テーブルごとにシークレットが自動的に作成されます。
+これは、STS 認証情報を使用する AWS S3 などのクラウドストレージプロバイダーで最も効果的に機能します。
+ただし、一時的な認証情報ではパフォーマンスが制限される可能性があるため、`dataset()` または dlt+ 変換を使用する場合は、ファイルシステムを明示的に定義することをお勧めします。
+このアプローチにより、ネイティブの DuckDB ファイルシステムアクセス、永続的なシークレット、および高速なデータアクセスが可能になります。
+たとえば、Iceberg テーブルの保存場所として AWS S3 を使用する場合、`filesystem` セクションの宛先設定で明示的な認証情報を提供できます。
 
 ```toml
 [destination.iceberg.filesystem.credentials]
@@ -333,17 +351,18 @@ aws_access_key_id = "please set me up!"
 aws_secret_access_key = "please set me up!"
 ```
 
-## Partitioning
+## パーティショニング
 
-Apache Iceberg supports [table partitioning](https://iceberg.apache.org/docs/latest/partitioning/) to optimize query performance.
+Apache Iceberg は、クエリパフォーマンスを最適化するために [テーブルパーティショニング](https://iceberg.apache.org/docs/latest/partitioning/) をサポートしています。
 
-There are two ways to configure partitioning in dlt+ Iceberg destination:
-* Using the [`iceberg_adapter`](#using-the-iceberg_adapter-function) function
-* Using column-level [`partition`](#using-column-level-partition-property) property
+dlt+ Iceberg の宛先でパーティショニングを構成する方法は 2 つあります。
+* [`iceberg_adapter`](#using-the-iceberg_adapter-function) 関数を使用する
+* 列レベルの [`partition`](#using-column-level-partition-property) プロパティを使用する
 
-### Using the `iceberg_adapter` function
+### `iceberg_adapter` 関数の使用
 
-The `iceberg_adapter` function allows you to configure partitioning for your Iceberg tables. This adapter supports various partition transformations that can be applied to your data columns.
+`iceberg_adapter` 関数を使用すると、Iceberg テーブルのパーティション分割を設定できます。
+このアダプタは、データ列に適用できるさまざまなパーティション変換をサポートしています。
 
 
 ```py
@@ -361,12 +380,14 @@ iceberg_adapter(
 )
 ```
 
-### Partition transformations
+### パーティション変換
 
-Iceberg supports several transformation functions for partitioning. Use the `iceberg_partition` helper class to create partition specifications:
+Iceberg は、パーティション分割のためのいくつかの変換関数をサポートしています。
+パーティション仕様を作成するには、`iceberg_partition` ヘルパークラスを使用します。
 
-#### Identity partitioning
-Partition by the exact value of a column (default for string columns when specified by name):
+#### ID パーティショニング
+
+列の正確な値でパーティション分割します（文字列列の場合は、名前で指定した場合のデフォルト）。
 
 ```py
 # These are equivalent:
@@ -374,8 +395,9 @@ iceberg_adapter(resource, partition=["region"])
 iceberg_adapter(resource, partition=[iceberg_partition.identity("region")])
 ```
 
-#### Temporal transformations
-Extract time components from date/datetime columns:
+#### 時間変換
+
+日付/日時列から時間要素を抽出します。
 
 * `iceberg_partition.year(column_name)`: Partition by year
 * `iceberg_partition.month(column_name)`: Partition by month
@@ -396,8 +418,9 @@ iceberg_adapter(
 )
 ```
 
-#### Bucket partitioning
-Distribute data across a fixed number of buckets using a hash function:
+#### バケット分割
+
+ハッシュ関数を使用して、一定数のバケットにデータを分散します:
 
 ```py
 iceberg_adapter(
@@ -406,8 +429,9 @@ iceberg_adapter(
 )
 ```
 
-#### Truncate partitioning
-Partition string values by a fixed prefix length:
+#### 切り捨てパーティション分割
+
+文字列値を固定プレフィックス長でパーティション分割します:
 
 ```py
 iceberg_adapter(
@@ -416,10 +440,11 @@ iceberg_adapter(
 )
 ```
 
-### Advanced partitioning examples
+### 高度なパーティション分割の例
 
-#### Multi-column partitioning
-Combine multiple partition strategies:
+#### 複数列のパーティション分割
+
+複数のパーティション戦略を組み合わせる:
 
 ```py
 import dlt
@@ -457,8 +482,9 @@ pipeline = dlt.pipeline("sales_pipeline", destination="iceberg")
 pipeline.run(sales_data)
 ```
 
-#### Custom partition field names
-Specify custom names for partition fields to make them more descriptive:
+#### カスタムパーティションフィールド名
+
+パーティションフィールドにわかりやすいカスタム名を指定します。
 
 ```py
 import dlt
@@ -477,11 +503,12 @@ iceberg_adapter(
 )
 ```
 
-### Using column-level partition property
+### 列レベルのパーティションプロパティの使用
 
-You can configure identity partitioning directly at the column level using the `"partition": True` property in the column specification. This approach uses identity transformation (partitioning by exact column values).
+列仕様で「"partition": True」プロパティを使用することで、列レベルで直接アイデンティティパーティションを設定できます。
+このアプローチでは、アイデンティティ変換（正確な列値によるパーティション分割）が使用されます。
 
-#### Basic column-level partitioning
+#### 基本的な列レベルのパーティション分割
 
 ```py
 import dlt
@@ -498,9 +525,9 @@ pipeline = dlt.pipeline("sales_pipeline", destination="iceberg")
 pipeline.run(sales_data)
 ```
 
-#### Multiple column partitioning
+#### 複数列のパーティション分割
 
-You can partition on multiple columns by setting `"partition": True` for each column:
+各列に「"partition": True」を設定することで、複数の列でパーティション分割できます。
 
 ```py
 @dlt.resource(columns={
@@ -514,11 +541,13 @@ def multi_partition_data():
     ]
 ```
 
-### Partitioning by dlt load id
+### DLT ロード ID によるパーティション分割
 
-dlt [load id](../../general-usage/destination-tables.md#load-packages-and-load-ids) is a unique identifier for each load package (a batch of data processed by dlt). Each execution of a pipeline generates a unique load id that identifies all data loaded in that specific run. The `_dlt_load_id` is a system column automatically added by `dlt` to each row of data loaded in a table.
+DLT [ロード ID](../../general-usage/destination-tables.md#load-packages-and-load-ids) は、各ロードパッケージ（DLT によって処理されるデータのバッチ）の一意の識別子です。
+パイプラインを実行するたびに、その実行でロードされたすべてのデータを識別する一意のロード ID が生成されます。
+`_dlt_load_id` は、`dlt` によってテーブルにロードされる各データ行に自動的に追加されるシステム列です。
 
-To partition by dlt load id, set the `partition` property to `_dlt_load_id` in the column specification:
+DLT ロード ID でパーティション分割するには、列指定で `partition` プロパティを `_dlt_load_id` に設定します。
 
 ```py
 @dlt.resource(columns={"_dlt_load_id": {"partition": True}})

@@ -4,17 +4,18 @@ description: MS SQL replication
 keywords: [MSSQL, CDC, Change Tracking, MSSQL replication]
 ---
 
-# MS SQL replication
+# MS SQL レプリケーション
 
-dlt+ provides a comprehensive solution for syncing an MS SQL Server table using [Change Tracking](https://learn.microsoft.com/en-us/sql/relational-databases/track-changes/about-change-tracking-sql-server), a solution similar to CDC. By leveraging SQL Server's native Change Tracking feature, you can efficiently load incremental data changes — including inserts, updates, and deletes — into your destination.
+dlt+ は、CDC に類似したソリューションである [変更追跡](https://learn.microsoft.com/en-us/sql/relational-databases/track-changes/about-change-tracking-sql-server) を使用して、MS SQL Server テーブルを同期するための包括的なソリューションを提供します。
+SQL Server のネイティブな変更追跡機能を活用することで、挿入、更新、削除などの増分データ変更を効率的に同期先に読み込むことができます。
 
-## Prerequisites
+## 前提条件
 
-Before you begin, ensure that Change Tracking is enabled on both your database and the tables you wish to track, as it is a feature that must be explicitly activated.
+変更追跡は明示的に有効化する必要があるため、開始する前に、データベースと追跡対象のテーブルの両方で変更追跡が有効になっていることを確認してください。
 
-### Enable Change Tracking on the database
+### データベースで変更追跡を有効にする
 
-Run the following SQL command to enable Change Tracking on your database:
+データベースで変更追跡を有効にするには、次のSQLコマンドを実行します。
 
 ```sql
 ALTER DATABASE [YourDatabaseName]
@@ -22,13 +23,13 @@ SET CHANGE_TRACKING = ON
 (CHANGE_RETENTION = 7 DAYS, AUTO_CLEANUP = ON);
 ```
 
-- `[YourDatabaseName]`: Replace with the name of your database.
-- `CHANGE_RETENTION`: Specifies how long Change Tracking information is retained. In this example, it’s set to 7 days.
-- `AUTO_CLEANUP`: When set to ON, Change Tracking information older than the retention period is automatically removed.
+- `[YourDatabaseName]`: 実際のデータベース名に置き換えます。
+- `CHANGE_RETENTION`: 変更追跡情報の保持期間を指定します。この例では7日間に設定されています。
+- `AUTO_CLEANUP`: ONに設定すると、保持期間を過ぎた変更追跡情報は自動的に削除されます。
 
-### Enable Change Tracking on the table
+### テーブルの変更追跡を有効にする
 
-For each table you want to track, execute:
+追跡するテーブルごとに、以下のコマンドを実行します:
 
 ```sql
 ALTER TABLE [YourSchemaName].[YourTableName]
@@ -36,30 +37,34 @@ ENABLE CHANGE_TRACKING
 WITH (TRACK_COLUMNS_UPDATED = ON);
 ```
 
-- `[YourSchemaName].[YourTableName]`: Replace with your schema and table names.
-- `TRACK_COLUMNS_UPDATED`: When set to ON, allows you to see which columns were updated in a row. Set to OFF if you don’t need this level of detail.
+- `[YourSchemaName].[YourTableName]`: スキーマ名とテーブル名に置き換えてください。
+- `TRACK_COLUMNS_UPDATED`: ONに設定すると、行内で更新された列を確認できます。
+このレベルの詳細が必要ない場合はOFFに設定してください。
 
-### Set up dlt+ and drivers
+### dlt+ とドライバーのセットアップ
 
-* Make sure dlt+ is installed according to the [installation guide](../getting-started/installation.md).
+* [インストールガイド](../getting-started/installation.md) に従って dlt+ がインストールされていることを確認してください。
 
-* Install the Microsoft ODBC Driver for SQL Server according to the official [instructions](https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver16). If you prefer, there is also a [Python library alternative](https://www.pymssql.org/).
+* 公式の [手順](https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver16) に従って、Microsoft ODBC Driver for SQL Server をインストールしてください。
 
-* Specify the credentials for your SQL Server connection according to the [sql_database source instructions](../../dlt-ecosystem/verified-sources/sql_database/setup)
+必要に応じて、[Python ライブラリの代替](https://www.pymssql.org/) もご利用いただけます。
+
+* [sql_database ソースの手順](../../dlt-ecosystem/verified-sources/sql_database/setup) に従って、SQL Server 接続の資格情報を指定してください。
 
 
-## Setting up the pipeline
+## パイプラインの設定
 
-The process involves two main steps:
+このプロセスは主に2つのステップで構成されます。
 
-1. **Initial full load**: Use the `sql_table` function to perform a full backfill of your table data.
-2. **Incremental loading**: Use the `create_change_tracking_table` function to load incremental changes using SQL Server's Change Tracking.
+1. **初期フルロード**: `sql_table` 関数を使用して、テーブルデータの完全なバックフィルを実行します。
+2. **増分ロード**: `create_change_tracking_table` 関数を使用して、SQL Server の変更追跡機能を利用した増分変更をロードします。
 
-This approach ensures that you have a complete dataset from the initial load and efficiently keep it updated with subsequent changes.
+このアプローチにより、初期ロードから完全なデータセットが確保され、その後の変更に合わせて効率的に更新されます。
 
-### Initial full load
+### 初期フルロード
 
-Get the Change Tracking version **before you execute the initial load** to make sure you do not miss any updates that may happen during it. This may result in "replaying" a few changes that happen during the load, but this will not have any impact on the destination data due to the `merge` write disposition.
+**初期ロードを実行する前に**、変更追跡バージョンを取得して、ロード中に発生する可能性のある更新を見逃さないようにしてください。
+これにより、ロード中に発生したいくつかの変更が「再現」される可能性がありますが、`merge`書き込み処理のため、宛先データには影響しません。
 
 ```py
 from dlt_plus.sources.mssql import get_current_change_tracking_version
@@ -72,9 +77,9 @@ engine = create_engine(connection_url)
 tracking_version = get_current_change_tracking_version(engine)
 ```
 
-To fully avoid any duplication, you may completely lock the table during the initial load.
+重複を完全に回避するには、初期ロード中にテーブルを完全にロックします。
 
-Now you can use the `sql_table` resource to perform the initial backfill:
+これで、`sql_table` リソースを使用して初期バックフィルを実行できます:
 
 ```py
 import dlt
@@ -99,7 +104,8 @@ pipeline = dlt.pipeline(
 pipeline.run(initial_resource)
 ```
 
-By default, the `_DLT_DELETED` or the `_DLT_SYS_CHANGE_VERSION` columns are only created by the incremental change tracking resource when there are changes. If you want these to be created during the initial load, you can configure this with `apply_hints` before running the pipeline as follows:
+デフォルトでは、`_DLT_DELETED` 列または `_DLT_SYS_CHANGE_VERSION` 列は、変更があった場合にのみ増分変更追跡リソースによって作成されます。
+これらの列を初期ロード中に作成する場合は、パイプラインを実行する前に次のように `apply_hints` を使用して設定できます:
 
 ```py
 initial_resource.apply_hints(
@@ -110,7 +116,7 @@ initial_resource.apply_hints(
     )
 ```
 
-Next, configure the incremental resource for the first run with the `create_change_tracking_table` function and run it **once**:
+次に、`create_change_tracking_table` 関数を使用して初回実行用の増分リソースを設定し、**1 回** 実行します。
 
 ```py
 from dlt_plus.sources.mssql import create_change_tracking_table
@@ -130,12 +136,15 @@ incremental_resource = create_change_tracking_table(
 
 pipeline.run(incremental_resource)
 ```
-When running for the first time, it is necessary to pass the `tracking_version` in the `initial_tracking_version` argument. This will initialize incremental loading and keep the updated tracking version in the dlt state. In subsequent runs, you do not need to provide the initial value anymore.
 
-### Incremental loading
+初めて実行する際は、`initial_tracking_version` 引数に `tracking_version` を渡す必要があります。
+これにより、増分読み込みが初期化され、更新されたトラッキングバージョンが dlt 状態に保持されます。
+以降の実行では、初期値を指定する必要はありません。
 
-After the initial load, you can run the `create_change_tracking_table` resource on a schedule to load only the changes since the last tracking version using SQL Server’s `CHANGETABLE` function.
-You do not need to pass `initial_tracking_version` anymore, since this is automatically stored in the dlt state.
+### 増分ロード
+
+初期ロード後、SQL Server の `CHANGETABLE` 関数を使用して、スケジュールに従って `create_change_tracking_table` リソースを実行し、最後の追跡バージョン以降の変更のみをロードできます。
+`initial_tracking_version` は自動的に dlt 状態に保存されるため、渡す必要はありません。
 
 ```py
 from dlt_plus.sources.mssql import create_change_tracking_table
@@ -149,14 +158,15 @@ pipeline.run(incremental_resource)
 ```
 
 :::note
- The `write_disposition` is by default set to `merge`, which handles upserts based on primary keys. This determines the behavior when new data is loaded, especially regarding duplicates, updates, and deletes.
+`write_disposition` はデフォルトで `merge` に設定されており、主キーに基づいて upsert を処理します。
+これは、新しいデータがロードされる際、特に重複、更新、削除に関して、動作を決定します。
 :::
 
-## Full code example
+## 完全なコード例
 
 <details>
 
-<summary>Show full code example</summary>
+<summary>完全なコード例を表示</summary>
 
 ```py
 import dlt
@@ -265,9 +275,10 @@ if __name__ == "__main__":
 
 
 
-## Understanding the change tracking query
+## 変更追跡クエリについて
 
-The incremental loading process uses a SQL query that joins the CHANGETABLE function with the source table to fetch the latest changes. Here’s a simplified version of the query:
+増分読み込みプロセスでは、CHANGETABLE関数とソーステーブルを結合して最新の変更を取得するSQLクエリを使用します。
+クエリの簡略版を以下に示します:
 
 ```sql
 SELECT
@@ -284,30 +295,33 @@ ORDER BY
     ct.SYS_CHANGE_VERSION ASC
 ```
 
-- *CHANGETABLE*: Retrieves changes for the specified table since the last tracking version.
-- **Join with source table**: The join retrieves the current data for the changed rows.
-- *SYS_CHANGE_VERSION*: Used to track and order changes.
-- *_dlt_deleted*: Indicates if a row was deleted.
+- *CHANGETABLE*: 指定されたテーブルにおける、最後の追跡バージョン以降の変更を取得します。
+- **ソーステーブルとの結合**: 結合により、変更された行の現在のデータが取得されます。
+- *SYS_CHANGE_VERSION*: 変更の追跡と順序付けに使用されます。
+- *_dlt_deleted*: 行が削除されたかどうかを示します。
 
 :::note
- Since the query joins with the production table, there may be implications for locking and performance. Ensure your database can handle the additional load, and consider isolation levels if necessary.
+クエリは本番環境のテーブルと結合するため、ロックやパフォーマンスに影響が出る可能性があります。
+データベースが追加の負荷を処理できることを確認し、必要に応じて分離レベルを検討してください。
 :::
 
 
 ## Full refresh
 
 :::warning
-Doing a full refresh will drop the destination table, i.e., delete data from the destination, and reset the state holding the tracking version.
+完全更新を実行すると、宛先テーブルがドロップされ、つまり宛先からデータが削除され、追跡バージョンを保持している状態がリセットされます。
 :::
-You can trigger a full refresh by performing a full load again and passing `drop_resources` to the run method (as described in the [pipeline configuration](../../general-usage/pipeline#selectively-drop-tables-and-resource-state-with-drop_resources)):
+
+フル ロードを再度実行し、run メソッドに `drop_resources` を渡すことで、完全な更新をトリガーできます ([パイプライン構成](../../general-usage/pipeline#selectively-drop-tables-and-resource-state-with-drop_resources) で説明されているとおり)。
+
 ```py
 pipeline.run(initial_resource, refresh="drop_resources")
 ```
 
 
-## Handling deletes
+## 削除の処理
 
-There is an optional parameter that can be passed to `create_change_tracking_table` for configuring how to handle deletes:
+削除の処理方法を設定するために、`create_change_tracking_table` に渡すことができるオプションパラメータがあります。
 
 ```py
 from dlt_plus.sources.mssql import create_change_tracking_table
@@ -321,17 +335,18 @@ incremental_resource = create_change_tracking_table(
 pipeline.run(incremental_resource)
 ```
 
-### Hard deletes
+### ハード削除
 
-By default, `hard_delete` is set to `True`, meaning hard deletes are performed, i.e., rows deleted in the source will be permanently removed from the destination.
+デフォルトでは、`hard_delete` は `True` に設定されており、ハード削除が実行されます。つまり、ソースで削除された行は、ターゲットからも完全に削除されます。
 
-Replicated data allows for NULLs for not nullable columns when a record is deleted. To avoid additional tables that hold deleted rows and additional merge steps, dlt emits placeholder values that are stored in the staging dataset only.
+レプリケートされたデータでは、レコードが削除された際に、NULL 値が許可されない列に NULL が許容されます。
+削除された行を保持するテーブルの追加や追加のマージ手順を回避するため、dlt はステージングデータセットにのみ保存されるプレースホルダ値を出力します。
 
-### Soft deletes
+### ソフト削除
 
-If `hard_delete` is set to `False`, soft deletes are performed, i.e., rows deleted in the source will be marked as deleted but not physically removed from the destination.
+`hard_delete` が `False` に設定されている場合、ソフト削除が実行されます。つまり、ソースで削除された行は削除済みとしてマークされますが、デスティネーションからは物理的に削除されません。
 
-In this case, the destination schema must accept NULLs for the replicated columns, so make sure you pass the `remove_nullability_adapter` adapter to the `sql_table` resource:
+この場合、デスティネーションスキーマはレプリケートされた列に対して NULL を受け入れる必要があるため、`sql_table` リソースに `remove_nullability_adapter` アダプタを必ず渡してください。
 
 ```py
 from dlt_plus.sources.mssql import remove_nullability_adapter

@@ -3,20 +3,23 @@
 
 <img src="https://storage.googleapis.com/dlt-blog-images/plus/dlt_plus_projects.png" width="500"/>
 
-[dlt+ Project](../core-concepts/project.md) provides a structured and opinionated approach to organizing data workflows while implementing best practices for data engineering teams. dlt+ Project automates key processes such as data loading, data transformations, data catalogs, and data governance, and enables different members of the data teams to work more easily with each other.
+[dlt+ プロジェクト](../core-concepts/project.md) は、データエンジニアリングチームにベストプラクティスを実装しながら、データワークフローを体系的に整理するための構造化された独自のアプローチを提供します。
 
-With dlt+ Project, you can efficiently manage your data workflows by:
+dlt+ プロジェクトは、データの読み込み、データ変換、データカタログ、データガバナンスといった主要なプロセスを自動化し、データチームのさまざまなメンバー間の連携を容易にします。
 
-1. [Using a declarative `dlt.yml` file](#the-dlt-manifest-file-dltyml) to define sources, destinations, pipelines, and transformations.
-2. Configuring [different profiles](../core-concepts/profiles.md) for various use cases and environments.
-3. Ensuring data quality by defining tests with [dlt+ tests utils](./quality/tests.md).
-4. Packaging your project as a Python package and distributing it via PyPI or a git repository [Coming Soon!]
+dlt+ プロジェクトを使用すると、次の方法でデータワークフローを効率的に管理できます。
 
-This structured approach allows teams to work efficiently while maintaining flexibility and control over their data workflows.
+1. [宣言型の `dlt.yml` ファイル](#the-dlt-manifest-file-dltyml) を使用して、ソース、出力先、パイプライン、および変換を定義します。
+2. さまざまなユースケースと環境に合わせて [異なるプロファイル](../core-concepts/profiles.md) を構成します。
+3. [dlt+ テストユーティリティ](./quality/tests.md) を使用してテストを定義し、データ品質を確保します。
+4. プロジェクトをPythonパッケージとしてパッケージ化し、PyPIまたはGitリポジトリ経由で配布する [近日公開予定]
 
-## Project structure
+この構造化されたアプローチにより、チームはデータワークフローの柔軟性と制御を維持しながら、効率的に作業を進めることができます。
 
-A dlt+ Project has the following general structure:
+## プロジェクト構造
+
+dlt+ プロジェクトの一般的な構造は次のとおりです:
+
 ```text
 ├── .dlt/                 # folder containing dlt configurations and profile settings
 │   ├── config.toml
@@ -30,15 +33,19 @@ A dlt+ Project has the following general structure:
 └── dlt.yml               # the main project manifest
 ```
 
-## The dlt manifest file (dlt.yml)
+## DLTマニフェストファイル (dlt.yml)
 
-The main component of a dlt+ Project is the dlt manifest file (`dlt.yml`). It marks the root of your project and contains the main configurations. Here you can declare all of your data platform entities in a YAML format. It contains the following sections:
+DLT+プロジェクトの主要コンポーネントは、DLTマニフェストファイル (`dlt.yml`) です。
+これはプロジェクトのルートを示し、主要な設定が含まれています。
+ここで、すべてのデータプラットフォームエンティティをYAML形式で宣言できます。
+以下のセクションが含まれます。
 
-### Sources
+### ソース
 
-This section lets you define sources either declaratively or by referencing an implementation from a Python module inside `sources/`. In the example below, two sources are declared:
-1. a dlt REST API source whose parameters are passed within the manifest
-2. a GitHub source defined in a function `source` whose source code inside `sources/github.py` is referenced
+このセクションでは、宣言的に、または`sources/`内のPythonモジュールの実装を参照することで、ソースを定義できます。
+以下の例では、2つのソースが宣言されています。
+1. マニフェスト内でパラメータが渡されるdlt REST APIソース
+2. `source`関数で定義されたGitHubソース。`sources/github.py`内のソースコードが参照されます。
 
 ```yaml
 sources:
@@ -58,18 +65,19 @@ sources:
     type: github.source
 ```
 :::tip
-Source **type** is used to refer to the location in Python code where the `@dlt.source` decorated function is present. You can
-always use a full path to a function name in a Python module, but we also support shorthand and relative notations. For example:
-* `rest_api` will be expanded to `dlt.sources.rest_api.rest_api` where `dlt.sources.rest_api` is a Python module in OSS dlt and `rest_api` is a name of a function in that module.
-* `github.source` will be expanded to `sources.github.sources` in the current project.
+ソース **type** は、Python コード内で `@dlt.source` で装飾された関数が存在する場所を参照するために使用されます。
+Python モジュール内の関数名へのフルパスは常に使用できますが、省略表記と相対表記もサポートされています。
+例:
+* `rest_api` は `dlt.sources.rest_api.rest_api` に展開されます。ここで、`dlt.sources.rest_api` は OSS dlt 内の Python モジュールであり、`rest_api` はそのモジュール内の関数名です。
+* `github.source` は、現在のプロジェクト内で `sources.github.sources` に展開されます。
 
-If the **type** cannot be resolved, dlt+ will provide you with a detailed list of all candidate types that were looked up
-so you can make required corrections.
+**type** を解決できない場合、dlt+ は検索されたすべての候補タイプの詳細なリストを提供するので、必要な修正を行うことができます。
 :::
 
-### Destinations
+### 宛先
 
-The destinations section defines dlt destinations in a similar way to how you would define them in a pure Python dlt project. As with sources, you can also create a `destinations/` folder and reference custom implementations of destinations inside it.
+宛先セクションでは、純粋なPythonのDLTプロジェクトで定義する方法と同様の方法で、DLTの宛先を定義します。
+ソースと同様に、`destinations/`フォルダを作成し、その中に宛先のカスタム実装を参照することもできます。
 
 ```yaml
 destinations:
@@ -77,9 +85,10 @@ destinations:
         type: duckdb
 ```
 
-### Pipelines
+### パイプライン
 
-Pipelines can be used to load data from sources to destinations. The pipeline defined below loads data from the GitHub source to a dataset named "github_events_dataset" inside the duckdb destination.
+パイプラインは、ソースから宛先へデータをロードするために使用できます。
+以下で定義されるパイプラインは、GitHub ソースから duckdb 宛先内の「github_events_dataset」というデータセットにデータをロードします。
 
 ```yaml
 github_pipeline:
@@ -87,11 +96,15 @@ github_pipeline:
   destination: duckdb
   dataset_name: github_events_dataset
 ```
-You can declare all arguments of `dlt.pipeline` in this section. For a full list of arguments, refer to the [docstrings](https://github.com/dlt-hub/dlt/blob/71b4975c70d1931750b3245e919a520a2400e870/dlt/pipeline/__init__.py#L30).
 
-### Datasets
+このセクションでは、`dlt.pipeline` のすべての引数を宣言できます。
+引数の完全なリストについては、[docstrings](https://github.com/dlt-hub/dlt/blob/71b4975c70d1931750b3245e919a520a2400e870/dlt/pipeline/__init__.py#L30) を参照してください。
 
-The datasets section defines datasets that live on a destination (defined in the destinations section). Any datasets declared in the [pipeline section](#pipelines) are automatically created if not declared here. Read more about datasets in dlt+ [here](../core-concepts/datasets.md).
+### データセット
+
+datasets セクションでは、出力先（destinations セクションで定義）に保存されるデータセットを定義します。
+[pipeline セクション](#pipelines) で宣言されたデータセットは、ここで宣言されていない場合は自動的に作成されます。
+dlt+ のデータセットの詳細については、[こちら](../core-concepts/datasets.md) をご覧ください。
 
 ```yaml
 datasets:
@@ -100,11 +113,14 @@ datasets:
       - duckdb
 ```
 
-### Cache 🧪
+### キャッシュ 🧪
 
-In this section, you specify the input table(s) that you want to transform, and the output table(s) that you want to write after performing the transformations. The example below loads the table "events" from the destination dataset "github_events_dataset" into a local cache, then transforms it using the transformations inside the `transformations/` folder, and finally writes two tables back into the dataset "github_events_dataset": the original "events" table, and the transformed "events_aggregated" table. Read more about how local cache is used for transformations [here](../core-concepts/datasets.md).
+このセクションでは、変換する入力テーブルと、変換後に書き込む出力テーブルを指定します。
+以下の例では、出力先データセット「github_events_dataset」からテーブル「events」をローカルキャッシュに読み込み、`transformations/` フォルダ内の変換を使用して変換し、最後に元の「events」テーブルと変換後の「events_aggregated」テーブルの2つのテーブルをデータセット「github_events_dataset」に書き戻します。
+ローカルキャッシュを変換に使用する方法の詳細については、[こちら](../core-concepts/datasets.md) をご覧ください。
 
-The cache feature is currently limited to specific use cases and is only compatible with data stored in filesystem-based destinations. Please make sure that the input dataset for the cache is located in the filesystem-based destination ([Iceberg](../ecosystem/iceberg.md), [Delta](../ecosystem/delta.md), or [Cloud storage and filesystem](../../dlt-ecosystem/destinations/filesystem.md)).
+キャッシュ機能は現在、特定のユースケースに限定されており、ファイルシステムベースの出力先に保存されているデータにのみ対応しています。
+キャッシュの入力データセットがファイルシステムベースの保存先 ([Iceberg](../ecosystem/iceberg.md)、[Delta](../ecosystem/delta.md)、または [クラウド ストレージとファイルシステム](../../dlt-ecosystem/destinations/filesystem.md)) にあることを確認してください。
 
 ```yaml
 caches:
@@ -120,12 +136,15 @@ caches:
           events_aggregated: events_aggregated
 ```
 :::note
-🚧 This feature is under development. Interested in becoming an early tester? [Join dlt+ early access](https://info.dlthub.com/waiting-list)
+🚧 この機能は現在開発中です。早期テスターに​​ご興味をお持ちですか？[dlt+早期アクセスにご参加ください](https://info.dlthub.com/waiting-list)
 :::
 
-### Transformations 🧪
+### 変換 🧪
 
-Here you specify the settings for your transformations. In the code example, we define an arrow-based transformation that will operate on the cache "github_events_cache". It will make use of code in the `transformations/` folder. Read more about how transformations are done [here](../features/transformations/index.md).
+ここでは、変換の設定を指定します。
+コード例では、キャッシュ「github_events_cache」を操作する arrow ベースの変換を定義しています。
+これは、`transformations/` フォルダ内のコードを使用します。
+変換の実行方法の詳細については、[こちら](../features/transformations/index.md) をご覧ください。
 
 ```yaml
 transformations:
@@ -134,12 +153,14 @@ transformations:
     cache: github_events_cache
 ```
 :::note
-🚧 This feature is under development. Interested in becoming an early tester? [Join dlt+ early access](https://info.dlthub.com/waiting-list)
+🚧 この機能は現在開発中です。早期テスターに​​ご興味をお持ちですか？[dlt+早期アクセスにご参加ください](https://info.dlthub.com/waiting-list)
 :::
 
-### Profiles
+### プロファイル
 
-You can use the profiles section to define different environments (example: dev, staging, prod, tests). One package may have multiple profiles which can be specified using dlt+ cli commands. The default profile name is `dev`. It's created automatically alongside the `tests` profile.
+profiles セクションを使用して、異なる環境（例：dev、staging、prod、tests）を定義できます。
+1 つのパッケージに複数のプロファイルが存在する場合があり、これらは dlt+ cli コマンドを使用して指定できます。
+デフォルトのプロファイル名は `dev` です。これは `tests` プロファイルと一緒に自動的に作成されます。
 
 ```yaml
 profiles:
@@ -155,16 +176,17 @@ profiles:
         bucket_url: s3://dlt-ci-test-bucket/dlt_example_project/
 ```
 
-### Project settings and variable substitution
+### プロジェクト設定と変数置換
 
-You can override default project settings using the `project` section:
-* `project_dir` - the root directory of the project, i.e., the directory where the project Python modules are stored.
-* `data_dir` and `local_dir` - [files created by pipelines and destinations](#local-and-temporary-files-data_dir), separated by the current profile name.
-* `name` - the name of the project.
-* `default_profile` - the name of the default profile, which can be configured in the project section as seen above.
-* `allow_undefined_entities` - by default, dlt+ will create entities like destinations, sources, and datasets ad hoc. This flag disables such behavior.
+`project` セクションを使用して、デフォルトのプロジェクト設定をオーバーライドできます。
+* `project_dir` - プロジェクトのルートディレクトリ、つまりプロジェクトの Python モジュールが保存されているディレクトリ。
+* `data_dir` と `local_dir` - [パイプラインと出力先によって作成されるファイル](#local-and-temporary-files-data_dir)。現在のプロファイル名で区切られます。
+* `name` - プロジェクト名。
+* `default_profile` - デフォルトのプロファイル名。上記のように、プロジェクトセクションで設定できます。
+* `allow_undefined_entities` - デフォルトでは、dlt+ は出力先、ソース、データセットなどのエンティティをアドホックに作成します。このフラグは、このような動作を無効にします。
 
-In the example below:
+以下の例で：
+
 ```yaml
 project:
   name: test_project
@@ -173,19 +195,22 @@ project:
   default_profile: tests
   local_dir: "{data_dir}/local"
 ```
-* We set the project name to `test_project`, overriding the default (which is the name of the parent folder).
-* We set `data_dir` to the value of the environment variable `DLT_DATA_DIR` and separate it by the profile name `current_profile`.
-* We prevent any undefined entities (`allow_undefined_entities`) from being created (i.e., datasets or destinations).
-* We set the default profile name to `tests`.
-* We set the `local_dir` to a folder `local` in the `data_dir` we defined above.
 
-As you may guess from the example above, you can use Python-style formatters to substitute variables:
-* You can reference environment variables using the `{env.ENV_VARIABLE_NAME}` syntax.
-* Any of the project settings can be substituted as well.
+* プロジェクト名を `test_project` に設定し、デフォルト（親フォルダ名）を上書きします。
+* `data_dir` を環境変数 `DLT_DATA_DIR` の値に設定し、プロファイル名 `current_profile` で区切ります。
+* 未定義のエンティティ（`allow_undefined_entities`）（データセットや出力先など）が作成されないようにします。
+* デフォルトのプロファイル名を `tests` に設定します。
+* `local_dir` を、上記で定義した `data_dir` 内のフォルダ `local` に設定します。
 
-### Implicit entities
-By default, dlt+ will automatically create entities such as datasets or destinations when they are requested by the user or the executed code.
-For example, a minimal `dlt.yml` configuration might look like this:
+上記の例からお分かりいただけるように、Python スタイルのフォーマッタを使用して変数を置換できます。
+* `{env.ENV_VARIABLE_NAME}` 構文を使用して環境変数を参照できます。
+* プロジェクト設定もすべて置換可能です。
+
+### 暗黙的なエンティティ
+
+デフォルトでは、dlt+ はユーザーまたは実行されたコードからデータセットや宛先などのエンティティが要求されたときに、それらを自動的に作成します。
+例えば、最小限の `dlt.yml` 設定は次のようになります。
+
 ```yaml
 sources:
   arrow:
@@ -201,20 +226,27 @@ pipelines:
     destination: duckdb
     dataset_name: my_pipeline_dataset
 ```
-Running the following command executes the pipeline:
+
+次のコマンドを実行すると、パイプラインが実行されます:
+
 ```sh
 dlt pipeline my_pipeline run
 ```
-In this case, the `my_pipeline_dataset` dataset is not declared explicitly, so dlt+ creates it automatically. The `duckdb` destination and the `arrow` source are explicitly defined, so they do not need to be created implicitly. However, if any entity (such as a source or destination) is referenced only in the pipeline and not defined under the corresponding section, dlt+ will create it implicitly.
 
-Implicit creation of entities can be controlled using the `allow_undefined_entities` setting in the project configuration:
+この場合、`my_pipeline_dataset` データセットは明示的に宣言されていないため、dlt+ によって自動的に作成されます。
+`duckdb` 宛先と `arrow` ソースは明示的に定義されているため、暗黙的に作成する必要はありません。
+ただし、エンティティ（ソースや宛先など）がパイプライン内でのみ参照され、対応するセクションで定義されていない場合、dlt+ によって暗黙的に作成されます。
+
+エンティティの暗黙的な作成は、プロジェクト設定の `allow_undefined_entities` 設定を使用して制御できます。
 
 ```yaml
 project:
   allow_undefined_entities: false
 ```
-If `allow_undefined_entities` is set to `false`, dlt+ will no longer create missing entities automatically.
-Datasets and destinations must be declared explicitly in the `dlt.yml` file:
+
+`allow_undefined_entities` が `false` に設定されている場合、dlt+ は不足しているエンティティを自動的に作成しなくなります。
+データセットと宛先は `dlt.yml` ファイルで明示的に宣言する必要があります。
+
 ```yaml
 datasets:
   my_pipeline_dataset:
@@ -222,10 +254,12 @@ datasets:
         - duckdb
 ```
 
-### Managing datasets and destinations
+### データセットと出力先の管理
 
-When datasets are explicitly declared in the `dlt.yml` file, the `destination` field must list all destinations where the dataset is allowed to be materialized. This applies even if `allow_undefined_entities` is set to `true`.
-Each pipeline that references a dataset must use a destination that is included in the dataset’s `destination` list. If the pipeline specifies a destination not listed, dlt+ will raise a configuration error.
+`dlt.yml` ファイルでデータセットを明示的に宣言する場合、`destination` フィールドにデータセットの実体化が許可されるすべての出力先をリストする必要があります。
+これは、`allow_undefined_entities` が `true` に設定されている場合でも適用されます。
+データセットを参照する各パイプラインは、データセットの `destination` リストに含まれる出力先を使用する必要があります。
+パイプラインでリストにない出力先を指定した場合、dlt+ は構成エラーを発生させます。
 
 ```yaml
 datasets:
@@ -235,37 +269,39 @@ datasets:
       - bigquery
 ```
 
-In this case, pipelines using either `duckdb` or `bigquery` as a destination can safely reference `my_pipeline_dataset`.
+この場合、`duckdb` または `bigquery` のいずれかを宛先として使用するパイプラインは、`my_pipeline_dataset` を安全に参照できます。
 
 :::note
-The destination field is an array, allowing you to specify one or more destinations where the dataset can be materialized.
+宛先フィールドは配列であり、データセットを具体化できる 1 つ以上の宛先を指定できます。
 :::
 
-### Other settings
+### その他の設定
 
-`dlt.yml` is a [dlt config provider](../../general-usage/credentials/setup.md), and you can use it in the same way you use `config.toml`.
-For example, you can configure the log level:
+`dlt.yml` は [dlt 設定プロバイダ](../../general-usage/credentials/setup.md) であり、`config.toml` と同じように使用できます。
+例えば、ログレベルを設定できます。
 
 ```yaml
 runtime:
   log_level: WARNING
 ```
 
-or any of the settings we mention in the [performance](../../reference/performance.md) chapter.
+または、[パフォーマンス](../../reference/performance.md)の章で説明されている設定のいずれか。
 
-## Local and temporary files (`data_dir`)
+## ローカルファイルと一時ファイル (`data_dir`)
 
-The dlt+ project has a dedicated location (`data_dir`), where all working files are stored. By default, it is the `_data` folder in the root of the project.
-Working files for each profile are stored separately. For example, files for the `dev` profile are stored in `_data/dev`.
+dlt+ プロジェクトには専用の場所 (`data_dir`) があり、そこにすべての作業ファイルが保存されます。
+デフォルトでは、プロジェクトのルートにある `_data` フォルダです。
+各プロファイルの作業ファイルは個別に保存されます。
+例えば、`dev` プロファイルのファイルは `_data/dev` に保存されます。
 
-Working files include:
-* Pipeline working directory (`{data_dir}/pipelines` folder) where load packages, pipeline state, and schemas are stored locally.
-* All files created by destinations (`{data_dir}/local`) i.e., local `filesystem` buckets, duckdb databases, iceberg, and delta lakes (if configured for the local filesystem).
-* Default locations for ad hoc (i.e., dbt related) Python virtual environments.
+作業ファイルには以下が含まれます。
+* パイプラインの作業ディレクトリ（`{data_dir}/pipelines` フォルダ）。ロードパッケージ、パイプラインの状態、スキーマがローカルに保存されます。
+* 出力先（`{data_dir}/local`）によって作成されたすべてのファイル（ローカルの `filesystem` バケット、duckdb データベース、iceberg、delta lakes（ローカルファイルシステム用に設定されている場合）。
+* アドホック（dbt 関連）Python 仮想環境のデフォルトの場所。
 
 :::tip
-Use relative paths when configuring destinations that generate local files to ensure they are automatically placed in the profile-separated
-`{data_dir}/local` folder. For example:
+ローカルファイルを生成する出力先を設定する際は、相対パスを使用して、プロファイルで区切られた `{data_dir}/local` フォルダに自動的に配置されるようにしてください。
+例:
 
 ```yaml
 destinations:
@@ -274,41 +310,46 @@ destinations:
   my_duckdb:
     type: duckdb
 ```
-The `iceberg` destination will create an iceberg lake in the `_data/dev/local/lake` folder, and `duckdb` will create a database in
-`_data/dev/local/my_duckdb.duckdb`.
 
-You can clean up your working files with the `dlt project --profile name clean` command.
+`iceberg` 宛先は `_data/dev/local/lake` フォルダに iceberg レイクを作成し、`duckdb` は `_data/dev/local/my_duckdb.duckdb` にデータベースを作成します。
+
+`dlt project --profile name clean` コマンドを使用して、作業ファイルをクリーンアップできます。
 :::
 
-## Python API to interact with dlt-plus project
+## dlt-plus プロジェクトを操作するための Python API
 
-You can access any dlt+ project entity or function via the Python interface.
-The current module provides access to various parts of your active dlt+ project.
+Python インターフェースを介して、dlt+ プロジェクトのあらゆるエンティティまたは関数にアクセスできます。
+現在のモジュールは、アクティブな dlt+ プロジェクトのさまざまな部分へのアクセスを提供します。
 
-Import statement:
+`import` ステートメント:
+
 ```py
 from dlt_plus import current
 ```
 
-Available methods:
-- `current.project()` - Retrieves the project configuration
-- `current.entities()` - Returns a factory with all instantiated entities
-- `current.catalog()` - Provides access to all defined datasets in the catalog
-- `current.runner()` - Allows you to run pipelines programmatically
+利用可能なメソッド:
+- `current.project()` - プロジェクト構成を取得します
+- `current.entities()` - インスタンス化されたすべてのエンティティを含むファクトリーを返します
+- `current.catalog()` - カタログ内のすべての定義済みデータセットにアクセスできるようにします
+- `current.runner()` - プログラムでパイプラインを実行できるようにします
 
 :::info
-If you packaged your dlt+ Project into a pip-installable package, you can access all methods above directly from the package. For example:
+dlt+ プロジェクトを pip でインストール可能なパッケージにパッケージ化した場合、上記のすべてのメソッドにパッケージから直接アクセスできます。
+例:
+
 ```py
 import my_dlt_package
 
 my_dlt_package.catalog()
 ```
-[Learn more](../getting-started/advanced_tutorial.md) about how to package your project.
+
+プロジェクトをパッケージ化する方法については、[詳細](../getting-started/advanced_tutorial.md)をご覧ください。
 :::
 
-### Accessing project settings
+### プロジェクト設定へのアクセス
 
-Here are a few examples of what you can access from the project object:
+プロジェクトオブジェクトからアクセスできる項目の例をいくつか示します:
+
 ```py
 from dlt_plus import current
 
@@ -321,10 +362,12 @@ print(current.project().config)
 # list explicitly defined datasets (also works with destinations, sources, pipelines, etc.)
 print(current.project().datasets)
 ```
-### Accessing entities
+### エンティティへのアクセス
 
-Accessing entities in code works the same way as when referencing them in the `dlt.yml` file.
-If allowed, implicit entities will be created and returned automatically. If not, an error will be raised.
+コード内でのエンティティへのアクセスは、`dlt.yml` ファイル内でのエンティティ参照と同じように機能します。
+許可されている場合、暗黙的なエンティティが自動的に作成され、返されます。
+許可されていない場合は、エラーが発生します。
+
 ```py
 import dlt_plus
 from dlt_plus import current
@@ -335,12 +378,13 @@ destination = entities.get_destination("duckdb")
 transformation = entities.get_transformation("stressed_transformation")
 
 ```
-Here, we access the entities manager, which allows you to create sources, destinations, pipelines, and other objects.
 
-### Running pipelines with the runner
+ここで、エンティティ マネージャーにアクセスして、ソース、宛先、パイプライン、その他のオブジェクトを作成できます。
 
-`dlt+` includes a pipeline runner, which is the same one used when you run pipelines from the CLI.
-You can also use it directly in your code through the project context:
+### ランナーを使ったパイプラインの実行
+
+`dlt+` にはパイプラインランナーが含まれており、これは CLI からパイプラインを実行するときに使用するものと同じです。
+プロジェクトコンテキストを通じてコード内で直接使用することもできます。
 
 ```py
 from dlt_plus import current
@@ -351,9 +395,9 @@ runner = current.runner()
 runner.run_pipeline("my_pipeline")
 ```
 
-### Accessing the catalog
+### カタログへのアクセス
 
-The catalog allows you to access all explicitly defined datasets:
+カタログを使用すると、明示的に定義されたすべてのデータセットにアクセスできます:
 
 ```py
 from dlt_plus import current
@@ -366,19 +410,20 @@ print(dataset.row_counts().df())
 ```
 
 :::tip
-Learn more about the available data access methods in dlt datasets by reading the [Python loaded data access guide](../../general-usage/dataset-access/dataset).
-It covers how to browse, filter tables, and retrieve data in various formats.
+DLTデータセットで利用可能なデータアクセス方法の詳細については、[Pythonロードデータアクセスガイド](../../general-usage/dataset-access/dataset)をお読みください。
+このガイドでは、テーブルの参照、フィルタリング、さまざまな形式のデータの取得方法について説明しています。
 :::
 
-### Writing data back to the catalog
+### カタログへのデータの書き戻し
 
-You can also write data to datasets in the dlt+ catalog. Each dataset has a `.save()` method that lets you write data back to it.
-In the future, you'll be able to control which datasets are writable using contracts.
-Under the hood, `dlt+` runs an ad-hoc pipeline to handle the write operation.
+dlt+ カタログ内のデータセットにデータを書き込むこともできます。
+各データセットには、データを書き戻すための `.save()` メソッドがあります。
+将来的には、コントラクトを使用して書き込み可能なデータセットを制御できるようになります。
+`dlt+` は内部的にアドホックパイプラインを実行して書き込み操作を処理します。
 
 :::warning
-Writing data to the catalog is an **experimental feature**.
-Use it with caution until it's fully stable.
+カタログへのデータの書き込みは**試験的な機能**です。
+完全に安定するまでは注意してご使用ください。
 :::
 
 ```py
@@ -391,7 +436,7 @@ dataset = current.catalog().dataset("my_pipeline_dataset")
 dataset.save(pd.DataFrame({"name": ["John", "Jane", "Jim"], "age": [30, 25, 35]}), table_name="my_table")
 ```
 
-You can also read from an existing table and write the data to a new table, either in the same or another dataset:
+既存のテーブルからデータを読み取り、同じデータセットまたは別のデータセット内の新しいテーブルにデータを書き込むこともできます:
 
 ```py
 from dlt_plus import current
@@ -410,12 +455,12 @@ def transform_frames():
 dataset.save(transform_frames, table_name="my_new_table")
 ```
 
-### Switching profiles in code
+### コード内でのプロファイルの切り替え
 
-By default, when you access the project in code, it uses the default or pinned profile.
-You can switch to a different profile using the `switch_profile` function.
+デフォルトでは、コード内でプロジェクトにアクセスすると、デフォルトまたは固定されたプロファイルが使用されます。
+`switch_profile` 関数を使用して、別のプロファイルに切り替えることができます。
 
-Here’s an example:
+例を以下に示します。
 
 ```py
 from dlt_plus import current
@@ -430,23 +475,30 @@ if __name__ == "__main__":
     print(current.project().current_profile)
 ```
 
-## Config and secrets
+## 設定とシークレット
 
-As shown above, it is possible to pass additional dlt settings and configurations in the manifest file itself. However, existing dlt config providers are also supported as usual, like:
+上記のように、マニフェストファイル自体に追加の DLT 設定と構成を渡すことが可能です。
+ただし、既存の DLT 設定プロバイダーも通常通りサポートされています。例えば、以下のようになります。
 
-1. Environ provider
-2. `.dlt/config.toml` provider, including the global config
-3. `.dlt/<profile_name>.secrets.toml`, which is the secrets toml provider but scoped to a particular profile. A per-profile version (`dev.secrets.toml`) is sought instead of the `secrets.toml` file.
+1. Environ プロバイダー
+2. `.dlt/config.toml` プロバイダー（グローバル設定を含む）
+3. `.dlt/<profile_name>.secrets.toml`（シークレット toml プロバイダーですが、特定のプロファイルにスコープが限定されています）。
+`secrets.toml` ファイルの代わりに、プロファイルごとのバージョン（`dev.secrets.toml`）が検索されます。
 
 :::note
-Based on the information about precedence in the [configuration docs](../../general-usage/credentials/setup#choose-where-to-store-configuration), the yaml files provide the lowest precedence of all providers just above the default values for a config value. Settings in the yaml file will therefore be overridden by `toml` and `env` variables if present.
+[設定ドキュメント](../../general-usage/credentials/setup#choose-where-to-store-configuration)に記載されている優先順位に関する情報に基づき、yamlファイルは、設定値のデフォルト値のすぐ上に、すべてのプロバイダーの中で最も低い優先順位を提供します。したがって、yamlファイルの設定は、`toml`および`env`変数が存在する場合、それらによって上書きされます。
 :::
 
-## Project context
+## プロジェクトコンテキスト
 
-The `dlt.yml` marks the root of a project. Projects can also be nested. If you run any dlt project CLI command, dlt will search for the project root in the filesystem tree starting from the current working directory and run all operations on the found project. So, if your `dlt.yml` is in the `tutorial` folder, you can run `dlt pipeline my_pipeline run` from this folder or any subfolder, and it will run the pipeline on the `tutorial` project.
+`dlt.yml` はプロジェクトのルートを示します。
+プロジェクトはネストすることもできます。
+dlt プロジェクトの CLI コマンドを実行すると、dlt は現在の作業ディレクトリからファイルシステムツリー内のプロジェクトルートを検索し、見つかったプロジェクトに対してすべての操作を実行します。
+つまり、`dlt.yml` が `tutorial` フォルダ内にある場合、このフォルダまたは任意のサブフォルダから `dlt pipeline my_pipeline run` を実行すると、`tutorial` プロジェクトに対してパイプラインが実行されます。
 
-## Packaging and distributing the projects
+## プロジェクトのパッケージ化と配布
 
-Projects can be distributed as Python packages to share with your organization and enable data access. Instructions on how to build these Python packages are coming soon. Join our [early access](https://info.dlthub.com/waiting-list) program to learn more!
+プロジェクトはPythonパッケージとして配布でき、組織内で共有したり、データアクセスを可能にしたりすることができます。
+これらのPythonパッケージのビルド方法については、近日中に公開予定です。
+[早期アクセス](https://info.dlthub.com/waiting-list)プログラムにご参加いただき、詳細をご確認ください。
 

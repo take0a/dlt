@@ -3,39 +3,41 @@ title: Setup
 description: Define and execute local transformations
 ---
 
-dlt+ provides a powerful mechanism for executing transformations on your data using a locally spun-up cache. It automatically creates and manages the cache before execution and cleans it up afterward.
+dlt+ は、ローカルでスピンアップされたキャッシュを使用してデータの変換を実行するための強力なメカニズムを提供します。
+実行前にキャッシュを自動的に作成・管理し、実行後にキャッシュをクリーンアップします。
 
-A transformation consists of functions that modify data stored in a [cache](../../core-concepts/cache.md). These transformations can be implemented using:
+変換は、[キャッシュ](../../core-concepts/cache.md) に保存されたデータを変更する関数で構成されます。これらの変換は、以下を使用して実装できます。
 
-* [dbt models](./dbt-transformations.md)
-* [🧪 Python user-defined functions](./python-transformations.md)
+* [dbt モデル](./dbt-transformations.md)
+* [🧪 Python ユーザー定義関数](./python-transformations.md)
 
-By combining a cache and transformations, you can efficiently process data loaded via dlt and move it to a new destination.
+キャッシュと変換を組み合わせることで、dlt 経由で読み込まれたデータを効率的に処理し、新しい宛先に移動できます。
 
 :::caution
-Local transformations are currently limited to specific use cases and are only compatible with data stored in filesystem-based destinations:
+ローカル変換は現在、特定のユースケースに限定されており、ファイルシステムベースの宛先に保存されたデータとのみ互換性があります:
 
 * [Iceberg](../../ecosystem/iceberg.md)
 * [Delta](../../ecosystem/delta.md)
 * [Cloud storage and filesystem](../../../dlt-ecosystem/destinations/filesystem.md)
 
-Make sure to specify a dataset located in a filesystem-based destination when [defining a cache](#defining-the-cache).
+[キャッシュを定義する](#defining-the-cache) ときは、ファイルシステムベースの保存先にあるデータセットを指定するようにしてください。
 :::
 
-To use this feature, follow these steps:
+この機能を使用するには、以下の手順に従ってください:
 
-1. [Configure the `dlt.yml` file](#configure-dltyml-file): define a cache and specify transformations.
-2. [Generate scaffolding](#generate-scaffolding): automatically create transformation templates.
-3. [Modify transformations](#modify-transformations): update the generated Python functions or dbt models.
-4. [Run transformations](#run-transformations): execute them on your data.
+1. [`dlt.yml` ファイルの設定](#configure-dltyml-file): キャッシュを定義し、変換を指定します。
+2. [スキャフォールディングの生成](#generate-scaffolding): 変換テンプレートを自動的に作成します。
+3. [変換の変更](#modify-transformations): 生成された Python 関数または dbt モデルを更新します。
+4. [変換の実行](#run-transformations): データに対して変換を実行します。
 
-## Configure `dlt.yml` file
+## `dlt.yml` ファイルの設定
 
-Before setting up the transformations in the `dlt.yml` file, you need to make sure you have defined the cache.
+`dlt.yml` ファイルで変換を設定する前に、キャッシュが定義されていることを確認する必要があります。
 
-### Defining the cache
+### キャッシュの定義
 
-You can find detailed instructions on how to define a cache in the [cache core concept](../../core-concepts/cache.md#define-the-cache). Here's an example:
+キャッシュを定義する方法の詳細な手順は、[キャッシュのコアコンセプト](../../core-concepts/cache.md#define-the-cache)に記載されています。
+以下に例を示します:
 
 ```yaml
 caches:
@@ -52,20 +54,20 @@ caches:
 ```
 
 :::caution
-Please make sure that the input dataset for the cache is located in a filesystem-based destination ([Iceberg](../../ecosystem/iceberg.md), [Delta](../../ecosystem/delta.md), or [Cloud storage and filesystem](../../../dlt-ecosystem/destinations/filesystem.md)).
+キャッシュの入力データセットがファイルシステムベースの保存先 ([Iceberg](../../ecosystem/iceberg.md)、[Delta](../../ecosystem/delta.md)、または [クラウド ストレージとファイルシステム](../../../dlt-ecosystem/destinations/filesystem.md)) にあることを確認してください。
 :::
 
-### Defining transformations
+### 変換の定義
 
-Specify transformations in `dlt.yml` with the following parameters:
+`dlt.yml` で、以下のパラメータを使用して変換を指定します。
 
-* unique identifier for the transformation.
-* engine – choose between:
-  * `arrow` for Python-based transformations
-  * `dbt` for dbt-based transformations
-* cache – the cache that the transformation will run on.
+* 変換の一意の識別子。
+* エンジン – 以下から選択します。
+  * Python ベースの変換の場合は `arrow`
+  * dbt ベースの変換の場合は `dbt`
+* キャッシュ – 変換が実行されるキャッシュ。
 
-For example,
+例:
 
 ```yaml
 transformations:
@@ -74,37 +76,40 @@ transformations:
     cache: github_events_cache
 ```
 
-## Generate scaffolding
+## スキャフォールディングの生成
 
-To create transformation scaffolding based on your dlt pipeline:
+DLTパイプラインに基づいて変換スキャフォールディングを作成するには：
 
-1. Run the dlt pipeline at least once; this ensures dlt has the dataset schemas.
-2. Execute the following CLI command:
+1. DLTパイプラインを少なくとも1回実行します。これにより、DLTにデータセットスキーマが確実に含まれます。
+2. 次のCLIコマンドを実行します。
 
 ```sh
 dlt transformation <transformation-name> render-t-layer
 ```
 
-This will generate transformation files inside the `./transformations` folder. Depending on the engine:
+これにより、`./transformations` フォルダ内に変換ファイルが生成されます。
+エンジンによって異なります。
 
-* For Python transformations: a Python script with transformation functions ([learn more](./python-transformations.md))
-* For dbt transformations: dbt models ([learn more](./dbt-transformations.md))
+* Python 変換の場合: 変換関数を含む Python スクリプト ([詳細はこちら](./python-transformations.md))
+* dbt 変換の場合: dbt モデル ([詳細はこちら](./dbt-transformations.md))
 
-Each generated transformation includes models for managing incremental loading states via `dlt_load_id`.
+生成される各変換には、`dlt_load_id` を介して増分読み込み状態を管理するためのモデルが含まれます。
 
-## Modify transformations
+## 変換の変更
 
-Now you can update the generated transformations and create new ones to reflect the desired behavior. We recommend keeping the incremental approach as in the generated models.
+生成された変換を更新し、目的の動作を反映する新しい変換を作成できます。
+生成されたモデルと同様に、増分アプローチを維持することをお勧めします。
 
-## Run transformations
+## 変換の実行
 
-dlt+ offers comprehensive CLI support for executing transformations. You can find the full list of available commands in the [command line interface](../../reference.md).
+dlt+ は、変換を実行するための包括的な CLI サポートを提供します。
+利用可能なコマンドの全リストは、[コマンドラインインターフェース](../../reference.md) で確認できます。
 
-To run the defined transformation, use the [following command](../../reference.md#dlt-transformation-run):
+定義された変換を実行するには、[次のコマンド](../../reference.md#dlt-transformation-run) を使用します。
 
 ```sh
 dlt transformation <transformation_name> run
 ```
 
-This command populates the local cache, applies the defined transformations, and then flushes the transformed tables to the specified destination.
+このコマンドは、ローカル キャッシュにデータを入力し、定義された変換を適用し、変換されたテーブルを指定された宛先にフラッシュします。
 

@@ -4,38 +4,40 @@ description: Using the dlt+ cli commands to package a dlt+ Project and enable se
 keywords: [command line interface, cli, dlt init, dlt+, project]
 ---
 
-Packaging a dlt+ Project simplifies distribution across teams or stakeholders, such as data analysts or data science teams, without requiring direct access to the project’s internal code. Once installed, the package can be used to run pipelines and access production data through a standardized Python interface.
+dlt+ プロジェクトをパッケージ化すると、プロジェクトの内部コードに直接アクセスすることなく、データアナリストやデータサイエンスチームなどのチームや関係者間での配布が簡素化されます。
+パッケージをインストールすると、標準化された Python インターフェースを介してパイプラインを実行し、本番環境のデータにアクセスできるようになります。
 
-In this tutorial, you will learn how to package your dlt+ project for reuse and distribution and make it pip-installable.
+このチュートリアルでは、dlt+ プロジェクトを再利用および配布用にパッケージ化し、pip でインストールできるようにする方法を学習します。
 
 
-## Prerequisites
+## 前提条件
 
-Before you begin, ensure the following requirements are met:
+始める前に、以下の要件を満たしていることを確認してください。
 
-- dlt+ is installed and set up according to the [installation guide](./installation.md)
-- You are familiar with the [core concepts of dlt](../../reference/explainers/how-dlt-works.md)
-- You have completed the [basic project tutorial](./tutorial.md)
+- dlt+ が [インストールガイド](./installation.md) に従ってインストールおよび設定されていること
+- [dlt の中核概念](../../reference/explainers/how-dlt-works.md) を理解していること
+- [基本プロジェクトチュートリアル](./tutorial.md) を完了していること
 
-Additionally, install the required Python packages:
+さらに、必要な Python パッケージをインストールしてください。
 
 ```sh
 pip install pandas numpy pyarrow streamlit dlt[duckdb] uv
 ```
 
 
-## Packaging a project
+## プロジェクトのパッケージ化
 
-`dlt+` provides tools to help you package a project for distribution. This makes your project installable via `pip` and easier to share across your organization.
+`dlt+` は、配布用にプロジェクトをパッケージ化するためのツールを提供します。
+これにより、プロジェクトは `pip` 経由でインストールできるようになり、組織内での共有が容易になります。
 
-To create the project structure required for a package, add the `--package` option when initializing:
+パッケージに必要なプロジェクト構造を作成するには、初期化時に `--package` オプションを追加します。
 
 ```sh
 dlt project init arrow duckdb --package my_dlt_project
 ```
 
-This creates the same basic project as in the [basic tutorial](./tutorial.md), but places it inside a module named `my_dlt_project`, and includes a basic `pyproject.toml` file following PEP standards. 
-You’ll also get a default `__init__.py` file to make the package usable after installation:
+これは[基本チュートリアル](./tutorial.md)と同じ基本プロジェクトを作成しますが、`my_dlt_project`というモジュール内に配置され、PEP標準に準拠した基本的な`pyproject.toml`ファイルが含まれます。
+また、インストール後にパッケージを使用できるようにするためのデフォルトの`__init__.py`ファイルも取得されます。
 
 ```sh
 .
@@ -47,45 +49,46 @@ You’ll also get a default `__init__.py` file to make the package usable after 
 └── pyproject.toml        # the main project manifest
 ```
 
-Your `dlt.yml` works exactly the same as in non-packaged projects. 
-The key difference is the module structure and the presence of the `pyproject.toml` file. 
-The file includes a special entry point setting to let dlt+ discover your project:
+`dlt.yml` は、パッケージ化されていないプロジェクトと全く同じように動作します。
+主な違いは、モジュール構造と `pyproject.toml` ファイルの存在です。
+このファイルには、dlt+ がプロジェクトを検出できるようにするための特別なエントリポイント設定が含まれています。
 
 ```toml
 [project.entry-points.dlt_package]
 dlt-project = "my_project"
 ```
 
-You can still run the pipeline as usual with the CLI commands from the root folder:
+ルート フォルダーから CLI コマンドを使用して、通常どおりパイプラインを実行することもできます:
 
 ```sh
 dlt pipeline my_pipeline run
 ```
 
-If you open the `__init__.py` file inside your project module, you'll see the full interface that users of your package will interact with.
-This interface is very similar to the [`current`](../features/projects.md#python-api-to-interact-with-dlt-plus-project) interface used in flat (non-packaged) projects. The main difference is that it automatically uses the `access` profile by default.
-You can customize the `__init__.py` file to your project's needs.
+プロジェクトモジュール内の `__init__.py` ファイルを開くと、パッケージのユーザーが操作する完全なインターフェースが表示されます。
+このインターフェースは、フラット（パッケージ化されていない）プロジェクトで使用される [`current`](../features/projects.md#python-api-to-interact-with-dlt-plus-project) インターフェースと非常によく似ています。
+主な違いは、デフォルトで `access` プロファイルが自動的に使用されることです。
+`__init__.py` ファイルは、プロジェクトのニーズに合わせてカスタマイズできます。
 
-### Using the packaged project
+### パッケージ化されたプロジェクトの使用
 
-To demonstrate how your packaged project can be used, let's simulate a real-world scenario where a data scientist installs and runs your project in a separate Python environment.
-In this example, we'll use the [**uv** package manager](https://github.com/astral-sh/uv), but the same steps apply when using **poetry** or **pip**. You can find installation instructions [here](https://github.com/astral-sh/uv?tab=readme-ov-file#installation).
-Assume your packaged dlt+ project is located at: `/Volumes/my_drive/my_folder/pyproject.toml`. 
-Navigate to a new directory and initialize your project:
+パッケージ化されたプロジェクトの使用方法を説明するために、データサイエンティストが別のPython環境にプロジェクトをインストールして実行するという実際のシナリオをシミュレートしてみましょう。
+この例では、[**uv** パッケージマネージャー](https://github.com/astral-sh/uv) を使用しますが、**poetry** または **pip** を使用する場合も同じ手順が適用されます。インストール手順は [こちら](https://github.com/astral-sh/uv?tab=readme-ov-file#installation) で確認できます。
+パッケージ化された dlt+ プロジェクトが `/Volumes/my_drive/my_folder/pyproject.toml` にあると仮定します。
+新しいディレクトリに移動し、プロジェクトを初期化します。
 
 ```sh
 uv init
 ```
 
-Install your packaged project directly from the local path:
+パッケージ化されたプロジェクトをローカル パスから直接インストールします:
 
 ```sh
 uv pip install /Volumes/my_drive/my_folder
 ```
 
-Your dlt+ project is now available for use in this environment.
+これで、dlt+ プロジェクトをこの環境で使用できるようになりました。
 
-As an example, create a new Python file named `test_project.py`, use your packaged project, and define the environment variables it needs:
+例として、`test_project.py` という名前の新しい Python ファイルを作成し、パッケージ化されたプロジェクトを使用して、必要な環境変数を定義します。
 
 ```py
 # import the packaged project
@@ -111,16 +114,17 @@ if __name__ == "__main__":
     print(dataset.row_counts().df())
 ```
 
-Run the script inside the uv virtual environment:
+uv 仮想環境内でスクリプトを実行します:
 
 ```sh
 uv run python test_project.py
 ```
-Once your pipeline has run, you can explore and share the loaded data using various access methods provided by dlt+. [Learn more about it in the Secure data access and sharing.](../features/data-access#data-access-and-sharing)
+
+パイプラインを実行すると、dlt+ が提供するさまざまなアクセス方法を使用して、読み込んだデータを探索および共有できます。
+[詳細については、「安全なデータアクセスと共有」をご覧ください。](../features/data-access#data-access-and-sharing)
 
 :::info
-In a real-world setup, a data scientist wouldn't install the package from a local path.
-Instead, it would typically come from a private PyPI repository or a Git URL.
+実際の環境では、データサイエンティストはローカルパスからパッケージをインストールすることはありません。通常は、プライベートな PyPI リポジトリまたは Git URL からパッケージを取得します。
 :::
 
 

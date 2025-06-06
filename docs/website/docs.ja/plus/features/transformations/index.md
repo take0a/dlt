@@ -5,16 +5,17 @@ keywords: ["dlt+", "transformations", "cache", "dbt"]
 ---
 import DocCardList from '@theme/DocCardList';
 
-As part of dlt+, we provide a local transformation [cache](../../core-concepts/cache.md) — a staging layer for data transformations allowing you to test, validate, and debug data pipelines without running everything in the warehouse. With local transformations, you can:
+dlt+ の一部として、ローカル変換 [cache](../../core-concepts/cache.md) を提供しています。これは、データ変換のためのステージングレイヤーであり、ウェアハウス内ですべてのデータを実行することなく、データパイプラインのテスト、検証、デバッグを行うことができます。ローカル変換を使用すると、次のことが可能になります。
 
-* Run transformations locally, eliminating the need to wait for warehouse queries.
-* Validate the schema before loading to catch mismatches early.
-* Test without incurring cloud costs, as in-memory execution prevents wasted compute.
+* 変換をローカルで実行することで、ウェアハウスクエリを待つ必要がなくなります。
+* ロード前にスキーマを検証し、不一致を早期に検出できます。
+* インメモリ実行によりコンピューティングの無駄が防止されるため、クラウドコストを発生させずにテストできます。
 
-Local transformations are built on DuckDB, Arrow, and dbt, so they work with your existing stack.
+ローカル変換は DuckDB、Arrow、dbt 上に構築されているため、既存のスタックで動作します。
 
 :::caution
-The local transformations feature is currently in the early access phase. We recommend waiting for general access before using it in production.
+ローカル変換機能は現在、早期アクセス段階です。
+本番環境でご利用いただく前に、一般アクセスが開始されるまでお待ちいただくことをお勧めします。
 :::
 
 <DocCardList />

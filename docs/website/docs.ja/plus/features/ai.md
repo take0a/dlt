@@ -6,39 +6,44 @@ keywords: [dlt+, Claude Desktop, MCP, Model Context Protocol]
 
 # AI workflows
 
-As part of dlt+, we are developing several tools to enhance development with AI workflows. The first of these is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io) plugin for Claude Desktop for data exploration.
+dlt+の一環として、AIワークフローを活用した開発を強化するためのツールをいくつか開発しています。
+その1つが、Claude Desktopのデータ探索用プラグインである[Model Context Protocol (MCP)](https://modelcontextprotocol.io)です。
 
-## Prerequisites
-- dlt+ installed in a virtual environment (see [installation guide](../getting-started/installation.md))
-- [Claude Desktop](https://claude.ai/download) installed
+## 前提条件
 
-## Install dlt+ with MCP support
+- 仮想環境に dlt+ がインストールされている（[インストールガイド](../getting-started/installation.md) を参照）
+- [Claude Desktop](https://claude.ai/download) がインストールされている
 
-Make sure your virtual environment is activated, then:
+## MCPサポート付きのdlt+をインストールします。
+
+仮想環境がアクティブ化されていることを確認し、以下の手順を実行してください。
 
 ```sh
 pip install dlt-plus[mcp]
 ```
 
-## Set up or use a dlt+ project
+## dlt+ プロジェクトの設定または使用
 
-You can either use your existing dlt+ project or create a simple test project to try out the MCP workflow.
+既存の dlt+ プロジェクトを使用することも、簡単なテストプロジェクトを作成して MCP ワークフローを試すこともできます。
 
-### Using an existing project
-If you already have a dlt+ project, you can use it directly - just make sure you have run at least one pipeline so there's some data to explore. You can skip to [configure Claude Desktop](#configure-claude-desktop) if you have a project ready.
+### 既存のプロジェクトの使用
 
-### Creating a test project
-If you don't have a project yet, here's how to create a simple one:
+既に dlt+ プロジェクトをお持ちの場合は、そのまま使用できます。ただし、少なくとも 1 つのパイプラインを実行し、探索可能なデータがあることを確認してください。
+プロジェクトの準備が整っている場合は、[Claude Desktop の設定](#configure-claude-desktop) に進んでください。
 
-On Unix-based systems:
+### テストプロジェクトの作成
+
+まだプロジェクトをお持ちでない場合は、以下の手順に従って簡単なプロジェクトを作成してください。
+
+Unix ベースのシステムの場合：
 
 ```sh
 touch dlt.yml
 ```
 
-Alternatively, you can create an empty dlt.yml file in any text editor.
+または、任意のテキストエディタで空の dlt.yml ファイルを作成することもできます。
 
-Copy and paste the following configuration into the `dlt.yml` file:
+以下の設定をコピーして `dlt.yml` ファイルに貼り付けます:
 
 ```yaml
 sources:
@@ -72,27 +77,27 @@ datasets:
       - pokemon_local
 ```
 
-This will create a dlt+ project with a single pipeline that loads data from the Pokemon API and stores it in a local directory.
+これにより、Pokemon API からデータを読み込み、ローカルディレクトリに保存する単一のパイプラインを持つ dlt+ プロジェクトが作成されます。
 
-Validate the project configuration:
+プロジェクト構成を検証します:
 
 ```sh
 dlt project config validate
 ```
 
-If the configuration is valid, you should see the following message:
+構成が有効な場合は、次のメッセージが表示されます:
 
 ```sh
 Configuration validation successful!
 ```
 
-That means you can now run the pipeline to get some data:
+つまり、パイプラインを実行してデータを取得できるようになりました:
 
 ```sh
 dlt pipeline pokemon run
 ```
 
-If the pipeline runs successfully, you should see the following message:
+パイプラインが正常に実行されると、次のメッセージが表示されます:
 
 ```sh
 1 load package(s) were loaded to destination pokemon_local and into dataset pokemon_dataset
@@ -100,18 +105,23 @@ The pokemon_local destination used file:///path/to/your/project/_data/dev/local/
 Load package 1739383145.0668569 is LOADED and contains no failed jobs
 ```
 
-Great, you have some data in your project. The next step is configuring Claude Desktop, but for this, you'll need to get a path to your `dlt` executable. When you are using a virtual environment, the `dlt` executable is typically located in its `bin` directory (on Unix-like systems). For example, if your virtual environment is located in a `.venv` directory, the path to the `dlt` executable is `.venv/bin/dlt`.
-Running `which dlt` in your terminal will give you the path to the `dlt` executable. Take note of it; we will use it in the next step.
+プロジェクトにデータがいくつか追加されました。
+次のステップはClaude Desktopの設定ですが、そのためには`dlt`実行ファイルへのパスを取得する必要があります。
+仮想環境を使用している場合、`dlt`実行ファイルは通常、`bin`ディレクトリにあります（Unix系システムの場合）。
+例えば、仮想環境が`.venv`ディレクトリにある場合、`dlt`実行ファイルへのパスは`.venv/bin/dlt`です。
+ターミナルで`which dlt`を実行すると、`dlt`実行ファイルへのパスが表示されます。
+このパスをメモしておいてください。次のステップで使用します。
 
-## Configure Claude Desktop
+## Claude Desktop を設定する
 
-Make sure you have installed [Claude Desktop](https://claude.ai/download) and have an account.
+[Claude Desktop](https://claude.ai/download) がインストールされ、アカウントを持っていることを確認してください。
 
-### Update Claude desktop config
+### Claude デスクトップの設定を更新します。
 
-In Claude Desktop, go to settings (in macOS, Claude > Settings) and under "Developer," click "Edit Config." You will see the location of the `claude_desktop_config.json` file.
+Claude デスクトップで設定（macOS の場合は「Claude」>「設定」）に移動し、「開発者」の下にある「設定を編集」をクリックします。
+`claude_desktop_config.json` ファイルの場所が表示されます。
 
-Open the file in a text editor and add the following configuration:
+テキストエディタでファイルを開き、以下の設定を追加します。
 
 ```json
 {
@@ -129,56 +139,56 @@ Open the file in a text editor and add the following configuration:
 }
 ```
 
-Replace `</path/to/your/project/.venv/bin/dlt>` with the path to your `dlt` executable from the previous step and save the file.
+`</path/to/your/project/.venv/bin/dlt>` を前の手順の `dlt` 実行可能ファイルへのパスに置き換えて、ファイルを保存します。
 
 :::warning
-If you are using [environment variables](../../general-usage/credentials/setup.md#environment-variables) to configure dlt, make sure to include them as part of the command before the `dlt` executable.
+[環境変数](../../general-usage/credentials/setup.md#environment-variables)を使用して dlt を構成する場合は、それらを `dlt` 実行可能ファイルの前のコマンドの一部として必ず含めてください。
 :::
 
-### Restart Claude desktop
+### Claude デスクトップを再起動してください
 
-**Important**: Restart Claude Desktop so the new configuration is loaded.
+**重要**: 新しい設定を読み込むため、Claude デスクトップを再起動してください。
 
 :::note
-Make sure to restart Claude Desktop after you have updated the config.
+設定を更新した後は、必ず Claude Desktop を再起動してください。
 :::
 
-### Check the connection
+### 接続を確認してください
 
-After you have restarted Claude Desktop, you can check the connection by looking at the tool icon in the bottom right corner of the chat box:
+Claude Desktop を再起動した後、チャットボックスの右下にあるツールアイコンで接続を確認できます。
 
 ![Claude Desktop connection icon](https://storage.googleapis.com/dlt-blog-images/plus/mcp/claude-desktop-tool-icon.png)
 
-If you do not see the icon, ensure your `claude_desktop_config.json` is saved properly and that Claude Desktop was fully restarted.
+アイコンが表示されない場合は、`claude_desktop_config.json` が正しく保存されていること、および Claude Desktop が完全に再起動されていることを確認してください。
 
-When you click on the icon, you will see the "Available MCP Tools" popup with the tool's description.
+アイコンをクリックすると、「利用可能な MCP ツール」ポップアップとツールの説明が表示されます。
 
 ![Claude Desktop available MCP tools](https://storage.googleapis.com/dlt-blog-images/plus/mcp/claude-desktop-available-tools.png)
 
-## Start chatting
+## チャットを始めましょう
 
-Now you can start chatting with Claude Desktop and ask it questions about the data in your dlt+ project.
+Claude Desktop とチャットを開始し、dlt+ プロジェクト内のデータについて質問することができます。
 
-For example, you may ask, "Which tables do I have in my pipeline?":
+例えば、「パイプラインにはどのテーブルがありますか？」と尋ねることができます。
 
 ![Claude Desktop chat example](https://storage.googleapis.com/dlt-blog-images/plus/mcp/claude-desktop-chat-example.png)
 
-Claude will ask you for permission to run the tool locally:
+Claude は、ツールをローカルで実行する許可を求めます。
 
 ![Claude Desktop permission request](https://storage.googleapis.com/dlt-blog-images/plus/mcp/claude-desktop-permission-request.png)
 
-After you grant the permission, Claude Desktop will run the tool (available_datasets) and (depending on the result) may proceed with selecting and running other tools.
+権限を付与すると、Claude Desktop はツール (available_datasets) を実行し、(結果に応じて) 他のツールの選択と実行に進む場合があります。
 
 :::tip
-To see all the available tools, click on the tool icon in the bottom right corner of the chat box.
+利用可能なすべてのツールを表示するには、チャット ボックスの右下隅にあるツール アイコンをクリックします。
 :::
 
-More examples of the queries you can ask:
+他にも以下のようなクエリ例があります。
 
-- "What columns does the pokemon table have?"
-- "How many rows are in the pokemon table?"
-- "Transform the pokemon table to add a new column with the pokemon name length."
-- "What is the average height of the pokemon?"
+- 「ポケモンテーブルにはどんな列がありますか？」
+- 「ポケモンテーブルには何行ありますか？」
+- 「ポケモンテーブルを変換して、ポケモンの名前の長さを入力する新しい列を追加してください。」
+- 「ポケモンの平均身長はどれくらいですか？」
 
-That's it! You can now explore your dlt+ project from Claude Desktop using the MCP.
+これで完了です！これで、Claude Desktop から MCP を使用して dlt+ プロジェクトを操作できるようになりました。
 

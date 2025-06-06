@@ -4,16 +4,18 @@ description: Provide secure data access to your organization
 keywords: ["data access", "security", "contracts", "data sharing"]
 ---
 
-# Secure data access and sharing
+# 安全なデータアクセスと共有
 
-dlt+ makes it easy for end-users like data scientists or analysts to access high-quality production data in a secure and Python-friendly way. A [dlt+ Project](../core-concepts/project.md) exposes a standard Python API which connects to the production data using an "access" [profile](../core-concepts/profiles.md). This profile can be configured to specify how users are allowed to interact with the data, e.g., by applying restrictions on datasets that are not allowed to be modified.
+dlt+ は、データサイエンティストやアナリストなどのエンドユーザーが、安全かつ Python フレンドリーな方法で高品質な本番データに簡単にアクセスできるようにします。
+[dlt+ プロジェクト](../core-concepts/project.md) は、標準の Python API を公開し、「access」[プロファイル](../core-concepts/profiles.md) を使用して本番データに接続します。
+このプロファイルは、ユーザーがデータをどのように操作できるかを指定するように構成できます。例えば、変更が許可されていないデータセットに制限を適用するなどです。
 
-## Project packaging
+## プロジェクトのパッケージ化
 
-dlt+ Projects can be distributed as Python packages, with which data end-users can easily interact within their own Pythonic workflows.
-To package an existing dlt+ Project, you need to:
+dlt+ プロジェクトは Python パッケージとして配布できます。これにより、エンドユーザーは独自の Python ワークフロー内でデータを簡単に操作できます。
+既存の dlt+ プロジェクトをパッケージ化するには、以下の手順が必要です。
 
-1. Add an `__init__.py` file to the root of your project.
+1. プロジェクトのルートに `__init__.py` ファイルを追加します。
 
 <details>
 
@@ -70,7 +72,7 @@ def catalog() -> Catalog:
 ```
 </details>
 
-2. Package the project using any of the Python package managers (e.g., [uv](https://docs.astral.sh/uv/), [poetry](https://python-poetry.org/), or setuptools).
+2. いずれかの Python パッケージ マネージャー (例: [uv](https://docs.astral.sh/uv/)、[poetry](https://python-poetry.org/)、setuptools) を使用してプロジェクトをパッケージ化します。
 
 <details>
 
@@ -94,28 +96,30 @@ dlt-project = "dlt_example_project"
 </details>
 
 :::info
-cli support for packaging dlt+ Projects is currently in development and will be available in future releases.
+dlt+ プロジェクトのパッケージ化のための CLI サポートは現在開発中であり、将来のリリースで利用可能になる予定です。
 :::
 
-## Data access and sharing
+## データへのアクセスと共有
 
-Once you've created a Python package, you can distribute it via PyPI (private or public) or a git repository. The resulting Python package will allow users to access the data in their Pythonic workflows. An example of such a workflow:
+Python パッケージを作成したら、PyPI（プライベートまたはパブリック）または Git リポジトリ経由で配布できます。
+作成された Python パッケージにより、ユーザーは Python ワークフロー内でデータにアクセスできるようになります。
+このようなワークフローの例：
 
-1. Pip install the Python package in your local Python environment (for example, a notebook).
+1. ローカルの Python 環境（ノートブックなど）に Python パッケージを pip でインストールします。
 
     ```sh
     pip install -U --index-url https://pypi.dlthub.com dlt_example_project
     ```
 
-2. Import the project like any Python module.
+2. 他の Python モジュールと同様にプロジェクトをインポートします。
 
     ```py
     import dlt_example_project as dlt_project
     ```
 
-3. Explore the data.
+3. データを探索します。
 
-    The datasets declared in the project create a data catalog that can be used to explore which datasets and tables are available and even discover their schema without having to actually load any data into the local machine.
+    プロジェクトで宣言されたデータセットは、利用可能なデータセットとテーブルを探索し、ローカルマシンに実際にデータをロードすることなく、それらのスキーマを発見できるデータカタログを作成します。
 
     ```py
     my_catalog = dlt_project.catalog() # Access the data catalog created by dlt
@@ -123,7 +127,7 @@ Once you've created a Python package, you can distribute it via PyPI (private or
     print(my_catalog.github_events_dataset) # Access the dataset github_events_dataset from the catalog
     ```
 
-    In this example, `print(my_catalog)` shows two available datasets in the catalog: `github_events_dataset` in an s3 bucket and `reports_dataset` in a Snowflake warehouse.
+    この例では、`print(my_catalog)` はカタログ内の 2 つの使用可能なデータセット (s3 バケット内の `github_events_dataset` と Snowflake ウェアハウス内の `reports_dataset`) を表示します。
 
     ```sh
     Datasets in project dlt_example_project for profile access:
@@ -131,7 +135,7 @@ Once you've created a Python package, you can distribute it via PyPI (private or
     reports_dataset@warehouse[snowflake://loader:***@kgiotue-wn98412/dlt_data]
     ```
 
-    And `print(my_catalog.github_events_dataset)` shows the available tables in the dataset `github_events_dataset`.
+    また、`print(my_catalog.github_events_dataset)` は、データセット `github_events_dataset` で使用可能なテーブルを表示します。
 
     ```sh
     Dataset github_events_dataset tables in logical schema events@v2
@@ -154,37 +158,40 @@ Once you've created a Python package, you can distribute it via PyPI (private or
     push_event__payload__commits
     ```
 
-4. Access the data.
+4. データにアクセスします。
 
-    Choose the tables from the catalog you want to work with (for example: `issues_event`) and only load those into the local environment:
+    カタログから操作したいテーブル（例：`issues_event`）を選択し、それらのテーブルのみをローカル環境にロードします。
 
     ```py
     df = my_catalog.github_events_dataset.issues_event.df()
     ```
 
-    These can be loaded into:
-    * Pandas dataframes with `.df()`
-    * Arrow tables with `.arrow()`
-    * SQL with `.sql()`
+    これらは以下の場所に読み込むことができます。
+    * Pandas データフレーム（`.df()` を使用）
+    * Arrow テーブル（`.arrow()` を使用）
+    * SQL（`.sql()` を使用）
 
 
-5. Do work on the data.
+5. データに作業を実行します。
 
-    Once loaded into your environment, you can work on the data just as you would in your regular Python workflow. In the example below, a custom Python function `aggregate_issues()` performs some aggregations on the data.
+    環境にロードしたら、通常のPythonワークフローと同じようにデータを操作できます。
+    以下の例では、カスタムPython関数 `aggregate_issues()` がデータの集計を実行します。
 
     ```py
     reports_df = aggregate_issues(df)
     ```
 
-6. Share back the results.
+6. 結果を共有します。
 
-    Using the `.save()` method, you can write back data directly to the destination. For example, the code below writes `reports_df` from Step 5 as a new table `aggregated_issues` in the dataset `reports_dataset`:
+    `.save()` メソッドを使用すると、データを直接保存先に書き戻すことができます。
+    例えば、以下のコードは、ステップ 5 の `reports_df` をデータセット `reports_dataset` の新しいテーブル `aggregated_issues` として書き込みます。
 
     ```py
     print(my_catalog.reports_dataset.save(reports_df, table_name="aggregated_issues"))
     ```
 
-    Running these lines gives the following output:
+    これらの行を実行すると、次の出力が得られます:
+
     ```sh
     Pipeline save_aggregated_issues_pipeline load step completed in 7.85 seconds
     1 load package(s) were loaded to destination warehouse and into dataset reports_dataset
@@ -192,11 +199,14 @@ Once you've created a Python package, you can distribute it via PyPI (private or
     Load package 1730314457.4512188 is LOADED and contains no failed jobs
     ```
 
-## Security and contracts
+## セキュリティとコントラクト
 
-When end-users interact with data using the Python API, they do so through a profile called "access". As a data engineer, you can manage this access by setting configurations and credentials for this profile in `dlt.yml` or in the toml files. Read more about setting secrets and configurations for different profiles [here](../core-concepts/profiles.md).
+エンドユーザーがPython APIを使用してデータを操作する際には、「access」と呼ばれるプロファイルを使用します。
+データエンジニアは、`dlt.yml` または toml ファイルでこのプロファイルの設定と認証情報を設定することで、このアクセスを管理できます。
+各プロファイルのシークレットと設定の詳細については、[こちら](../core-concepts/profiles.md) をご覧ください。
 
-It's possible to set granular limits on how users can write data through schema and data contracts. These can be set individually per profile per dataset.
+スキーマとデータコントラクトを通じて、ユーザーがデータを書き込む方法にきめ細かな制限を設定できます。
+これらの制限は、プロファイルごと、データセットごとに個別に設定できます。
 
 ```yaml
 profiles:
@@ -214,13 +224,14 @@ profiles:
                     data_type: freeze
 ```
 
-In this example, users with the profile "access" are restricted from writing any tables or modifying the schema of existing tables in the dataset `github_events_dataset`. So if the end-user from the [previous example](#data-access-and-sharing) tried to write back their tables to this dataset instead of the `reports_dataset`:
+この例では、プロファイル「access」を持つユーザーは、データセット「github_events_dataset」内のテーブルへの書き込みや既存テーブルのスキーマ変更が制限されています。
+そのため、[前の例](#data-access-and-sharing)のエンドユーザーが、`reports_dataset`ではなくこのデータセットにテーブルを書き戻そうとした場合、次のようになります:
 
 ```py
 print(my_catalog.github_events_dataset.save(reports_df, table_name="aggregated_issues"))
 ```
 
-then they would get the following error:
+次のようなエラーが発生します:
 
 ```sh
 PipelineStepFailed: Pipeline execution failed at stage extract when processing package 1730314603.1941314 with exception:
@@ -229,7 +240,8 @@ PipelineStepFailed: Pipeline execution failed at stage extract when processing p
 In schema: events: In Schema: events Table: aggregated_issues. Contract on tables with mode freeze is violated. Trying to add table aggregated_issues but new tables are frozen.
 ```
 
-There are also contracts set on the `reports_dataset` that allow users to write tables but restrict them from modifying the existing schema. So, if the same user tried to add a new column `id` to the existing table `aggregated_issues` inside the `reports_dataset`:
+`reports_dataset` には、ユーザーがテーブルに書き込むことは許可するが、既存のスキーマの変更は制限するコントラクトも設定されています。
+つまり、同じユーザーが `reports_dataset` 内の既存のテーブル `aggregated_issues` に新しい列 `id` を追加しようとした場合、次のようになります。
 
 ```py
 # Access the aggregated_issues table from the reports_dataset in the catalog
@@ -242,7 +254,7 @@ reports_df["id"] = 1
 print(my_catalog.reports_dataset.save(reports_df, table_name="aggregated_issues"))
 ```
 
-then they would get the following error:
+次のようなエラーが発生します:
 
 ```sh
 PipelineStepFailed: Pipeline execution failed at stage extract when processing package 1730314610.4309433 with exception:

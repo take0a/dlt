@@ -6,28 +6,34 @@ keywords: [delta, delta lake]
 
 # Delta
 
-The Delta destination is based on the [filesystem destination](../../dlt-ecosystem/destinations/filesystem.md) in dlt. All configuration options from the filesystem destination can be configured as well.
+Delta の保存先は、dlt の [ファイルシステム保存先](../../dlt-ecosystem/destinations/filesystem.md) に基づいています。
+ファイルシステム保存先のすべての設定オプションも同様に設定できます。
 
 :::caution
-Under the hood, dlt+ uses the [deltalake library](https://pypi.org/project/deltalake/) to write Delta tables. Beware that when loading a large amount of data for one table, the underlying Rust implementation will consume a lot of memory. This is a known issue, and the maintainers are actively working on a solution. You can track the progress [here](https://github.com/delta-io/delta-rs/pull/2289). Until the issue is resolved, you can mitigate the memory consumption by doing multiple smaller incremental pipeline runs.
+dlt+ は内部的に [deltalake ライブラリ](https://pypi.org/project/deltalake/) を使用して Delta テーブルを書き込みます。
+1 つのテーブルに大量のデータをロードする場合、基盤となる Rust 実装が大量のメモリを消費することに注意してください。
+これは既知の問題であり、メンテナーは積極的に解決に取り組んでいます。
+進捗状況は [こちら](https://github.com/delta-io/delta-rs/pull/2289) で確認できます。
+問題が解決するまでは、複数の小さな増分パイプライン実行を行うことで、メモリ消費を軽減できます。
 :::
 
-## Setup
+## セットアップ
 
-Make sure you have installed the necessary dependencies:
+必要な依存関係がインストールされていることを確認してください:
+
 ```sh
 pip install deltalake
 pip install pyarrow>=2.0.18
 ```
 
-Initialize a dlt+ project in the current working directory with the following command:
+次のコマンドを使用して、現在の作業ディレクトリ内の dlt+ プロジェクトを初期化します:
 
 ```sh
 # replace sql_database with the source of your choice
 dlt project init sql_database delta
 ```
 
-This will create a Delta destination in your `dlt.yml`, where you can configure the destination:
+これにより、`dlt.yml` に Delta 宛先が作成され、宛先を設定できます:
 
 ```yaml
 destinations:
@@ -36,7 +42,7 @@ destinations:
     bucket_url: "s3://your_bucket" # replace with bucket url
 ```
 
-The credentials can be defined in the `secrets.toml`:
+資格情報は `secrets.toml` で定義できます:
 
 <Tabs
   groupId="filesystem-type"
@@ -71,7 +77,7 @@ azure_storage_account_key="Please set me up!"
 <TabItem value="gcp">
 
 :::caution
-Only [Service Account](../../dlt-ecosystem/destinations/bigquery#setup-guide) and [Application Default Credentials](../../dlt-ecosystem/destinations/bigquery#using-default-credentials) authentication methods are supported for Google Cloud Storage.
+Google Cloud Storage では、[サービス アカウント](../../dlt-ecosystem/destinations/bigquery#setup-guide) と [アプリケーションのデフォルト認証情報](../../dlt-ecosystem/destinations/bigquery#using-default-credentials) の認証方法のみがサポートされています。
 :::
 
 ```toml
@@ -85,8 +91,8 @@ project_id="Please set me up!"
 
 <TabItem value="sftp">
 
-Learn how to set up SFTP credentials for each authentication method in the [SFTP section](../../dlt-ecosystem/destinations/filesystem#sftp).
-For example, in the case of key-based authentication, you can configure the source the following way:
+各認証方法のSFTP認証情報の設定方法については、[SFTPセクション](../../dlt-ecosystem/destinations/filesystem#sftp)を参照してください。
+たとえば、キーベース認証の場合、ソースを次のように設定できます。
 
 ```toml
 # secrets.toml
@@ -100,24 +106,24 @@ sftp_key_passphrase = "your_passphrase"   # Optional: passphrase for your privat
 </Tabs>
 
 
-The Delta destination can also be defined in Python as follows:
+Delta の宛先は、Python では次のように定義することもできます:
 
 ```py
 pipeline = dlt.pipeline("loads_delta", destination="delta")
 ```
 
-## Write dispositions
+## 書き込み処理
 
-The Delta destination handles the write dispositions as follows:
-- `append` - files belonging to such tables are added to the dataset folder.
-- `replace` - all files that belong to such tables are deleted from the dataset folder, and then the current set of files is added.
-- `merge` - can be used only with the `upsert` [merge strategy](../../general-usage/merge-loading.md#upsert-strategy).
+Delta 出力先は、書き込み処理を次のように処理します。
+- `append` - 該当するテーブルに属するファイルがデータセットフォルダに追加されます。
+- `replace` - 該当するテーブルに属するすべてのファイルがデータセットフォルダから削除され、現在のファイルセットが追加されます。
+- `merge` - `upsert` [マージ戦略](../../general-usage/merge-loading.md#upsert-strategy) でのみ使用できます。
 
 :::caution
-The `upsert` merge strategy for the Delta destination is **experimental**.
+Delta 宛先の `upsert` マージ戦略は **実験的** です。
 :::
 
-The `merge` write disposition can be configured as follows on the source/resource level:
+`merge` 書き込み処理は、ソース/リソース レベルで次のように構成できます:
 
 <Tabs values={[{"label": "dlt.yml", "value": "yaml"}, {"label": "Python", "value": "python"}]}  groupId="language" defaultValue="yaml">
   <TabItem value="yaml">
@@ -152,15 +158,15 @@ pipeline = dlt.pipeline("loads_delta", destination="delta")
 </TabItem>
 </Tabs>
 
-Or on the `pipeline.run` level: <!-- can this also be defined in the yaml??-->
+または `pipeline.run` レベルで: <!-- can this also be defined in the yaml??-->
 
 ```py
 pipeline.run(write_disposition={"disposition": "merge", "strategy": "upsert"})
 ```
 
-## Partitioning
+## パーティショニング
 
-Delta tables can be partitioned (using [Hive-style partitioning](https://delta.io/blog/pros-cons-hive-style-partionining/)) by specifying one or more partition column hints on the source/resource level:
+デルタテーブルは、ソース/リソースレベルで1つ以上のパーティション列ヒントを指定することにより、パーティション分割（[Hive スタイルのパーティショニング](https://delta.io/blog/pros-cons-hive-style-partionining/)を使用）できます。
 
 <Tabs values={[{"label": "dlt.yml", "value": "yaml"}, {"label": "Python", "value": "python"}]}  groupId="language" defaultValue="yaml">
   <TabItem value="yaml">
@@ -192,11 +198,12 @@ Delta tables can be partitioned (using [Hive-style partitioning](https://delta.i
 </Tabs>
 
 :::caution
-Partition evolution (changing partition columns after a table has been created) is currently not supported.
+パーティションの進化 (テーブルの作成後にパーティション列を変更すること) は現在サポートされていません。
 :::
 
-## Table access helper functions
-You can use the `get_delta_tables` helper functions to access the native [DeltaTable](https://delta-io.github.io/delta-rs/api/delta_table/) objects.
+## テーブルアクセスヘルパー関数
+
+`get_delta_tables` ヘルパー関数を使用して、ネイティブの [DeltaTable](https://delta-io.github.io/delta-rs/api/delta_table/) オブジェクトにアクセスできます。
 
 ```py
 from dlt.common.libs.deltalake import get_delta_tables
@@ -213,8 +220,10 @@ delta_tables["another_delta_table"].optimize.z_order(["col_a", "col_b"])
 # etc.
 ```
 
-## Table format
-The Delta destination automatically assigns the `delta` table format to all resources that it will load. You can still fall back to storing files by setting `table_format` to native on the resource level:
+## テーブル形式
+
+Delta 出力先は、読み込むすべてのリソースに自動的に `delta` テーブル形式を割り当てます。
+リソースレベルで `table_format` をネイティブに設定することで、ファイルの保存にフォールバックすることもできます。
 
   ```py
   @dlt.resource(
@@ -226,9 +235,9 @@ The Delta destination automatically assigns the `delta` table format to all reso
   pipeline = dlt.pipeline("loads_delta", destination="delta")
   ```
 
-## Storage options and configuration
-You can pass storage options and configuration by configuring both `destination.filesystem.deltalake_storage_options` and
-`destination.filesystem.deltalake_configuration`:
+## ストレージオプションと設定
+
+`destination.filesystem.deltalake_storage_options` と `destination.filesystem.deltalake_configuration` の両方を設定することで、ストレージオプションと設定を渡すことができます。
 
 ```toml
 [destination.filesystem]
@@ -236,10 +245,12 @@ deltalake_configuration = '{"delta.enableChangeDataFeed": "true", "delta.minWrit
 deltalake_storage_options = '{"AWS_S3_LOCKING_PROVIDER": "dynamodb", "DELTA_DYNAMO_TABLE_NAME": "custom_table_name"}'
 ```
 
-dlt passes these as arguments to the `write_deltalake` method in the `deltalake` library (`deltalake_configuration` maps to `configuration` and `deltalake_storage_options` maps to `storage_options`). Look at their [documentation](https://delta-io.github.io/delta-rs/api/delta_writer/#deltalake.write_deltalake) to see which options can be used.
+dlt は、これらを `deltalake` ライブラリの `write_deltalake` メソッドに引数として渡します（`deltalake_configuration` は `configuration` に、`deltalake_storage_options` は `storage_options` にマッピングされます）。
+使用可能なオプションについては、[ドキュメント](https://delta-io.github.io/delta-rs/api/delta_writer/#deltalake.write_deltalake) を参照してください。
 
-You don't need to specify credentials here. dlt merges the required credentials with the options you provided before passing it as `storage_options`.
+ここで資格情報を指定する必要はありません。
+dlt は、必要な資格情報と指定されたオプションをマージしてから、`storage_options` として渡します。
 
 :::warning
-When using `s3`, you need to specify storage options to [configure](https://delta-io.github.io/delta-rs/usage/writing/writing-to-s3-with-locking-provider/) locking behavior.
+`s3` を使用する場合は、ロック動作を [設定](https://delta-io.github.io/delta-rs/usage/writing/writing-to-s3-with-locking-provider/) するためのストレージ オプションを指定する必要があります。
 :::

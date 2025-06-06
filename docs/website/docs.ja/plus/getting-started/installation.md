@@ -3,39 +3,39 @@ title: Installation
 description: Installation information for dlt+
 ---
 
-:::info Supported Python versions
+:::info サポートされているPythonのバージョン
 
-dlt+ currently supports Python versions 3.9-3.12.
+dlt+ は現在、Python バージョン 3.9 ～ 3.12 をサポートしています。
 
 :::
 
-## Quickstart
+## クイックスタート
 
-To install the `dlt-plus` package, run:
+`dlt-plus` パッケージをインストールするには、次のコマンドを実行します:
 
 ```sh
 pip install dlt-plus
 ```
 
-Please install a valid license before proceeding, as described under [licensing](#licensing).
+続行する前に、[ライセンス](#licensing) の説明に従って有効なライセンスをインストールしてください。
 
-## Setting up your environment
+## 環境の設定
 
-### Configuration of the Python environment
+### Python 環境の設定
 
-Check if your Python environment is configured:
+Python 環境が設定されているかどうかを確認します:
 
 ```sh
 python --version
 pip --version
 ```
 
-If you have a different Python version installed or are missing pip, follow the instructions below to update your Python version and/or install `pip`.
+異なるバージョンの Python がインストールされている場合、または pip が不足している場合は、以下の手順に従って Python バージョンを更新するか、または `pip` をインストールしてください。
 
 <Tabs values={[{"label": "Ubuntu", "value": "ubuntu"}, {"label": "macOS", "value": "macos"}, {"label": "Windows", "value": "windows"}]} groupId="operating-systems" defaultValue="ubuntu">
 <TabItem value="ubuntu">
 
-You can install Python 3.10 with `apt`.
+`apt` を使って Python 3.10 をインストールできます。
 
 ```sh
 sudo apt update
@@ -46,7 +46,7 @@ pip install uv
   </TabItem>
   <TabItem value="macos">
 
-On macOS, you can use [Homebrew](https://brew.sh) to install Python 3.10.
+macOSでは、[Homebrew](https://brew.sh)を使用してPython 3.10をインストールできます。
 
 ```sh
 brew update
@@ -57,7 +57,7 @@ pip install uv
   </TabItem>
   <TabItem value="windows">
 
-After installing [Python 3.10 (64-bit version) for Windows](https://www.python.org/downloads/windows/), you can install `pip`.
+[Python 3.10 (64ビット版) for Windows](https://www.python.org/downloads/windows/) をインストールした後、 `pip` をインストールできます。
 
 ```sh
 C:\> pip3 install -U pip
@@ -69,20 +69,20 @@ C:\> pip3 install uv
 
 ### Virtual environment
 
-We recommend working within a [virtual environment](https://docs.python.org/3/library/venv.html) when creating Python projects.
-This way, all the dependencies for your current project will be isolated from packages in other projects.
+Python プロジェクトを作成する際は、[仮想環境](https://docs.python.org/3/library/venv.html) 内で作業することをお勧めします。これにより、現在のプロジェクトのすべての依存関係が、他のプロジェクトのパッケージから分離されます。
 
 <Tabs values={[{"label": "Ubuntu", "value": "ubuntu"}, {"label": "macOS", "value": "macos"}, {"label": "Windows", "value": "windows"}]} groupId="operating-systems" defaultValue="ubuntu">
 
   <TabItem value="ubuntu">
 
-Create a new virtual environment in your working folder. This will create a `./venv` directory where your virtual environment will be stored:
+作業フォルダに新しい仮想環境を作成します。
+これにより、仮想環境が保存される `./venv` ディレクトリが作成されます。
 
 ```sh
 uv venv --python 3.10
 ```
 
-Activate the virtual environment:
+仮想環境をアクティブ化します。
 
 ```sh
 source .venv/bin/activate
@@ -91,13 +91,14 @@ source .venv/bin/activate
   </TabItem>
   <TabItem value="macos">
 
-Create a new virtual environment in your working folder. This will create a `./venv` directory where your virtual environment will be stored:
+作業フォルダに新しい仮想環境を作成します。
+これにより、仮想環境が保存される `./venv` ディレクトリが作成されます。
 
 ```sh
 uv venv --python 3.10
 ```
 
-Activate the virtual environment:
+仮想環境をアクティブ化します。
 
 ```sh
 source .venv/bin/activate
@@ -106,13 +107,14 @@ source .venv/bin/activate
   </TabItem>
   <TabItem value="windows">
 
-Create a new virtual environment in your working folder. This will create a `./venv` directory where your virtual environment will be stored:
+作業フォルダに新しい仮想環境を作成します。
+これにより、仮想環境が保存される `./venv` ディレクトリが作成されます:
 
 ```bat
 C:\> uv venv --python 3.10
 ```
 
-Activate the virtual environment:
+仮想環境をアクティブ化します:
 
 ```bat
 C:\> .\venv\Scripts\activate
@@ -121,45 +123,45 @@ C:\> .\venv\Scripts\activate
   </TabItem>
 </Tabs>
 
-### Install dlt+
+### dlt+ をインストール
 
-You can now install dlt+ in your virtual environment by running:
+次のコマンドを実行することで、仮想環境に dlt+ をインストールできます:
 
 ```sh
 # install the newest dlt version or upgrade the existing version to the newest one
 uv pip install -U dlt-plus
 ```
 
-Please install a valid license before proceeding, as described under [licensing](#licensing).
+続行する前に、[ライセンス](#licensing) の説明に従って有効なライセンスをインストールしてください。
 
 ## Licensing
 
-Once you have a valid license, you can make it available to dlt+ using one of the following methods:
+有効なライセンスを取得したら、次のいずれかの方法で dlt+ で利用できるようにすることができます。
 
-1. **Environment variable**: set the license key as an environment variable:
+1. **環境変数**: ライセンス キーを環境変数として設定します。
 
 ```sh
 export RUNTIME__LICENSE="eyJhbGciOiJSUz...vKSjbEc==="
 ```
 
-2. **Secrets file**: add the license key to a `secrets.toml` file. You can use either the project-level `secrets.toml` (located in `./.dlt/secrets.toml`) or the global one (located in `~/.dlt/secrets.toml`):
+2. **Secrets ファイル**: ライセンスキーを `secrets.toml` ファイルに追加します。プロジェクトレベルの `secrets.toml` ファイル（`./.dlt/secrets.toml` 内）またはグローバルの `secrets.toml` ファイル（`~/.dlt/secrets.toml` 内）のいずれかを使用できます。
 
 ```toml
 [runtime]
 license="eyJhbGciOiJSUz...vKSjbEc==="
 ```
 
-3. **`dlt.yml`**: add the license key directly in the [project manifest file](../features/projects.md) referencing a user-defined environment variable:
+3. **`dlt.yml`**: ユーザー定義の環境変数を参照して、[プロジェクト マニフェスト ファイル](../features/projects.md) にライセンス キーを直接追加します。
 
 ```yaml
 runtime:
   license: { env.MY_ENV_CONTAINING_LICENSE_KEY }
 ```
 
-You can verify that the license was installed correctly and is valid by running:
+次のコマンドを実行すると、ライセンスが正しくインストールされ、有効であることを確認できます:
 
 ```sh
 $ dlt license show
 ```
 
-Our license terms can be found [here](https://dlthub.com/legal/dlt-plus-eula).
+当社のライセンス条項については、[こちら](https://dlthub.com/legal/dlt-plus-eula) をご覧ください。

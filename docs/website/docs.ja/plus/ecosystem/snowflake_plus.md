@@ -6,51 +6,54 @@ keywords: [Snowflake, Iceberg, destination]
 
 # Snowflake+ Iceberg / Open Catalog
 
-Snowflake+ is a drop-in replacement for [OSS Snowflake destination](../../dlt-ecosystem/destinations/snowflake.md) that adds [Apache Iceberg tables](https://docs.snowflake.com/en/user-guide/tables-iceberg) creation and related features.
+Snowflake+は、[OSS Snowflake destination](../../dlt-ecosystem/destinations/snowflake.md)の代替として提供され、[Apache Icebergテーブル](https://docs.snowflake.com/en/user-guide/tables-iceberg)の作成と関連機能を追加します。
 
-It uses Snowflake to manage Iceberg data - tables are created and data is copied via Snowflake SQL and automatically visible in Snowflake (HORIZON)
-catalog as other (native) tables. On top of that, Snowflake provides table maintenance (like compacting, deleting snapshot etc.).
+Snowflakeを使用してIcebergデータを管理します。テーブルが作成され、データはSnowflake SQL経由でコピーされ、他の（ネイティブ）テーブルと同様にSnowflake（HORIZON）カタログに自動的に表示されます。
+さらに、Snowflakeはテーブルのメンテナンス（圧縮、スナップショットの削除など）も提供します。
 
-**Snowflake Open Catalog** (Polaris) is [fully supported](#syncing-snowflake-managed-iceberg-tables-to-snowflake-open-catalog) via `CATALOG SYNC` option. Both new data and all schema migrations performed by `dlt` are visible in it without any additional code or setup.
+**Snowflake Open Catalog** (Polaris)は、`CATALOG SYNC`オプションを介して[完全にサポート](#syncing-snowflake-managed-iceberg-tables-to-snowflake-open-catalog)されています。
+`dlt` によって実行される新しいデータとすべてのスキーマ移行は、追加のコードや設定なしで参照できます。
 
-All [data access](../../general-usage/dataset-access/) methods (pandas, arrow, Ibis, SQL etc.) that `dlt` supports via `pipeline.dataset()` are available.
+`dlt` が `pipeline.dataset()` 経由でサポートするすべての [データアクセス](../../general-usage/dataset-access/) メソッド (pandas、arrow、Ibis、SQL など) が利用可能です。
 
 :::tip
-You can [link](https://docs.snowflake.com/LIMITEDACCESS/iceberg/tables-iceberg-externally-managed-writes#label-tables-iceberg-external-writes-create-cld) any catalog (Lakekeeper, Glue, S3Tables or Open Catalog/Polaris) used by `dlt` [Iceberg](iceberg.md) destination to a Snowflake database.
+`dlt` [Iceberg](iceberg.md) の宛先で使用される任意のカタログ (Lakekeeper、Glue、S3Tables、または Open Catalog/Polaris) を Snowflake データベースに [リンク](https://docs.snowflake.com/LIMITEDACCESS/iceberg/tables-iceberg-externally-managed-writes#label-tables-iceberg-external-writes-create-cld) できます。
 :::
 
-This destination is available starting from dlt+ version 0.9.0. It fully supports all the functionality of the standard Snowflake destination, plus:
+このデスティネーションは、dlt+ バージョン 0.9.0 以降で利用可能です。
+Snowflake の標準デスティネーションの全機能に加え、以下の機能もサポートしています。
 
-1. The ability to create Iceberg tables in Snowflake by configuring `iceberg_mode` in your `config.toml` file or `dlt.yml` file.
-2. Additional configuration for Iceberg tables in Snowflake via:
-   - `external_volume`: The external volume name where Iceberg data is stored.
-   - `catalog`: The catalog name in which Iceberg tables are created. Defaults to `"SNOWFLAKE"`.
-   - `base_location`: A template string for the base path that Snowflake uses for storing the table data in external storage, supporting placeholders.
-   - `extra_placeholders`: Additional values that can be used in the `base_location` template.
-   - `catalog_sync`: The name of a [catalog integration](https://docs.snowflake.com/en/user-guide/tables-iceberg#catalog-integration) configured for [Snowflake Open Catalog](https://other-docs.snowflake.com/en/opencatalog/overview). If specified, Snowflake syncs Snowflake-managed Iceberg tables in the database with an external catalog in your Snowflake Open Catalog account.
+1. `config.toml` ファイルまたは `dlt.yml` ファイルで `iceberg_mode` を設定することで、Snowflake で Iceberg テーブルを作成できます。
+2. 以下の設定により、Snowflake で Iceberg テーブルを追加できます。
+    - `external_volume`: Iceberg データが保存される外部ボリューム名。
+    - `catalog`: Iceberg テーブルが作成されるカタログ名。デフォルトは `"SNOWFLAKE"` です。
+    - `base_location`: Snowflake がテーブルデータを外部ストレージに保存するために使用するベースパスのテンプレート文字列。プレースホルダーをサポートします。
+    - `extra_placeholders`: `base_location` テンプレートで使用できる追加の値。
+    - `catalog_sync`: [Snowflake Open Catalog](https://other-docs.snowflake.com/en/opencatalog/overview) 用に設定された [カタログ統合](https://docs.snowflake.com/en/user-guide/tables-iceberg#catalog-integration) の名前。
+    指定すると、Snowflake はデータベース内の Snowflake 管理の Iceberg テーブルを、Snowflake Open Catalog アカウント内の外部カタログと同期します。
 
-## Installation
+## インストール
 
-Install the `dlt-plus` package with the `snowflake` extra:
+`snowflake` エクストラを含む `dlt-plus` パッケージをインストールします。
 
 ```sh
 pip install "dlt-plus[snowflake]"
 ```
 
-Once the `snowflake` extra is installed, you can configure a pipeline to use `snowflake_plus` exactly the same way you would use the `snowflake` destination.
+`snowflake` エクストラがインストールされると、`snowflake` 宛先を使用する場合とまったく同じ方法で `snowflake_plus` を使用するようにパイプラインを構成できます。
 
-## Setup
+## セットアップ
 
-1. [Configure your Snowflake credentials](../../dlt-ecosystem/destinations/snowflake.md#setup-guide)
-2. [Set up a database user and permissions](../../dlt-ecosystem/destinations/snowflake.md#set-up-the-database-user-and-permissions)
-3. [Configure an external volume in Snowflake](https://docs.snowflake.com/en/user-guide/tables-iceberg-configure-external-volume)
-4. Grant usage on the external volume to the role you are using to load data:
+1. [Snowflake の認証情報を設定します](../../dlt-ecosystem/destinations/snowflake.md#setup-guide)
+2. [データベースユーザーと権限を設定します](../../dlt-ecosystem/destinations/snowflake.md#set-up-the-database-user-and-permissions)
+3. [Snowflake で外部ボリュームを設定します](https://docs.snowflake.com/en/user-guide/tables-iceberg-configure-external-volume)
+4. データのロードに使用するロールに外部ボリュームの使用権限を付与します。
 
 ```sql
 GRANT USAGE ON EXTERNAL VOLUME <external_volume_name> TO ROLE <role_name>;
 ```
 
-5. Configure the `snowflake_plus` destination. For a dlt+ project (in `dlt.yml`) or for a Python script (in `config.toml`):
+5. `snowflake_plus` の出力先を設定します。dlt+ プロジェクト（`dlt.yml` 内）または Python スクリプト（`config.toml` 内）の場合は、以下の手順に従います。
 
 <Tabs
   groupId="config-format"
@@ -61,13 +64,13 @@ GRANT USAGE ON EXTERNAL VOLUME <external_volume_name> TO ROLE <role_name>;
 ]}>
   <TabItem value="dlt-yml">
 
-If you don't have a dlt+ project yet, initialize one in the current working directory. Replace `sql_database` with the source of your choice:
+dlt+プロジェクトがまだない場合は、現在の作業ディレクトリでプロジェクトを初期化してください。`sql_database`を任意のソースコードに置き換えてください:
 
 ```sh
 dlt project init sql_database snowflake_plus
 ```
 
-This will create a Snowflake Plus destination in your `dlt.yml` file:
+これにより、`dlt.yml` ファイルに Snowflake Plus の宛先が作成されます:
 
 ```yaml
 destinations:
@@ -75,7 +78,7 @@ destinations:
     type: snowflake_plus
 ```
 
-To enable Iceberg table creation, set the `iceberg_mode` option and `external_volume` to the name of the external volume you created in step 3.
+Iceberg テーブルの作成を有効にするには、`iceberg_mode` オプションを設定し、`external_volume` を手順 3 で作成した外部ボリュームの名前に設定します。
 
 ```yaml
 destinations:
@@ -88,7 +91,7 @@ destinations:
   </TabItem>
   <TabItem value="config-toml">
 
-Add the configuration to your `config.toml` file:
+`config.toml` ファイルに設定を追加します:
 
 ```toml
 [destination.snowflake]
@@ -96,7 +99,7 @@ external_volume = "<external_volume_name>"
 iceberg_mode = "all"
 ```
 
-Use the `snowflake_plus` destination in your pipeline:
+パイプラインで `snowflake_plus` 宛先を使用します:
 
 ```py
 import dlt
@@ -115,87 +118,93 @@ def my_iceberg_table():
   </TabItem>
 </Tabs>
 
-## Configuration
+## 設定
 
-The `snowflake_plus` destination extends the standard Snowflake configuration with additional options:
+`snowflake_plus` 宛先は、Snowflake の標準設定に以下の追加オプションを追加して拡張します。
 
 ### `iceberg_mode`
-Controls which tables are created as Iceberg tables.
-- Possible values:
-  - `"all"`: All tables including dlt system tables are created as Iceberg tables
-  - `"data_tables"`: Only data tables (non-dlt system tables) are created as Iceberg tables
-  - `"none"`: No tables are created as Iceberg tables
-- Required: No
-- Default: `"none"`
+Icebergテーブルとして作成するテーブルを制御します。
+- 指定可能な値:
+- `"all"`: DLTシステムテーブルを含むすべてのテーブルがIcebergテーブルとして作成されます。
+- `"data_tables"`: データテーブル（DLTシステムテーブル以外）のみがIcebergテーブルとして作成されます。
+- `"none"`: Icebergテーブルとして作成されるテーブルはありません。
+- 必須: いいえ
+- デフォルト: `"none"`
 
 ### `external_volume`
-The external volume to store Iceberg metadata.
-- Required: Yes
-- Default: None
+Icebergメタデータを保存する外部ボリューム。
+- 必須: はい
+- デフォルト: なし
 
 ### `catalog`
-The catalog to use for Iceberg tables.
-- Required: No
-- Default: `"SNOWFLAKE"`. This will use [Snowflake as the catalog](https://docs.snowflake.com/en/user-guide/tables-iceberg#label-tables-iceberg-snowflake-as-catalog) for the Iceberg tables.
+Icebergテーブルに使用するカタログ。
+- 必須: いいえ
+- デフォルト: `"SNOWFLAKE"`。これにより、Icebergテーブルに[Snowflakeをカタログとして使用](https://docs.snowflake.com/en/user-guide/tables-iceberg#label-tables-iceberg-snowflake-as-catalog)します。
 
 ### `base_location`
-Template string for the base location where Iceberg data is stored in the external volume. Supports placeholders like `{dataset_name}` and `{table_name}`.
-- Required: No
-- Default: `"{dataset_name}/{table_name}"`
+Icebergデータが外部ボリュームに保存されるベースロケーションのテンプレート文字列。`{dataset_name}`や`{table_name}`などのプレースホルダーをサポートします。
+- 必須: いいえ
+- デフォルト: `"{dataset_name}/{table_name}"`
 
 ### `extra_placeholders`
-Dictionary of additional values that can be used in the `base_location` template. The values can be static strings or functions that accept the dataset name and table name as arguments and return a string.
-- Required: No
-- Default: None
+`base_location` テンプレートで使用できる追加の値の辞書です。
+値は、静的な文字列、またはデータセット名とテーブル名を引数として受け取り、文字列を返す関数にすることができます。
+- 必須: いいえ
+- デフォルト: なし
 
 ### `catalog_sync`
-The name of a [catalog integration](https://docs.snowflake.com/en/user-guide/tables-iceberg#catalog-integration) for syncing Iceberg tables to an external catalog in [Snowflake Open Catalog](https://other-docs.snowflake.com/en/opencatalog/overview).
-- Required: No
-- Default: None
+Icebergテーブルを[Snowflake Open Catalog](https://other-docs.snowflake.com/en/opencatalog/overview)内の外部カタログに同期するための[カタログ統合](https://docs.snowflake.com/en/user-guide/tables-iceberg#catalog-integration)の名前。
+- 必須: いいえ
+- デフォルト: なし
 
-Configure these options in your `config.toml` file under the `[destination.snowflake]` section or in `dlt.yml` file under the `destinations.snowflake_plus` section.
+これらのオプションは、`config.toml`ファイルの`[destination.snowflake]`セクション、または`dlt.yml`ファイルの`destinations.snowflake_plus`セクションで設定します。
 
-## Base location templating
+## ベースロケーションのテンプレート化
 
-The `base_location` parameter controls where Snowflake stores your Iceberg table data and metadata in the external volume. It's a template string that supports the following built-in placeholders:
+`base_location` パラメーターは、Snowflake が Iceberg テーブルのデータとメタデータを外部ボリュームのどこに保存するかを制御します。
+これは、以下の組み込みプレースホルダーをサポートするテンプレート文字列です。
 
-- `{dataset_name}`: The name of your dataset
-- `{table_name}`: The name of the table
+- `{dataset_name}`: データセットの名前
+- `{table_name}`: テーブルの名前
 
-For more flexibility, you can also define custom placeholders using the `extra_placeholders` option.
+柔軟性を高めるために、`extra_placeholders` オプションを使用してカスタムプレースホルダーを定義することもできます。
 
-### Examples
+### 例
 
-1. The default pattern `{dataset_name}/{table_name}` creates paths like `my_dataset/customers` in your external volume.
+1. デフォルトのパターン `{dataset_name}/{table_name}` は、外部ボリュームに「my_dataset/customers」のようなパスを作成します。
 
-2. Custom static path:
+2. カスタムの静的パス:
    ```yaml
    base_location: "custom/static/path"
    ```
-   This creates all tables in the same directory `custom/static/path`.
+   これにより、すべてのテーブルが同じディレクトリ `custom/static/path` 内に作成されます。
 
-3. Using custom placeholders:
+3. カスタムプレースホルダの使用:
    ```yaml
    base_location: "{env}/{dataset_name}/{table_name}"
    extra_placeholders:
      env: "prod"
    ```
-   This creates paths like `prod/my_dataset/customers`.
+   これにより、`prod/my_dataset/customers` のようなパスが作成されます。
 
-### How Snowflake uses the base location
+### Snowflake がベースロケーションを使用する方法
 
-When you provide a `base_location`, Snowflake uses it to create the paths where data and metadata are stored in your external cloud storage. The actual directory structure Snowflake creates follows this pattern:
+`base_location` を指定すると、Snowflake はそれを使用して、外部クラウドストレージ内のデータとメタデータを保存するパスを作成します。
+Snowflake が実際に作成するディレクトリ構造は、次のパターンに従います。
 
 ```text
 STORAGE_BASE_URL/BASE_LOCATION.<randomId>/[data | metadata]/
 ```
 
-Where `<randomId>` is a random Snowflake-generated 8-character string appended to create a unique directory.
+ここで、`<randomId>` は、Snowflake が生成したランダムな 8 文字の文字列で、一意のディレクトリを作成するために追加されます。
 
-For more details on how Snowflake organizes Iceberg table files in external storage, see the [Snowflake documentation on data and metadata directories](https://docs.snowflake.com/en/user-guide/tables-iceberg-storage#data-and-metadata-directories).
+Snowflake が外部ストレージで Iceberg テーブルファイルをどのように整理するかの詳細については、[データおよびメタデータディレクトリに関する Snowflake のドキュメント](https://docs.snowflake.com/en/user-guide/tables-iceberg-storage#data-and-metadata-directories) を参照してください。
 
-## Table format for individual tables
-You can specify table format (Iceberg/Native) for individual `dlt` resources. For example:
+## 個々のテーブルのテーブル形式
+
+個々の `dlt` リソースに対して、テーブル形式（Iceberg/Native）を指定できます。
+例:
+
   ```py
   @dlt.resource(
     table_format="native"
@@ -205,15 +214,16 @@ You can specify table format (Iceberg/Native) for individual `dlt` resources. Fo
 
   pipeline = dlt.pipeline("loads_native", destination="snowflake_plus")
   ```
-  Will create a native (non-iceberg) **my_resource** table, also when you set the [iceberg_mode](#iceberg_mode) to **all** or **data_tables**.
 
-## Write dispositions
+  [iceberg_mode](#iceberg_mode) を **all** または **data_tables** に設定した場合も、ネイティブ (アイスバーグではない) **my_resource** テーブルが作成されます。
 
-All standard write dispositions (`append`, `replace`, and `merge`) are supported for both regular Snowflake tables and Iceberg tables.
+## 書き込み処理
 
-## Data types
+すべての標準的な書き込み処理（`append`、`replace`、`merge`）は、通常のSnowflakeテーブルとIcebergテーブルの両方でサポートされています。
 
-The Snowflake Plus destination supports all standard Snowflake destination data types, with additional type mappings for Iceberg tables:
+## データ型
+
+Snowflake Plus の宛先は、すべての標準的な Snowflake の宛先データ型をサポートし、Iceberg テーブル用の追加の型マッピングもサポートします。
 
 | dlt Type | Iceberg Type |
 |----------|--------------|
@@ -228,15 +238,17 @@ The Snowflake Plus destination supports all standard Snowflake destination data 
 | `binary` | `binary` |
 | `json` | `string` |
 
-## Syncing Snowflake-managed Iceberg tables to Snowflake Open Catalog
+## Snowflake が管理する Iceberg テーブルを Snowflake Open Catalog に同期する
 
-To enable querying of Snowflake-managed Iceberg tables by third-party engines (e.g., Apache Spark) via an external catalog (Snowflake Open Catalog), use the `catalog_sync` configuration option. This setting specifies a [catalog integration](https://docs.snowflake.com/en/user-guide/tables-iceberg#catalog-integration) that syncs Iceberg tables to the external catalog.
+サードパーティ製エンジン（Apache Spark など）から外部カタログ（Snowflake Open Catalog）経由で Snowflake が管理する Iceberg テーブルへのクエリを有効にするには、`catalog_sync` 構成オプションを使用します。
+この設定は、Iceberg テーブルを外部カタログに同期する [カタログ統合](https://docs.snowflake.com/en/user-guide/tables-iceberg#catalog-integration) を指定します。
 
-### Setup
+### セットアップ
 
-1. Create an [external catalog in Snowflake Open Catalog](https://other-docs.snowflake.com/en/opencatalog/create-catalog).
+1. [Snowflake Open Catalog で外部カタログを作成](https://other-docs.snowflake.com/en/opencatalog/create-catalog)。
 
-2. Create a catalog integration in Snowflake. Example:
+2. Snowflake でカタログ統合を作成。
+例:
 
 ```sql
   CREATE OR REPLACE CATALOG INTEGRATION my_open_catalog_int
@@ -255,9 +267,9 @@ To enable querying of Snowflake-managed Iceberg tables by third-party engines (e
     ENABLED = TRUE;
 ```
 
-Refer to the [Snowflake documentation](https://docs.snowflake.com/en/user-guide/tables-iceberg-open-catalog-sync#step-4-create-a-catalog-integration-for-open-catalog) for detailed setup instructions.
+詳細な設定手順については、[Snowflake のドキュメント](https://docs.snowflake.com/en/user-guide/tables-iceberg-open-catalog-sync#step-4-create-a-catalog-integration-for-open-catalog) を参照してください。
 
-3. Configure the `catalog_sync` option:
+3. `catalog_sync` オプションを設定します。
 
 <Tabs
   groupId="config-format"
@@ -288,6 +300,6 @@ catalog_sync = "my_open_catalog_int"
   </TabItem>
 </Tabs>
 
-## Additional Resources
+## 追加リソース
 
-For more information on basic Snowflake destination functionality, please refer to the [Snowflake destination documentation](../../dlt-ecosystem/destinations/snowflake.md).
+Snowflakeの基本的なデスティネーション機能の詳細については、[Snowflakeデスティネーションドキュメント](../../dlt-ecosystem/destinations/snowflake.md)を参照してください。

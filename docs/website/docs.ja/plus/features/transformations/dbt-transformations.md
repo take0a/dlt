@@ -3,22 +3,26 @@ title: dbt generator
 description: Generate dbt models automatically
 ---
 
-The **dbt generator** creates scaffolding for dbt projects using data ingested by dlt. It analyzes the pipeline schema and automatically generates staging and fact dbt models. By integrating with dlt-configured destinations, it automates code creation and supports incremental loading, ensuring that only new records are processed in both the ingestion and transformation layers.
+**dbt ジェネレータ** は、DLT によって取り込まれたデータを使用して、DBT プロジェクトのスキャフォールディングを作成します。
+パイプライン スキーマを分析し、ステージング スキーマとファクト スキーマを自動生成します。
+DLT で構成された出力先と統合することで、コード作成を自動化し、増分ロードをサポートし、取り込みレイヤーと変換レイヤーの両方で新しいレコードのみが処理されるようにします。
 
-The dbt generator can be used as part of the local transformations feature as well as a standalone tool, enabling you to generate dbt models for any dlt pipeline.
-In this context, the dbt generator will be discussed as a standalone feature, though all the information provided is also applicable when using it with local transformations.
+DBT ジェネレータは、ローカル変換機能の一部としても、スタンドアロン ツールとしても使用でき、あらゆる DLT パイプライン用の DBT モデルを生成できます。
+ここでは、DBT ジェネレータをスタンドアロン機能として説明しますが、ここで説明するすべての情報は、ローカル変換で使用する場合にも適用できます。
 
-The dbt generator works as follows:
+DBT ジェネレータの動作は次のとおりです。
 
-- It automatically inspects the pipeline schema and generates a baseline dbt project, complete with staging and marts layers. The generator is able to create staging, dimensional, and fact models.
+- パイプライン スキーマを自動的に検査し、ステージング レイヤーとマート レイヤーを備えたベースライン DBT プロジェクトを生成します。
+ジェネレータは、ステージング スキーマ、ディメンション スキーマ、ファクト スキーマを作成できます。
 
-- Additionally, the dlt dbt generator lets you define relationships between the schema tables, which can be used to automatically create fact tables.
+- さらに、dlt dbt ジェネレーターを使用すると、スキーマテーブル間のリレーションシップを定義でき、これを使用してファクトテーブルを自動的に作成できます。
 
-- The resulting project can be executed using the credentials already provided to the pipeline and is capable of processing incoming data incrementally.
+- 生成されたプロジェクトは、パイプラインに既に提供されている資格情報を使用して実行でき、入力データを段階的に処理できます。
 
-## Adding relationship hints for fact tables
+## ファクトテーブルへのリレーションシップヒントの追加
 
-To generate fact tables, you will first need to add additional relationship hints to your pipeline. This requires ensuring that each table has a primary key defined, as relationships are based on these keys:
+ファクトテーブルを生成するには、まずパイプラインにリレーションシップヒントを追加する必要があります。
+リレーションシップはこれらのキーに基づいているため、各テーブルに主キーが定義されていることを確認する必要があります。
 
 ```py
 import dlt
@@ -30,7 +34,7 @@ def customers():
 
 ```
 
-To add relationship hints, use the relationship adapter:
+リレーションシップのヒントを追加するには、リレーションシップ アダプターを使用します:
 
 ```py
 import dlt
@@ -120,18 +124,19 @@ table_reference_adapter(
 ```
 
 :::note
-Only the relationships that the pipeline is not aware of need to be explicitly passed to the adapter, meaning you don't need to define the parent-child relationships created by dlt during the normalization stage, as it will already know about them.
+パイプラインが認識していない関係のみをアダプタに明示的に渡す必要があります。つまり、正規化段階で dlt によって作成された親子関係は既に認識されているため、定義する必要はありません。
 :::
 
-## Generating your baseline project
+## ベースライン・プロジェクトの生成
 
-Ensure that your dlt pipeline has been run at least once locally or restored from the destination. Then, navigate to the directory where your pipeline is located and, using its name, execute the following command to create a baseline dbt project with dimensional tables for all existing pipeline tables:
+DLTパイプラインがローカルで少なくとも1回実行されているか、または宛先から復元されていることを確認してください。
+次に、パイプラインが配置されているディレクトリに移動し、その名前を使用して次のコマンドを実行し、既存のすべてのパイプライン・テーブルに対応するディメンション・テーブルを含むベースラインDBTプロジェクトを作成します。
 
 ```sh
 dlt dbt generate <pipeline-name>
 ```
 
-This command generates a new folder named `dbt_<pipeline-name>`, which contains the project with the following structure:
+このコマンドは、次の構造のプロジェクトが含まれる `dbt_<pipeline-name>` という名前の新しいフォルダーを生成します。
 
 ```sh
 dbt_<pipeline-name>/
@@ -154,26 +159,28 @@ dbt_<pipeline-name>/
 └── requirements.txt
 ```
 
-Additionally, in the directory where you ran the generator, you will find a new Python file named `run_<pipeline-name>_dbt.py`, which you can execute to run the project.
+さらに、ジェネレーターを実行したディレクトリには、`run_<pipeline-name>_dbt.py` という名前の新しい Python ファイルがあり、これを実行してプロジェクトを実行できます。
 
 
-## Generating fact tables
+## ファクトテーブルの生成
 
-After creating the base project with dimensional tables, you can create fact tables that will use the previously added relationship hints by running:
+ディメンションテーブルを含むベースプロジェクトを作成したら、次のコマンドを実行して、以前に追加したリレーションシップヒントを使用するファクトテーブルを作成できます。
 
 ```sh
 dlt dbt generate <pipeline-name> --fact <fact_table_name>
 ```
 
-The `<fact_table_name>` you provide should be the name of the base table in which the relationships are to be found. This fact table will automatically join all related tables IDs discovered through dlt defined parent-child relationships, as well as any relationship IDs manually added through the adapter. You can then select and add additional fields in the generated model.
+指定する `<fact_table_name>` は、リレーションシップが見つかるベーステーブルの名前である必要があります。
+このファクトテーブルは、DLT で定義された親子関係を通じて検出されたすべての関連テーブル ID と、アダプタを通じて手動で追加されたリレーションシップ ID を自動的に結合します。
+その後、生成されたモデルで追加のフィールドを選択して追加できます。
 
-For the example above, we can run this for the `orders` table:
+上記の例では、`orders` テーブルに対してこれを実行できます。
 
 ```sh
 dlt dbt generate example_shop --fact orders
 ```
 
-This will generate the `fact_<pipeline-name>__orders.sql` model in the `marts` folder of the dbt project:
+これにより、dbt プロジェクトの `marts` フォルダーに `fact_<pipeline-name>__orders.sql` モデルが生成されます。
 
 ```sh
 dbt_<pipeline-name>/
@@ -197,37 +204,43 @@ dbt_<pipeline-name>/
 └── requirements.txt
 ```
 
-## Running your dbt project
+## dbt プロジェクトの実行
 
-You can run your dbt project with the previously mentioned script that was generated by `dlt dbt generate <pipeline-name>`:
+`dlt dbt generate <パイプライン名>` によって生成された前述のスクリプトを使用して、dbt プロジェクトを実行できます。
 
 ```sh
 python run_<pipeline_name>_dbt.py
 ```
-This script executes your dbt transformations, loads the results into a new dataset named `<original-dataset>_transformed`, and runs the dbt tests. If needed, you can adjust the dataset name directly in the script.
 
-If you want to see the `dbt run` command output, increase the logging level. For example:
+このスクリプトは、dbt 変換を実行し、結果を `<original-dataset>_transformed` という名前の新しいデータセットに読み込み、dbt テストを実行します。必要に応じて、スクリプト内でデータセット名を直接変更できます。
+
+`dbt run` コマンドの出力を確認するには、ログレベルを上げてください。例:
 
 ```sh
 RUNTIME__LOG_LEVEL=INFO python run_<pipeline_name>_dbt.py
 ```
 
-or by setting `config.toml`:
+または `config.toml` を設定することによって:
+
 ```toml
 [runtime]
 log_level="INFO"
 ```
 
-## Running dbt package directly
+## dbt パッケージを直接実行する
 
-If you'd like to run your dbt package without a pipeline instance, please refer to our [dbt runner docs](../../../dlt-ecosystem/transformations/dbt/dbt.md).
+パイプラインインスタンスを使用せずに dbt パッケージを実行する場合は、[dbt ランナーのドキュメント](../../../dlt-ecosystem/transformations/dbt/dbt.md) を参照してください。
 
-## Understanding incremental processing
+## 増分処理について
 
-dlt generates unique IDs for load packages, which are stored in the `_dlt_load_id` column of all tables in the dataset. This column indicates the specific load package to which each row belongs.
+dlt はロード パッケージに一意の ID を生成し、データセット内のすべてのテーブルの `_dlt_load_id` 列に格納します。
+この列は、各行が属する特定のロード パッケージを示します。
 
-The generated dbt project uses these load IDs to process data incrementally. To manage this process, the project includes two key tables that track the status of load packages:
+生成された dbt プロジェクトは、これらのロード ID を使用してデータを増分処理します。
+このプロセスを管理するために、プロジェクトにはロード パッケージのステータスを追跡する 2 つの主要なテーブルが含まれています。
 
-- `<pipeline_name>_dlt_active_load_ids`: At the start of each dbt run, this table is populated with all load IDs that were successful and have not yet been processed in previous dbt runs, referred to as active load IDs. The staging tables are then populated only with rows associated with these active load IDs.
-- `<pipeline_name>_dlt_processed_load_ids`: At the end of each dbt run, the active load IDs are recorded in this table, along with a timestamp. This allows you to track when each load ID was processed.
+- `<pipeline_name>_dlt_active_load_ids`: 各 dbt 実行の開始時に、このテーブルには、以前の dbt 実行で成功し、まだ処理されていないすべてのロード ID (アクティブ ロード ID) が入力されます。
+ステージング テーブルには、これらのアクティブ ロード ID に関連付けられた行のみが入力されます。
+- `<pipeline_name>_dlt_processed_load_ids`: 各 dbt 実行の終了時に、アクティブ ロード ID がタイムスタンプとともにこのテーブルに記録されます。
+これにより、各ロード ID がいつ処理されたかを追跡できます。
 

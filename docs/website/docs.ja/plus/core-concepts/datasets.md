@@ -1,16 +1,18 @@
-# Datasets
+# データセット
 
-A dataset is a physical collection of data and dlt metadata, including the schema on a destination. One destination can have multiple datasets; for now, datasets are bound to a physical destination, but this may change in future iterations.
+データセットとは、データとDLTメタデータ（出力先のスキーマを含む）の物理的な集合です。
+1つの出力先に複数のデータセットを含めることができます。現時点では、データセットは物理的な出力先にバインドされていますが、将来のバージョンでは変更される可能性があります。
 
-By treating datasets as individual entities, dlt+ enables data cataloging and data governance.
+データセットを個別のエンティティとして扱うことで、DLT+はデータカタログ化とデータガバナンスを実現します。
 
-#### Data cataloging
+#### データカタログ作成
 
-Datasets automatically create data catalogs that can be used to discover schema and [read and write data](../features/data-access.md).
+データセットは、スキーマの検出や[データの読み書き](../features/data-access.md)に使用できるデータカタログを自動的に作成します。
 
-#### Data governance
+#### データガバナンス
 
-Datasets are a fundamental unit of governance in the dlt+ Project. Using the declarative interface of dlt+, you can control:
-1. Where they are materialized: you can specify which destinations you would like to materialize the datasets in.
-2. Who can access them: you can enable and disable them per profile.
-3. Ways in which the schema can be modified: you can also set [schema contracts](../../general-usage/schema-contracts.md) per profile.
+データセットは、dlt+ プロジェクトにおけるガバナンスの基本単位です。
+dlt+ の宣言型インターフェースを使用することで、以下の制御が可能です。
+1. データセットのマテリアライズ先：データセットをマテリアライズする出力先を指定できます。
+2. データセットにアクセスできるユーザー：プロファイルごとに有効化/無効化できます。
+3. スキーマの変更方法：プロファイルごとに [スキーマコントラクト](../../general-usage/schema-contracts.md) を設定することもできます。

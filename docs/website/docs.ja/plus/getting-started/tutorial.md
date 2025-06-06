@@ -4,58 +4,59 @@ description: Using the dlt+ cli commands to create and manage dlt+ Project
 keywords: [command line interface, cli, dlt init, dlt+, project]
 ---
 
-This tutorial introduces you to dlt+ Project and the essential cli commands needed to create and manage it. You will learn how to:
+このチュートリアルでは、dlt+ プロジェクトと、その作成と管理に必要な基本的な CLI コマンドを紹介します。以下の方法を学習します。
 
-* initialize a new dlt+ Project
-* navigate the `dlt.yml` file
-* add sources, destinations, and pipelines
-* run pipelines using cli commands
-* inspect datasets
-* work with dlt+ Profiles for enabling different configurations
+* 新しい dlt+ プロジェクトの初期化
+* `dlt.yml` ファイルの操作
+* ソース、デスティネーション、パイプラインの追加
+* CLI コマンドを使用したパイプラインの実行
+* データセットの検査
+* dlt+ プロファイルを使用してさまざまな設定を有効にする
 
-## Prerequisites
+## 前提条件
 
-To follow this tutorial, make sure:
+このチュートリアルを進めるには、以下の条件を満たしている必要があります。
 
-- dlt+ is set up according to the [installation guide](./installation.md)
-- you're familiar with the [core concepts of dlt](../../reference/explainers/how-dlt-works.md)
+- dlt+ が [インストールガイド](./installation.md) に従ってセットアップされていること
+- [dlt のコアコンセプト](../../reference/explainers/how-dlt-works.md) を理解していること
 
 :::tip
-You can find the full list of available cli commands under [cli reference](../reference.md)
+利用可能な CLI コマンドの完全なリストは、[CLI リファレンス](../reference.md) で確認できます。
 :::
 
-## Creating a new dlt+ Project
+## 新しい dlt+ プロジェクトの作成
 
-Start by creating a new folder for your project. Then, navigate to the folder in your terminal.
+まず、プロジェクト用の新しいフォルダを作成します。次に、ターミナルでそのフォルダに移動します。
 
 ```sh
 mkdir tutorial && cd tutorial
 ```
 
-Run the following command to initialize a new dlt+ Project:
+新しい dlt+ プロジェクトを初期化するには、次のコマンドを実行します:
 
 ```sh
 # Initialize a dlt+ Project named "tutorial", the name is derived from the folder name
 dlt project init arrow duckdb
 ```
 
-This command generates a project named `tutorial` with:
-- one [pipeline](../../general-usage/pipeline)
-- one Arrow source defined in `sources/arrow.py`
-- one DuckDB destination
-- one dataset on the DuckDB destination
+このコマンドは、以下の内容を含む「tutorial」という名前のプロジェクトを生成します。
+- 1 つの [パイプライン](../../general-usage/pipeline)
+- 1 つの Arrow ソース (`sources/arrow.py` で定義)
+- 1 つの DuckDB 宛先
+- 1 つの DuckDB 宛先上のデータセット
 
 :::caution
-Currently, `dlt project init` only supports a limited number of sources (for example, [REST API](../../dlt-ecosystem/verified-sources/rest_api/index.md), [SQL database](../../dlt-ecosystem/verified-sources/sql_database/index.md), [filesystem](../../dlt-ecosystem/verified-sources/filesystem/index.md), etc.). To list all available sources, please use the [cli command](../reference.md#dlt-source-list):
+現在、`dlt project init` は限られた数のソースのみをサポートしています（例：[REST API](../../dlt-ecosystem/verified-sources/rest_api/index.md)、[SQL データベース](../../dlt-ecosystem/verified-sources/sql_database/index.md)、[ファイルシステム](../../dlt-ecosystem/verified-sources/filesystem/index.md) など）。
+利用可能なすべてのソースを一覧表示するには、[cli コマンド](../reference.md#dlt-source-list) を使用してください。
 
 ```sh
 dlt source list-available
 ```
-The support for other verified sources is coming soon!
+他の検証済みソースのサポートも近日中に開始される予定です。
 :::
 
-### The generated folder structure
-After running the command, the following folder structure is created:
+### 生成されたフォルダ構造
+コマンドを実行すると、次のフォルダ構造が作成されます。
 
 ```sh
 .
@@ -70,9 +71,10 @@ After running the command, the following folder structure is created:
 └── dlt.yml               # the main project manifest
 ```
 
-### Understanding `dlt.yml`
+### `dlt.yml` を理解する
 
-The `dlt.yml` file is the central configuration for your dlt+ Project. It defines the pipelines, sources, and destinations. In the generated project, the file looks like this:
+`dlt.yml` ファイルは、dlt+ プロジェクトの中心的な設定ファイルです。パイプライン、ソース、およびデスティネーションを定義します。
+生成されたプロジェクトでは、ファイルは次のようになります。
 
 ```yaml
 profiles:
@@ -101,48 +103,51 @@ pipelines:
 ```
 
 :::tip
-If you do not want to start with a source, destination, and pipeline, you can simply run `dlt project init --project-name tutorial`. This will generate a project with empty sources, destinations, and pipelines.
+ソース、宛先、パイプラインを最初から用意したくない場合は、`dlt project init --project-name tutorial` を実行するだけです。
+これにより、空のソース、宛先、パイプラインを含むプロジェクトが生成されます。
 :::
 
-Some details about the project structure above:
+上記のプロジェクト構造の詳細：
 
-* The `runtime` section is analogous to the config.toml [runtime] section and could also be omitted in this case.
-* The `profiles` section is not doing much in this case. There are two implicit profiles: `dev` and `tests` that are present in any project; we will learn about profiles in more detail later.
+* `runtime` セクションは config.toml の [runtime] セクションに類似しており、この場合は省略可能です。
+* `profiles` セクションは、この場合はあまり意味を持ちません。`dev` と `tests` という 2 つの暗黙的なプロファイルがあり、これらはどのプロジェクトにも存在します。プロファイルについては後ほど詳しく説明します。
 
-You can reference environment variables in the `dlt.yml` file using the `{env.ENV_VARIABLE_NAME}` syntax. Additionally, dlt+ provides several [predefined project variables](../features/projects.md#project-settings-and-variable-substitution) that are automatically substituted during loading.
+`dlt.yml` ファイルでは、`{env.ENV_VARIABLE_NAME}` 構文を使用して環境変数を参照できます。
+さらに、dlt+ はいくつかの [定義済みプロジェクト変数](../features/projects.md#project-settings-and-variable-substitution) を提供しており、これらは読み込み時に自動的に置換されます。
 
 :::tip
-You can find more information about the `dlt.yml` structure in the [dlt+ Project section](../core-concepts/project.md).
+`dlt.yml` 構造の詳細については、[dlt+ プロジェクト セクション](../core-concepts/project.md) を参照してください。
 :::
 
-## Running the pipeline
+## パイプラインの実行
 
-Once the project is initialized, you can run the pipeline using:
+プロジェクトが初期化されたら、次のコマンドでパイプラインを実行できます。
 
 ```sh
 dlt pipeline my_pipeline run
 ```
 
-This command:
-- Locates the pipeline named `my_pipeline` in `dlt.yml`.
-- Executes it, populating the duckdb destination that [is defined to be stored](../features/projects.md#local-and-temporary-files-data_dir) in `_data/dev/local/duckdb.duckdb`.
+このコマンドは、次の処理を実行します。
+- `dlt.yml` 内で `my_pipeline` という名前のパイプラインを検索します。
+- それを実行し、`_data/dev/local/duckdb.duckdb` 内の [保存先として定義されている](../features/projects.md#local-and-temporary-files-data_dir) duckdb の保存先にデータを入力します。
 
 :::tip
-Take a look at the [Projects context](../features/projects.md#project-context) to learn more about how to work with nested projects and how dlt searches for the pipelines based on its name.
+ネストされたプロジェクトの操作方法と、dlt が名前に基づいてパイプラインを検索する方法の詳細については、[プロジェクト コンテキスト](../features/projects.md#project-context) を参照してください。
 :::
 
-### Inspecting the results
+### 結果の検証
 
-Use the [`dlt dataset` command](../reference.md#dlt-dataset) to interact with the dataset stored in the DuckDB destination. For example:
+[`dlt dataset` コマンド](../reference.md#dlt-dataset) を使用して、DuckDB の保存先に保存されているデータセットを操作します。例:
 
-### Counting the loaded rows
-To count rows in the dataset, run:
+### 読み込まれた行数をカウントする
+
+データセット内の行数をカウントするには、次のコマンドを実行します。
 
 ```sh
 dlt dataset my_pipeline_dataset row-counts
 ```
 
-This will show the number of rows in the items table as specified by the arrow source. Additionally, the internal dlt tables are shown.
+これにより、arrow ソースで指定されたアイテムテーブルの行数が表示されます。さらに、内部のDLTテーブルも表示されます。
 
 ```sh
             table_name  row_count
@@ -152,14 +157,16 @@ This will show the number of rows in the items table as specified by the arrow s
 3  _dlt_pipeline_state          1
 ```
 
-### View data
-To view the first five rows of the `items` table:
+### データの表示
+
+`items` テーブルの最初の 5 行を表示するには:
 
 ```sh
 dlt dataset my_pipeline_dataset head items
 ```
 
-This displays the top entries in the `items` table, enabling quick validation of the pipeline's output. The output will be something like this:
+これにより、`items` テーブルの上位エントリが表示され、パイプラインの出力を迅速に検証できるようになります。
+出力は次のようになります:
 
 ```sh
 Loading first 5 rows of table items.
@@ -172,45 +179,50 @@ Loading first 5 rows of table items.
 4   4  jenny   49
 ```
 
-To show more rows, use the `--limit` flag.
+より多くの行を表示するには、`--limit` フラグを使用します。
 
 ```sh
 dlt dataset duckdb_dataset head items --limit 50
 ```
 
-## Adding sources, destinations, and pipelines to your project
+## プロジェクトへのソース、デスティネーション、パイプラインの追加
 
-Adding a new entity to an existing dlt+ Project is easy. You can add a new entity to your project by running the command:
+既存の dlt+ プロジェクトに新しいエンティティを追加するのは簡単です。
+次のコマンドを実行することで、プロジェクトに新しいエンティティを追加できます。
 
 ```sh
 dlt <entity_type> <entity_name> add
 ```
 
-Depending on the entity you are adding, different options are available.
-To explore all commands, refer to the [cli command reference](../reference.md). You can also use the `--help` option to see available settings for a specific entity. For example: `dlt destination add --help`. Let's individually add a source, destination, and pipeline to a new project, replicating the default project we created in the previous chapter.
+追加するエンティティに応じて、利用可能なオプションが異なります。
+すべてのコマンドを確認するには、[cli コマンドリファレンス](../reference.md)を参照してください。
+また、`--help` オプションを使用して、特定のエンティティで利用可能な設定を確認することもできます。
+例: `dlt destination add --help`。
+前の章で作成したデフォルトのプロジェクトを複製し、ソース、宛先、パイプラインを個別に新しいプロジェクトに追加してみましょう。
 
-### Create an empty project
+### 空のプロジェクトを作成する
 
-Delete all the files in the `tutorial` folder and run the following command to create an empty project:
+`tutorial` フォルダ内のすべてのファイルを削除し、次のコマンドを実行して空のプロジェクトを作成します。
 
 ```sh
 dlt project init
 ```
 
-This will create a project without any sources, destinations, datasets, or pipelines; the project will be named after the folder.
+これにより、ソース、宛先、データセット、パイプラインのないプロジェクトが作成され、プロジェクトの名前はフォルダーに基づいて付けられます。
 
-### Add all entities
+### すべてのエンティティを追加
 
-Now we can add all of our entities individually. This way, we can also give them their own names, which will be useful when having multiple destinations of the same type, for example.
+これで、すべてのエンティティを個別に追加できるようになりました。
+この方法では、エンティティに独自の名前を付けることもできます。これは、例えば同じタイプの送信先が複数ある場合などに便利です。
 
-Add a source with:
+ソースを追加するには、次の操作を行います。
 
 ```sh
 # add a new arrow source called "my_arrow_source"
 dlt source my_arrow_source add arrow
 ```
 
-Add a destination:
+宛先を追加するには:
 
 ```sh
 # add a new duckdb destination called "my_duckdb_destination"
@@ -218,7 +230,7 @@ Add a destination:
 dlt destination my_duckdb_destination add duckdb
 ```
 
-Now we can add a pipeline that uses the source and destination we just added:
+ここで、先ほど追加したソースと宛先を使用するパイプラインを追加できます:
 
 ```sh
 # add a new pipeline called "my_pipeline" which loads from my_arrow_source and saves to my_duckdb_destination
@@ -226,18 +238,19 @@ Now we can add a pipeline that uses the source and destination we just added:
 dlt pipeline my_pipeline add my_arrow_source my_duckdb_destination
 ```
 
-### Adding the core source
+### コアソースの追加
 
-You can add multiple entities using CLI commands. Let's add another source - this time, a core source such as a
-([REST API](../../dlt-ecosystem/verified-sources/rest_api/index.md), [SQL database](../../dlt-ecosystem/verified-sources/sql_database/index.md), [filesystem](../../dlt-ecosystem/verified-sources/filesystem/index.md)).
+CLI コマンドを使用して複数のエンティティを追加できます。
+今度は、別のソース、例えば [REST API](../../dlt-ecosystem/verified-sources/rest_api/index.md)、[SQL データベース](../../dlt-ecosystem/verified-sources/sql_database/index.md)、[ファイルシステム](../../dlt-ecosystem/verified-sources/filesystem/index.md) などのコアソースを追加してみましょう。
 
-Run the following command to add an SQL database source named `sql_db_1`:
+次のコマンドを実行して、`sql_db_1` という名前の SQL データベースソースを追加します。
+
 ```sh
 # add a new sql_database source called "sql_db_1"
 dlt source sql_db_1 add sql_database
 ```
 
-This will add the new source to your `dlt.yml` file:
+これにより、新しいソースが `dlt.yml` ファイルに追加されます。
 
 ```yaml
 sources:
@@ -248,7 +261,8 @@ sources:
     type: sql_database
 ```
 
-The corresponding credential placeholders will be added to `.dlt/secrets.toml`, but you can also define them in `dlt.yml`.
+対応する認証情報プレースホルダーは `.dlt/secrets.toml` に追加されますが、`dlt.yml` で定義することもできます。
+
 ```toml
 [sources.sql_db_1]
 table_names = ["family", "clan"]
@@ -261,32 +275,36 @@ host = "mysql-rfam-public.ebi.ac.uk"
 port = 4497
 ```
 
-## Configuration and profiles
+## 構成とプロファイル
 
-dlt+ introduces a new core concept - [Profiles](../core-concepts/profiles.md), which provides a way to manage different configurations for different environments. Let's have a look at our example project. The profiles section currently looks like this:
+dlt+ は新しいコアコンセプトである [プロファイル](../core-concepts/profiles.md) を導入しました。これにより、環境ごとに異なる構成を管理できるようになります。
+サンプルプロジェクトを見てみましょう。プロファイルセクションは現在、次のようになっています。
 
 ```yaml
 profiles:
   dev: {}
 ```
 
-Which means the `dev` profile is empty and by default, all the settings are inherited from the project configuration. We can inspect the current state of the project configuration by running
+つまり、`dev` プロファイルは空で、デフォルトではすべての設定がプロジェクト構成から継承されます。
+プロジェクト構成の現在の状態を確認するには、次のコマンドを実行します。
 
 ```sh
 dlt project --profile dev config show
 ```
 
-This will show the current state of the project configuration with the `dev` profile loaded. If you don't specify the `--profile` option, the `dev` profile is used by default.
+これにより、`dev` プロファイルがロードされたプロジェクト構成の現在の状態が表示されます。
+`--profile` オプションを指定しない場合は、デフォルトで `dev` プロファイルが使用されます。
 
-### Adding a new profile
+### 新しいプロファイルの追加
 
-We can now create a new profile called `prod` that changes the location of the duckdb file we are loading to, as well as the log level of the project and the number of rows we are loading. Please run:
+これで、ロード先のduckdbファイルの場所、プロジェクトのログレベル、ロードする行数を変更する「prod」という新しいプロファイルを作成できます。
+以下を実行してください。
 
 ```sh
 dlt profile prod add
 ```
 
-And change the prod profile to the following:
+そして、prod プロファイルを次のように変更します:
 
 ```yaml
   prod:
@@ -300,44 +318,51 @@ And change the prod profile to the following:
         credentials: my_data_prod.duckdb
 ```
 
-We can now inspect the prod profile. You will see that the new settings are merged with the project configuration and the `dev` profile settings.
+これで、prod プロファイルを検査できるようになりました。
+新しい設定がプロジェクト構成と `dev` プロファイル設定にマージされていることがわかります。
 
 ```sh
 dlt project --profile prod config show
 ```
 
-### Run a pipeline with the new profile and inspect the results
+### 新しいプロファイルでパイプラインを実行し、結果を確認します。
 
-Now, let's run the pipeline with the `prod` profile.
+では、`prod` プロファイルでパイプラインを実行してみましょう。
 
 ```sh
 dlt pipeline --profile prod my_pipeline run
 ```
 
-You can now see more output in the console due to the more verbose log level, and the number of rows loaded is now 200 instead of 100. Let's inspect our datasets for each profile (assuming you still have the duckdb database file from the previous chapter).
+ログレベルがより詳細になったため、コンソールに表示される出力が増え、ロードされた行数も 100 行から 200 行になりました。
+各プロファイルのデータセットを調べてみましょう (前の章で作成した duckdb データベース ファイルがまだ残っていると仮定します)。
 
 ```sh
 dlt dataset --profile dev my_duckdb_destination_dataset row-counts
 dlt dataset --profile prod my_duckdb_destination_dataset row-counts
 ```
 
-You will see that the number of rows loaded is now 200 instead of 100 in the prod profile.
+製品プロファイルでは、ロードされた行数が 100 ではなく 200 になっていることがわかります。
 
 :::tip
-Profiles can also be inherited from other profiles; you can find more information in [Profiles](../core-concepts/profiles.md).
+プロファイルは他のプロファイルから継承することもできます。詳細については、[プロファイル](../core-concepts/profiles.md) を参照してください。
 :::
 
-### Using config files with profiles
+### プロファイルでの設定ファイルの使用
 
-You can also use the same configuration and secrets toml files and environment variables. You have probably noticed that your project contains more than one secrets file with the profile name prepended. These secrets files are only loaded if a given profile is active. Let's move the duckdb credentials, runtime settings, and source settings to the toml files instead of the `dlt.yml` file to demonstrate this:
+同じ設定ファイルとシークレットのToMLファイル、および環境変数を使用することもできます。
+プロジェクトには、プロファイル名が先頭に付いたシークレットファイルが複数含まれていることに気付いたかもしれません。
+これらのシークレットファイルは、特定のプロファイルがアクティブな場合にのみ読み込まれます。
+これを実証するために、duckdbの認証情報、ランタイム設定、およびソース設定を`dlt.yml`ファイルではなくToMLファイルに移動してみましょう。
 
-First, remove all the content of the `prod` section in the `dlt.yml` file, but keep the key and the empty secrets file. We can also remove the `runtime` section from the `dlt.yml` file as well as the `credentials` key from the destination and the `row_count` key from the `sources.my_arrow_source` section. If you try to run the pipeline now, dlt will complain about missing configuration values:
+まず、`dlt.yml`ファイルの`prod`セクションの内容をすべて削除しますが、キーと空のシークレットファイルはそのまま残しておきます。
+`dlt.yml`ファイルから`runtime`セクションを削除し、出力先から`credentials`キーと`sources.my_arrow_source`セクションから`row_count`キーを削除することもできます。
+この時点でパイプラインを実行しようとすると、dltは設定値が不足しているというエラーメッセージを表示します。
 
 ```sh
 dlt pipeline my_pipeline run
 ```
 
-Now let's add the following to the `dev.secrets.toml` file:
+次に、`dev.secrets.toml` ファイルに次の内容を追加します:
 
 ```toml
 [runtime]
@@ -350,7 +375,7 @@ credentials = "my_data.duckdb"
 row_count = 100
 ```
 
-And the following to the `prod.secrets.toml` file:
+そして、`prod.secrets.toml` ファイルに次の内容を追加します:
 
 ```toml
 [runtime]
@@ -363,21 +388,21 @@ credentials = "my_data_prod.duckdb"
 row_count = 200
 ```
 
-We can now clear the `_data` directory and repeat the steps above where you run both pipelines and inspect both datasets; you will see that the settings from the toml files are applied:
+`_data` ディレクトリをクリアし、上記の手順を繰り返して両方のパイプラインを実行し、両方のデータセットを検査します。toml ファイルの設定が適用されていることがわかります。
 
-Load some data:
+データを読み込みます:
 
 ```sh
 dlt pipeline --profile dev my_pipeline run
 dlt pipeline --profile prod my_pipeline run
 ```
 
-Inspect the datasets:
+データセットを検査します:
 
 ```sh
 dlt dataset --profile dev my_duckdb_destination_dataset row-counts
 dlt dataset --profile prod my_duckdb_destination_dataset row-counts
 ```
 
-To locate your [loaded data](../features/projects.md#local-and-temporary-files-data_dir), check the `_data\{profile name}\local` directory.
+[ロードされたデータ](../features/projects.md#local-and-temporary-files-data_dir)を見つけるには、`_data\{profile name}\local`ディレクトリを確認してください。
 

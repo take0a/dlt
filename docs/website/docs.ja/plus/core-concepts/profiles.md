@@ -3,9 +3,10 @@ title: Profiles
 keywords: [dlt+, profiles]
 ---
 
-A profile is a set of configurations and secrets defined for a specific use case. Profiles provide a way to manage different configurations for different environments.
+プロファイルとは、特定のユースケース向けに定義された設定とシークレットのセットです。
+プロファイルは、環境ごとに異なる設定を管理する手段を提供します。
 
-They are defined in the `dlt.yml` under the `profiles` section.
+プロファイルは、`dlt.yml` の `profiles` セクションで定義されます。
 
 ```yaml
 profiles:
@@ -27,20 +28,22 @@ profiles:
         credentials: my_data_prod.duckdb
 ```
 
-Every project includes two implicit profiles by default: `dev` and `tests`. If no profile is specified, the `dev` profile is loaded by default.
-All CLI commands that run on a project support the `--profile` option, allowing you to specify the desired profile. For example,
+すべてのプロジェクトには、デフォルトで `dev` と `tests` という 2 つの暗黙的なプロファイルが含まれています。
+プロファイルが指定されていない場合は、デフォルトで `dev` プロファイルが読み込まれます。
+プロジェクトで実行されるすべての CLI コマンドは `--profile` オプションをサポートしており、必要なプロファイルを指定できます。
+例えば、
 
 ```sh
 dlt project --profile dev my_pipeline run
 dlt dataset --profile prod my_duckdb_destination_dataset row-counts
 ```
 
-## Using config files with profiles
+## プロファイルでの設定ファイルの使用
 
-All the configuration and secrets for profiles can also be placed in TOML files, as [described in dlt OSS documentation](../../general-usage/credentials/).
-Each profile can have its own `secrets.toml` file, which is only loaded when that profile is active.
+プロファイルのすべての設定とシークレットは、[dlt OSS ドキュメント](../../general-usage/credentials/)に記載されているように、TOML ファイルに配置することもできます。
+各プロファイルには独自の `secrets.toml` ファイルを作成でき、このファイルはそのプロファイルがアクティブな場合にのみ読み込まれます。
 
-For example, if you have two secrets files under `.dlt`:
+例えば、`.dlt` 以下に 2 つのシークレットファイルがある場合:
 
 ```sh
 .
@@ -50,7 +53,7 @@ For example, if you have two secrets files under `.dlt`:
 │   └── tests.secrets.toml
 ```
 
-You can run a pipeline with different profiles as follows:
+次のように、異なるプロファイルを使用してパイプラインを実行できます:
 
 ```sh
 dlt pipeline --profile dev my_pipeline run
@@ -58,22 +61,28 @@ dlt pipeline --profile tests my_pipeline run
 ```
 
 :::caution
-Please note the following inconsistencies between the YAML and TOML files that will be fixed in the future:
+YAML ファイルと TOML ファイルの間には、今後修正される予定の以下の不整合がありますのでご注意ください。
 
-* The YAML `destinations` section is singularized to `destination` in the TOML file.
-* The project variables such as `tmp_dir` are not available in the TOML files.
+* YAML の `destinations` セクションは、TOML ファイルでは `destination` と単数形になっています。
+* `tmp_dir` などのプロジェクト変数は、TOML ファイルでは使用できません。
 :::
 
-## Pinning profiles
-You can pin a profile locally, making the given profile name the default one. This is useful, for example, when deploying your project in a production or staging environment.
+## プロファイルのピン留め
+
+プロファイルをローカルにピン留めし、指定したプロファイル名をデフォルトにすることができます。
+これは、例えばプロジェクトを本番環境やステージング環境にデプロイする場合に便利です。
+
 ```sh
 dlt profile prod pin
 ```
-will pin the `prod` profile and from now on all Python scripts and cli commands will see it as the default and switch to it automatically.
-The profile pin is kept in the `.dlt/profile-name` file. Remove this file to unpin. Note that our default `.gitignore` prevents this file from being added.
 
-### Settings in the `dlt.yml` file vs TOML files
+`prod` プロファイルをピン留めします。これ以降、すべての Python スクリプトと CLI コマンドはこれをデフォルトとして認識し、自動的に切り替えます。
+プロファイルのピン留めは `.dlt/profile-name` ファイルに保存されます。
+ピン留めを解除するには、このファイルを削除します。デフォルトの `.gitignore` により、このファイルの追加がブロックされていることに注意してください。
 
-For dlt+ Projects, it's best practice to keep all non-secret settings in `dlt.yml` and store secrets only in `.dlt/secrets.toml`. This ensures that sensitive data is only available in the necessary profiles or environments.
+### `dlt.yml` ファイルと TOML ファイルの設定
 
-In the example above, some non-secret values were moved to `.dlt/secrets.toml` for demonstration purposes only - this is not the recommended approach.
+dlt+ プロジェクトでは、シークレットではない設定はすべて `dlt.yml` に保存し、シークレットは `.dlt/secrets.toml` にのみ保存するのがベストプラクティスです。
+これにより、機密データは必要なプロファイルまたは環境でのみ利用可能になります。
+
+上記の例では、デモ目的のため、シークレットではない値の一部を `.dlt/secrets.toml` に移動していますが、これは推奨される方法ではありません。

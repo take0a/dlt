@@ -5,23 +5,31 @@ keywords: ["dlt+", "cache", "transformations"]
 ---
 
 :::caution
-🚧 This feature is under development, and the interface may change in future releases. Interested in becoming an early tester? [Join dlt+ early access](https://info.dlthub.com/waiting-list)
+🚧 この機能は現在開発中であり、今後のリリースでインターフェースが変更される可能性があります。
+早期テスターに​​ご興味をお持ちですか？[dlt+早期アクセスにご参加ください](https://info.dlthub.com/waiting-list)
 :::
 
-The dlt+ Cache is a temporary local storage created by dlt+ to enhance development workflows. It allows you to efficiently run local transformations, materialize dbt models, and test your queries before deploying them to production.
+dlt+ キャッシュは、開発ワークフローを強化するために dlt+ によって作成される一時的なローカルストレージです。
+これにより、ローカル変換を効率的に実行し、dbt モデルをマテリアライズし、クエリを本番環境にデプロイする前にテストすることができます。
 
-## How it works
+## 仕組み
 
-The dlt+ Cache is a powerful tool that enables users to shift parts of their data workflows earlier in the development process. Its primary use case today is [running transformations locally](../features/transformations/index.md), but we plan to support more use cases and workflows in the future.
+dlt+ キャッシュは、開発プロセスの早い段階でデータワークフローの一部を移行できる強力なツールです。
+現在、主なユースケースは[ローカルでの変換実行](../features/transformations/index.md)ですが、将来的にはより多くのユースケースとワークフローをサポートする予定です。
 
-The cache is powered by DuckDB, supporting the full DuckDB SQL dialect. You can manipulate cached data and push it back to any dlt destination.
+キャッシュはDuckDBを搭載しており、DuckDBのSQL方言を完全にサポートしています。
+キャッシュされたデータを操作し、任意のdlt出力先にプッシュバックできます。
 
-You specify which datasets you want to pass to the cache in your dlt manifest file (`dlt.yml`). The cache automatically discovers the source schema from the data and runs your transformations using the cache and DuckDB as a query engine. Currently, you can define your transformations in dbt or Python (pandas, arrows, polars, etc.). After running your transformations, the cache will sync the results to the output dataset in your destination. The output schema is also automatically discovered (when not explicitly declared).
+dltマニフェストファイル(`dlt.yml`)で、キャッシュに渡すデータセットを指定します。
+キャッシュはデータからソーススキーマを自動的に検出し、キャッシュとDuckDBをクエリエンジンとして使用して変換を実行します。
+現在、変換はdbtまたはPython(pandas、arrows、polarsなど)で定義できます。
+変換を実行すると、キャッシュは結果を出力先の出力データセットに同期します。
+出力スキーマも自動的に検出されます (明示的に宣言されていない場合)。
 
-## Define the cache
+## キャッシュを定義する
 
-To define a cache, you need to declare the name, inputs, and outputs in the `dlt.yml` file. For example, the following configuration defines a cache that retrieves data
-from `github_events_dataset`, processes it, and writes the transformed data to `github_reports_dataset`:
+キャッシュを定義するには、`dlt.yml` ファイルで名前、入力、出力を宣言する必要があります。
+例えば、次の設定は、`github_events_dataset` からデータを取得し、処理して、変換後のデータを `github_reports_dataset` に書き込むキャッシュを定義します。
 
 ```yaml
 caches:
@@ -38,26 +46,29 @@ caches:
 ```
 
 :::caution
-Currently, a cache usage has specific constraints. Please keep the following limitations in mind:
+現在、キャッシュの使用には特定の制約があります。
+以下の制限事項にご注意ください。
 
-* The input dataset must be located on a filesystem-based destination such as [Iceberg](../ecosystem/iceberg.md), [Delta](../ecosystem/delta.md), or [Cloud storage and filesystem](../../dlt-ecosystem/destinations/filesystem.md). The cache creates live views on these tables.
-* While the cache works with any output destination, you must explicitly define output tables.
-* A cache can only write data using the append write disposition.
+* 入力データセットは、[Iceberg](../ecosystem/iceberg.md)、[Delta](../ecosystem/delta.md)、[クラウドストレージとファイルシステム](../../dlt-ecosystem/destinations/filesystem.md) などのファイルシステムベースの出力先に配置されている必要があります。
+キャッシュはこれらのテーブルにライブビューを作成します。
+* キャッシュはどの出力先でも機能しますが、出力テーブルを明示的に定義する必要があります。
+* キャッシュは追加書き込み方式でのみデータを書き込むことができます。
 :::
 
-You can configure input tables in the cache to specify which tables are cached locally. This allows you to run SQL queries on remote data lakes efficiently, eliminating complex data retrieval workflows.
-Outputs define how processed data in the cache is pushed back to a chosen destination.
+キャッシュ内の入力テーブルを構成して、ローカルにキャッシュするテーブルを指定できます。
+これにより、リモートデータレイクに対してSQLクエリを効率的に実行でき、複雑なデータ取得ワークフローが不要になります。
+出力は、キャッシュ内の処理済みデータを選択した宛先にプッシュバックする方法を定義します。
 
-[Populating](../reference.md#dlt-cache-populate) and [flushing](../reference.md#dlt-cache-flush) the cache are discrete steps.
-You can orchestrate these as part of your deployment or trigger them interactively using the cli, especially when analyzing data locally or working in a notebook.
+キャッシュへの[ポピュレート](../reference.md#dlt-cache-populate)と[フラッシュ](../reference.md#dlt-cache-flush)は別々のステップです。
+これらをデプロイメントの一部としてオーケストレーションすることも、特にローカルでデータを分析する場合やノートブックで作業する場合に、CLIを使用して対話的にトリガーすることもできます。
 
-## Why you should use it
+## 使用すべき理由
 
-The main use case for a cache is [local transformations](../features/transformations/index.md). This provides several advantages, like:
+キャッシュの主なユースケースは[ローカル変換](../features/transformations/index.md)です。これには、次のようないくつかの利点があります。
 
-1. Your source schema is discovered automatically.
-2. You save unnecessary computing costs by shifting transformation queries away from expensive cloud warehouses to the local machine or a cloud-deployed server.
-3. You reduce the egress costs since data remains in your local system.
-4. The same engine is used for transformations (i.e., SQL dialect) irrespective of where you're loading your data.
-5. Metadata is easily propagated from the input to the output dataset, and dataset catalogs are maintained automatically.
+1. ソーススキーマが自動的に検出されます。
+2. 変換クエリを高価なクラウドウェアハウスからローカルマシンまたはクラウドにデプロイされたサーバーに移行することで、不要なコンピューティングコストを削減できます。
+3. データがローカルシステムに残るため、出力コストを削減できます。
+4. データのロード場所に関係なく、同じエンジン（SQL方言）が変換に使用されます。
+5. メタデータは入力データセットから出力データセットに簡単に伝播され、データセットカタログは自動的に維持されます。
 
