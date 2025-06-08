@@ -5,17 +5,15 @@ description: Learn how use the custom destination to load to LanceDB.
 keywords: [destination, credentials, example, lancedb, custom destination, vectorstore, AI, LLM]
 ---
 
-This example showcases a Python script that demonstrates the integration of LanceDB, an open-source vector database,
-as a custom destination within the dlt ecosystem.
-The script illustrates the implementation of a custom destination as well as the population of the LanceDB vector
-store with data from various sources.
-This highlights the seamless interoperability between dlt and LanceDB.
+この例では、オープンソースのベクターデータベースであるLanceDBを、DLTエコシステム内のカスタムデスティネーションとして統合するPythonスクリプトを紹介します。
+このスクリプトは、カスタムデスティネーションの実装と、LanceDBベクターストアへの様々なソースからのデータの入力を示しています。
+これにより、DLTとLanceDB間のシームレスな相互運用性が明らかになります。
 
-You can get a Spotify client ID and secret from https://developer.spotify.com/.
+SpotifyクライアントIDとシークレットは、https://developer.spotify.com/から取得できます。
 
-We'll learn how to:
-- Use the [custom destination](../dlt-ecosystem/destinations/destination.md)
-- Delegate the embeddings to LanceDB using OpenAI Embeddings
+以下の方法を学習します。
+- [カスタムデスティネーション](../dlt-ecosystem/destinations/destination.md)を使用する
+- OpenAI Embeddingsを使用してLanceDBに埋め込みを委任する
 """
 
 __source_name__ = "spotify"

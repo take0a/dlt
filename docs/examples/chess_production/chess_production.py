@@ -5,15 +5,15 @@ description: Learn how run chess pipeline in production
 keywords: [incremental loading, example]
 ---
 
-In this example, you'll find a Python script that interacts with the Chess API to extract players and game data.
+この例では、Chess API と連携してプレイヤーとゲームデータを抽出する Python スクリプトを紹介します。
 
-We'll learn how to:
+以下の方法を学習します。
 
-- Inspecting packages after they have been loaded.
-- Loading back load information, schema updates, and traces.
-- Triggering notifications in case of schema evolution.
-- Using context managers to independently retry pipeline stages.
-- Run basic tests utilizing `sql_client` and `normalize_info`.
+- ロード後のパッケージの検査。
+- ロード情報、スキーマの更新、トレースのバックロード。
+- スキーマの変更時に通知をトリガー。
+- コンテキストマネージャーを使用してパイプラインステージを個別に再試行。
+- `sql_client` と `normalize_info` を利用した基本テストの実行。
 
 """
 

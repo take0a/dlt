@@ -6,47 +6,47 @@ keywords: [connector x, pyarrow, zero copy, duckdb, postgres, initial load]
 ---
 
 :::info
-Huge shout out to [Simon Späti](https://github.com/sspaeti) for this example!
+この例を提供してくれた [Simon Späti](https://github.com/sspaeti) に大いに感謝します。
 :::
 
-This examples shows you how to export and import data from Postgres to Postgres in a fast way with ConnectorX and DuckDB
-since the default export will generate `Insert_statement` during the normalization phase, which is super slow for large tables.
+この例では、ConnectorX と DuckDB を使用して、Postgres から Postgres へデータを高速にエクスポートおよびインポートする方法を示します。
+デフォルトのエクスポートでは、正規化フェーズで `Insert_statement` が生成されますが、これは大規模なテーブルでは非常に遅くなります。
 
-As it's an initial load, we create a separate schema with timestamp initially and then replace the existing schema with the new one.
+これは初期ロードであるため、最初にタイムスタンプ付きの別のスキーマを作成し、その後、既存のスキーマを新しいスキーマに置き換えます。
 
 :::note
-This approach is tested and works well for an initial load (`--replace`), however, the incremental load (`--merge`) might need some adjustments (loading of load-tables of dlt, setting up first run after an initial
-load, etc.).
+このアプローチはテスト済みで、初期ロード (`--replace`) では適切に機能しますが、増分ロード (`--merge`) ではいくつかの調整が必要になる場合があります
+ (dlt のロード テーブルのロード、初期ロード後の最初の実行のセットアップなど)。
 :::
 
-We'll learn:
+学習内容：
 
-- How to get arrow tables from [connector X](https://github.com/sfu-db/connector-x) and yield them in chunks.
-- That merge and incremental loads work with arrow tables.
-- How to use DuckDB for a speedy normalization.
-- How to use `argparse` to turn your pipeline script into a CLI.
-- How to work with `ConnectionStringCredentials` spec.
+- [コネクタ X](https://github.com/sfu-db/connector-x) からアローテーブルを取得し、チャンク単位で生成する方法。
+- アローテーブルでマージロードと増分ロードが機能すること。
+- DuckDB を使用して高速な正規化を行う方法。
+- `argparse` を使用してパイプラインスクリプトを CLI に変換する方法。
+- `ConnectionStringCredentials` 仕様の使用方法。
 
+`.dlt/secrets.toml` または dlt 環境変数でデータベース認証情報を定義し、テーブル名（"table_1" と "table_2"）を調整する必要があることに注意してください。
 
-Be aware that you need to define the database credentials in `.dlt/secrets.toml` or dlt ENVs and adjust the tables names ("table_1" and "table_2").
-
-Install `dlt` with `duckdb` as extra, also `connectorx`, Postgres adapter and progress bar tool:
+`dlt` を `duckdb` とともにインストールし、`connectorx`、Postgres アダプタ、プログレスバーツールもインストールします。
 
 ```sh
 pip install "dlt[duckdb]" connectorx pyarrow psycopg2-binary alive-progress
 ```
 
-Run the example:
+例を実行します:
+
 ```sh
 python postgres_to_postgres.py --replace
 ```
 
 :::warn
-Attention: There were problems with data type TIME that includes nano seconds. More details in
-[Slack](https://dlthub-community.slack.com/archives/C04DQA7JJN6/p1711579390028279?thread_ts=1711477727.553279&cid=C04DQA7JJN60)
+注意: ナノ秒を含むTIMEデータ型に問題が発生しました。
+詳細は[Slack](https://dlthub-community.slack.com/archives/C04DQA7JJN6/p1711579390028279?thread_ts=1711477727.553279&cid=C04DQA7JJN60)をご覧ください。
 
-As well as with installing DuckDB extension (see [issue
-here](https://github.com/duckdb/duckdb/issues/8035#issuecomment-2020803032)), that's why I manually installed the `postgres_scanner.duckdb_extension` in my Dockerfile to load the data into Postgres.
+DuckDB拡張機能のインストール（[問題はこちら](https://github.com/duckdb/duckdb/issues/8035#issuecomment-2020803032)を参照）に加え、
+データをPostgresにロードするために、Dockerfileに`postgres_scanner.duckdb_extension`を手動でインストールしました。
 :::
 """
 

@@ -6,17 +6,17 @@ keywords: [runners, lambda, airflow]
 
 # Runners
 
-With dlt+ you can now run pipelines directly from the command line, allowing you to go to production faster:
+dlt+ を使用すると、コマンドラインから直接パイプラインを実行できるようになり、より早く本番環境に移行できるようになります。
 
 ```sh
 dlt pipeline my_pipeline run
 ```
 
-These can also be run in different environments with the use of [profiles](../core-concepts/profiles.md):
+これらは、[プロファイル](../core-concepts/profiles.md)を使用してさまざまな環境で実行することもできます。
 
 ```sh
 dlt project --profile prod my_pipeline run
 ```
 
-We are working on specialized runners for environments like Airflow, Dagster, Prefect, and more. If you're interested, feel free to [join our early access program](https://info.dlthub.com/waiting-list).
+Airflow、Dagster、Prefectなどの環境に特化したランナーの開発に取り組んでいます。ご興味をお持ちいただけましたら、[早期アクセスプログラム](https://info.dlthub.com/waiting-list)にぜひご参加ください。
 

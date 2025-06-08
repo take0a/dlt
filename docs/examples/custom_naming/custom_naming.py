@@ -5,23 +5,22 @@ description: We demonstrate how to create naming conventions that allow UNICODE 
 keywords: [example]
 ---
 
-This example shows how to add and use custom naming convention. Naming conventions translate identifiers found in source data into identifiers in
-destination, where rules for a valid identifier are constrained.
+この例では、カスタム命名規則を追加して使用する方法を示します。命名規則は、ソースデータ内の識別子を、有効な識別子のルールが制約されている宛先の識別子に変換します。
 
-Custom naming conventions are classes that derive from `NamingConvention` that you can import from `dlt.common.normalizers.naming`. We recommend the following module layout:
-1. Each naming convention resides in a separate Python module (file)
-2. The class is always named `NamingConvention`
+カスタム命名規則は、`dlt.common.normalizers.naming` からインポートできる `NamingConvention` から派生したクラスです。次のモジュールレイアウトを推奨します。
+1. 各命名規則は、別々の Python モジュール（ファイル）に存在します。
+2. クラスの名前は常に `NamingConvention` です。
 
-There are two naming conventions in this example:
-1. A variant of `sql_ci` that generates identifier collisions with a low (user defined) probability by appending a deterministic tag to each name.
-2. A variant of `sql_cs` that allows for LATIN (ie. umlaut) characters
+この例には 2 つの命名規則があります。
+1. `sql_ci` の派生版で、各名前に決定論的なタグを追加することで、低い確率（ユーザー定義）で識別子の衝突を生成します。
+2. LATIN（ウムラウトなど）文字に対応した `sql_cs` のバリアント
 
-With this example you will learn to:
-* Create a naming convention module with a recommended layout
-* Use naming convention by explicitly passing it to `duckdb` destination factory
-* Use naming convention by configuring it config.toml
-* Changing the declared case sensitivity by overriding `is_case_sensitive` property
-* Providing custom normalization logic by overriding `normalize_identifier` method
+この例では、以下の点を学習します。
+* 推奨レイアウトで命名規則モジュールを作成する
+* 命名規則を `duckdb` の宛先ファクトリに明示的に渡すことで使用する
+* 命名規則を config.toml で設定することで使用する
+* `is_case_sensitive` プロパティをオーバーライドすることで、宣言されている大文字と小文字の区別を変更する
+* `normalize_identifier` メソッドをオーバーライドすることで、カスタム正規化ロジックを提供する
 
 """
 

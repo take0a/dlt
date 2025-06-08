@@ -1,20 +1,20 @@
 """
 ---
-title: Propagate primary_key from root to nested tables
+title: primary_key をルートからネストされたテーブルに伝播する
 description: Learn how to propagate any column to nested tables
 keywords: [root table, nested reference, parent key]
 ---
 
-You learn how to propagate specific fields (e.g., primary, foreign keys) from a parent record into each child record.
+親レコードの特定のフィールド（主キー、外部キーなど）を各子レコードに伝播する方法を学習します。
 
-In this example, we'll explore how to:
+この例では、以下の手順を説明します。
 
-- Add `parent_id` into each child record using `add_parent_id` function
-- Use the [`add_map` function](https://dlthub.com/docs/api_reference/extract/resource#add_map) to apply this
-custom logic to every record in the dataset
+- `add_parent_id` 関数を使用して、各子レコードに `parent_id` を追加する
+- [`add_map` 関数](https://dlthub.com/docs/api_reference/extract/resource#add_map) を使用して、
+このカスタムロジックをデータセット内のすべてのレコードに適用する
 
 :::note important
-Please note that dlt metadata, including `_dlt_id` and `_dlt_load_id`, will still be loaded into the tables.
+`_dlt_id` および `_dlt_load_id` を含む dlt メタデータは引き続きテーブルにロードされることに注意してください。
 :::
 """
 

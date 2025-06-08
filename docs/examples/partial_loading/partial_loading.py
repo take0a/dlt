@@ -5,16 +5,15 @@ description: Load chess game data from Chess.com into a filesystem destination, 
 keywords: [incremental loading, REST API, dlt, chess.com, data pipeline, backfill management, filesystem]
 ---
 
-This script interacts with the Chess.com REST API to extract game data for a specific user on a monthly basis.
-The script retrieves game data for a specified time range, and when additional data is loaded for a different time range,
-it automatically handles de-duplication by deleting any previously loaded files for overlapping time range.
+このスクリプトは、Chess.com REST API と連携して、特定のユーザーのゲームデータを月単位で抽出します。
+このスクリプトは指定された期間のゲームデータを取得し、異なる期間のデータが追加でロードされると、
+重複する期間の以前にロードされたファイルを削除することで、自動的に重複排除を行います。
 
-We'll learn:
+学習内容：
 
-- How to configure a [REST API source](../dlt-ecosystem/verified-sources/rest_api/basic.md) using
- the `dlt` library.
-- How to manage and delete old backfill files for de-duplication.
-- How to use [Filesystem](../dlt-ecosystem/destinations/filesystem.md) as a destination for storing extracted data.
+- `dlt` ライブラリを使用して [REST API ソース](../dlt-ecosystem/verified-sources/rest_api/basic.md) を設定する方法。
+- 重複排除のために古いバックフィルファイルを管理および削除する方法。
+- 抽出されたデータの保存先として [ファイルシステム](../dlt-ecosystem/destinations/filesystem.md) を使用する方法。
 """
 
 import os

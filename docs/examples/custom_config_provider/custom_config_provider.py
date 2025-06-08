@@ -5,17 +5,15 @@ description: We show how to keep configuration in yaml file with switchable prof
 keywords: [config, yaml config, profiles]
 ---
 
-This example shows how to replace secrets/config toml files with a yaml file that contains several profiles (prod and dev) and jinja-like
-placeholders that are replaced with corresponding env variables.
-`dlt` resolves configuration by querying so called config providers (to ie. query env variables or content of a toml file).
-Here we will instantiate a provider with a custom loader and register it to be queried. At the end we demonstrate (using mock github source)
-that `dlt` uses it along other (standard) providers to resolve configuration.
+この例では、シークレット/設定 toml ファイルを、複数のプロファイル（prod と dev）と、対応する環境変数に置き換えられる jinja 風のプレースホルダーを含む yaml ファイルに置き換える方法を示します。
+`dlt` は、いわゆる設定プロバイダー（つまり、環境変数または toml ファイルの内容を照会する）を照会することで設定を解決します。
+ここでは、カスタムローダーを使用してプロバイダーをインスタンス化し、照会できるように登録します。最後に、`dlt` が他の（標準）プロバイダーとともにそれを使用して設定を解決する様子を（モック github ソースを使用して）示します。
 
-In this example you will learn to:
+この例では、次のことを学習します。
 
-* Implement custom configuration loader that parses yaml file, manipulates it and then returns final Python dict
-* Instantiate custom provider (CustomLoaderDocProvider) from the loader
-* Register provider instance to be queried
+* yaml ファイルを解析、操作し、最終的な Python 辞書を返すカスタム設定ローダーを実装する
+* ローダーからカスタムプロバイダー（CustomLoaderDocProvider）をインスタンス化する
+* 照会できるようにプロバイダーインスタンスを登録する
 
 """
 

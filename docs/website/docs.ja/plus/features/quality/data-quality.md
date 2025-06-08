@@ -5,14 +5,14 @@ keywords: ["dlt+", "data quality", "contracts"]
 ---
 
 :::caution
-🚧 This feature is under development. Interested in becoming an early tester? [Join dlt+ early access](https://info.dlthub.com/waiting-list).
+🚧 この機能は現在開発中です。早期テスターに​​ご興味をお持ちですか？[dlt+早期アクセスにご参加ください](https://info.dlthub.com/waiting-list)。
 :::
 
-dlt+ will allow you to define data validation rules at the YAML level or using Pydantic models. This ensures your data meets expected quality standards at the ingestion step.
+dlt+を使用すると、YAMLレベルまたはPydanticモデルを使用してデータ検証ルールを定義できます。これにより、取り込み段階でデータが期待される品質基準を満たしていることが保証されます。
 
-## Example: Defining a quality contract in YAML
+## 例: YAML での品質コントラクトの定義
 
-You can specify quality contracts to enforce constraints on your data, such as expected value ranges and nullability.
+品質コントラクトを指定することで、期待値の範囲や null 値許容など、データに制約を適用できます。
 
 ```yaml
 engine_version: 10
@@ -29,12 +29,13 @@ tables:
             max_value: 100
 ```
 
-## Key features
-With dlt+, you will be able to:
+## 主な機能
 
-* Define data tests and quality contracts using YAML configuration or Pydantic models.
-* Apply both row-level and batch-level validation.
-* Enforce constraints on distributions, boundaries, and expected values.
+dlt+ を使用すると、次のことが可能になります。
 
-Stay tuned for updates as we expand these capabilities! 🚀
+* YAML 設定または Pydantic モデルを使用して、データテストと品質契約を定義します。
+* 行レベルとバッチレベルの両方の検証を適用します。
+* 分布、境界、期待値に制約を適用します。
+
+これらの機能を拡張していく予定ですので、今後のアップデートにご期待ください。 🚀
 

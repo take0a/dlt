@@ -5,13 +5,13 @@ description: Learn how use the custom destination to load to bigquery and use cr
 keywords: [destination, credentials, example, bigquery, custom destination]
 ---
 
-In this example, you'll find a Python script that demonstrates how to load to BigQuery with the custom destination.
+この例では、カスタム宛先を使用して BigQuery にロードする方法を示す Python スクリプトを紹介します。
 
-We'll learn how to:
-- Use [built-in credentials.](../general-usage/credentials/complex_types#gcp-credentials)
-- Use the [custom destination.](../dlt-ecosystem/destinations/destination.md)
-- Use pyarrow tables to create nested column types on BigQuery.
-- Use BigQuery `autodetect=True` for schema inference from parquet files.
+以下の方法を学習します。
+- [組み込み認証情報](../general-usage/credentials/complex_types#gcp-credentials) を使用する
+- [カスタム宛先](../dlt-ecosystem/destinations/destination.md) を使用する
+- pyarrow テーブルを使用して BigQuery でネストされた列型を作成する
+- parquet ファイルからのスキーマ推論に BigQuery の `autodetect=True` を使用する
 
 """
 

@@ -5,15 +5,14 @@ description: Learn how to use dlt transformers and how to speed up your loads wi
 keywords: [transformers, parallelism, example]
 ---
 
-For this example, we will be loading Pokemon data from the [PokeAPI](https://pokeapi.co/) with the help of transformers to load
-Pokemon details in parallel.
+この例では、ポケモンの詳細情報を並列にロードするために、トランスフォーマーを利用して [PokeAPI](https://pokeapi.co/) からポケモンデータをロードします。
 
-We'll learn how to:
-- create 2 [transformers](../general-usage/resource.md#process-resources-with-dlttransformer) and connect them to a resource with the pipe operator `|`;
-- [load these transformers in parallel](../reference/performance.md#parallelism-within-a-pipeline) using the `@dlt.defer` decorator;
-- [configure parallelism](../reference/performance.md#parallel-pipeline-config-example) in the `config.toml` file;
-- deselect the main resource, so it will not be loaded into the database;
-- importing and using a pre-configured `requests` library with automatic retries (`from dlt.sources.helpers import requests`).
+以下の方法を学習します。
+- 2 つの [トランスフォーマー](../general-usage/resource.md#process-resources-with-dlttransformer) を作成し、パイプ演算子 `|` を使用してリソースに接続します。
+- `@dlt.defer` デコレータを使用して [これらのトランスフォーマーを並列にロード](../reference/performance.md#parallelism-within-a-pipeline) します。
+- `config.toml` ファイルで [並列処理を設定](../reference/performance.md#parallel-pipeline-config-example) します。
+- メインリソースの選択を解除して、データベースにロードされないようにします。
+- 自動再試行機能付きの事前構成済みの `requests` ライブラリをインポートして使用します (`from dlt.sources.helpers import requests`)。
 
 """
 

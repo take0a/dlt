@@ -5,15 +5,15 @@ description: Learn how work with Google services
 keywords: [google sheets, credentials, example]
 ---
 
-In this example, you'll find a Python script that demonstrates how to load Google Sheets data using the `dlt` library.
+この例では、`dlt` ライブラリを使用して Google スプレッドシートのデータを読み込む方法を示す Python スクリプトを紹介します。
 
-We'll learn how to:
-- use [built-in credentials](../general-usage/credentials/complex_types#gcp-credentials);
-- use [union of credentials](../general-usage/credentials/complex_types#working-with-alternatives-of-credentials-union-types);
-- create [dynamically generated resources](../general-usage/source#create-resources-dynamically).
+以下の方法を学習します。
+- [組み込み認証情報](../general-usage/credentials/complex_types#gcp-credentials);
+- [認証情報の結合](../general-usage/credentials/complex_types#working-with-alternatives-of-credentials-union-types);
+- [動的に生成されるリソース](../general-usage/source#create-resources-dynamically);
 
 :::tip
-This example is for educational purposes. For best practices, we recommend using [Google Sheets verified source](../dlt-ecosystem/verified-sources/google_sheets.md).
+この例は教育目的です。ベストプラクティスとして、[Google スプレッドシートの検証済みソース](../dlt-ecosystem/verified-sources/google_sheets.md) の使用をお勧めします。
 :::
 
 """

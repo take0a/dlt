@@ -5,18 +5,15 @@ description: Learn how to backfill in chunks of defined size
 keywords: [incremental loading, backfilling, chunks,example]
 ---
 
-In this example, you'll find a Python script that will load from a sql_database source in chunks of defined size. This is useful for backfilling in multiple pipeline runs as
-opposed to backfilling in one very large pipeline run which may fail due to memory issues on ephemeral storage or just take a very long time to complete without seeing any
-progress in the destination.
+この例では、sql_database ソースから定義済みのサイズのチャンク単位でロードする Python スクリプトを示します。これは、複数のパイプライン実行でバックフィルを行う場合に便利です。1 回の非常に大きなパイプライン実行でバックフィルを行うと、一時ストレージのメモリ問題により失敗したり、完了までに非常に長い時間がかかったりして、出力先に進捗状況が表示されなかったりする可能性があります。
 
-We'll learn how to:
+ここでは、以下の方法を学習します。
 
-- Connect to a mysql database with the sql_database source
-- Select one table to load and apply incremental loading hints as well as the primary key
-- Set the chunk size and limit the number of chunks to load in one pipeline run
-- Create a pipeline and backfill the table in the defined chunks
-- Use the datasets accessor to inspect and assert the load progress
-
+- sql_database ソースを使用して MySQL データベースに接続する
+- ロードするテーブルを 1 つ選択し、増分ロードのヒントと主キーを適用する
+- チャンクサイズを設定し、1 回のパイプライン実行でロードするチャンク数を制限する
+- パイプラインを作成し、定義済みのチャンク単位でテーブルをバックフィルする
+- データセット アクセサーを使用して、ロードの進行状況を検査およびアサートする
 """
 
 import pandas as pd

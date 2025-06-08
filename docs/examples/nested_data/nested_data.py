@@ -5,15 +5,15 @@ description: Learn how control nested data
 keywords: [incremental loading, example]
 ---
 
-In this example, you'll find a Python script that demonstrates how to control nested data using the `dlt` library.
+この例では、`dlt` ライブラリを使用してネストされたデータを制御する方法を示す Python スクリプトを紹介します。
 
-We'll learn how to:
-- [Adjust maximum nesting level in three ways:](../general-usage/source#reduce-the-nesting-level-of-generated-tables)
-  - Limit nesting levels with dlt decorator.
-  - Dynamic nesting level adjustment.
-  - Apply data type hints.
-- Work with [MongoDB](../dlt-ecosystem/verified-sources/mongodb) in Python and `dlt`.
-- Enable [incremental loading](../general-usage/incremental-loading) for efficient data extraction.
+以下の方法を学習します。
+- [最大ネストレベルを 3 つの方法で調整する](../general-usage/source#reduce-the-nesting-level-of-generated-tables)
+- dlt デコレータを使用してネストレベルを制限する。
+- 動的なネストレベル調整。
+- データ型ヒントを適用する。
+- Python と `dlt` で [MongoDB](../dlt-ecosystem/verified-sources/mongodb) を操作する。
+- 効率的なデータ抽出のために [増分読み込み](../general-usage/incremental-loading) を有効にする。
 """
 
 # NOTE: this line is only for dlt CI purposes, you may delete it if you are using this example

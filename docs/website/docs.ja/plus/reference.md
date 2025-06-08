@@ -4,29 +4,31 @@ description: Command line interface (CLI) full reference of dlt
 keywords: [command line interface, cli, dlt init]
 ---
 
-# Command line interface reference
+# コマンドラインインターフェースリファレンス
 
 <!-- this page is fully generated from the argparse object of dlt, run make update-cli-docs to update it -->
 
-This page contains all commands available in the dlt CLI and is generated
-automatically from the fully populated python argparse object of dlt.
+このページには、dlt CLI で使用できるすべてのコマンドが含まれており、dlt の完全に設定された Python argparse オブジェクトから自動的に生成されます。
+
 :::note
-Flags and positional commands are inherited from the parent command. Position within the command string
-is important. For example if you want to enable debug mode on the pipeline command, you need to add the
-debug flag to the base dlt command:
+フラグと位置指定コマンドは親コマンドから継承されます。
+コマンド文字列内の位置は重要です。
+たとえば、パイプラインコマンドでデバッグモードを有効にするには、ベースとなる dlt コマンドにデバッグフラグを追加する必要があります:
 
 ```sh
 dlt --debug pipeline
 ```
 
-Adding the flag after the pipeline keyword will not work.
+パイプラインキーワードの後に​​フラグを追加しても機能しません。
 :::
 
 ## `dlt`
 
-Creates, adds, inspects and deploys dlt pipelines. Further help is available at https://dlthub.com/docs/reference/command-line-interface.
+DLTパイプラインを作成、追加、検査、デプロイします。
+詳細なヘルプは https://dlthub.com/docs/reference/command-line-interface でご覧いただけます。
 
-**Usage**
+**使用方法**
+
 ```sh
 dlt [-h] [--version] [--disable-telemetry] [--enable-telemetry]
     [--non-interactive] [--debug]
@@ -36,842 +38,849 @@ dlt [-h] [--version] [--disable-telemetry] [--enable-telemetry]
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--version` - Show program's version number and exit
-* `--disable-telemetry` - Disables telemetry before command is executed
-* `--enable-telemetry` - Enables telemetry before command is executed
-* `--non-interactive` - Non interactive mode. default choices are automatically made for confirmations and prompts.
-* `--debug` - Displays full stack traces on exceptions. useful for debugging if the output is not clear enough.
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--version` - プログラムのバージョン番号を表示して終了します
+* `--disable-telemetry` - コマンド実行前にテレメトリを無効にします
+* `--enable-telemetry` - コマンド実行前にテレメトリを有効にします
+* `--non-interactive` - 非対話型モード。確認とプロンプトは自動的にデフォルトの選択が行われます。
+* `--debug` - 例外発生時にフルスタックトレースを表示します。出力が不明瞭な場合のデバッグに役立ちます。
 
-**Available subcommands**
-* [`transformation`](#dlt-transformation) - Run transformations dlt+ project. experimental.
-* [`source`](#dlt-source) - Manage dlt+ project sources
-* [`project`](#dlt-project) - Manage dlt+ projects
-* [`profile`](#dlt-profile) - Manage dlt+ project profiles
-* [`pipeline`](#dlt-pipeline) - Operations on pipelines that were ran locally
-* [`license`](#dlt-license) - View dlt+ license status
-* [`destination`](#dlt-destination) - Manage project destinations
-* [`dbt`](#dlt-dbt) - Dlt+ dbt transformation generator
-* [`dataset`](#dlt-dataset) - Manage dlt+ project datasets
-* [`cache`](#dlt-cache) - Manage dlt+ project local data cache. experimental.
-* [`telemetry`](#dlt-telemetry) - Shows telemetry status
-* [`schema`](#dlt-schema) - Shows, converts and upgrades schemas
-* [`init`](#dlt-init) - Creates a pipeline project in the current folder by adding existing verified source or creating a new one from template.
-* [`render-docs`](#dlt-render-docs) - Renders markdown version of cli docs
-* [`deploy`](#dlt-deploy) - Creates a deployment package for a selected pipeline script
+**利用可能なサブコマンド**
+* [`transformation`](#dlt-transformation) - dlt+ プロジェクトの変換を実行します。試験的機能です。
+* [`source`](#dlt-source) - dlt+ プロジェクトのソースを管理します
+* [`project`](#dlt-project) - dlt+ プロジェクトを管理します
+* [`profile`](#dlt-profile) - dlt+ プロジェクトのプロファイルを管理します
+* [`pipeline`](#dlt-pipeline) - ローカルで実行されたパイプラインの操作
+* [`license`](#dlt-license) - dlt+ ライセンスのステータスを表示します
+* [`destination`](#dlt-destination) - プロジェクトの宛先を管理します
+* [`dbt`](#dlt-dbt) - Dlt+ dbt 変換ジェネレーター
+* [`dataset`](#dlt-dataset) - dlt+ プロジェクトのデータセットを管理します
+* [`cache`](#dlt-cache) - dlt+ プロジェクトのローカルデータキャッシュを管理します。試験運用版です。
+* [`telemetry`](#dlt-telemetry) - テレメトリのステータスを表示します。
+* [`schema`](#dlt-schema) - スキーマを表示、変換、アップグレードします。
+* [`init`](#dlt-init) - 既存の検証済みソースを追加するか、テンプレートから新しいソースを作成して、現在のフォルダにパイプラインプロジェクトを作成します。
+* [`render-docs`](#dlt-render-docs) - CLI ドキュメントの Markdown 版をレンダリングします。
+* [`deploy`](#dlt-deploy) - 選択したパイプラインスクリプトのデプロイメントパッケージを作成します。
 
 </details>
 
 ## `dlt transformation`
 
-Run transformations dlt+ project. Experimental.
+dlt+ プロジェクトの変換を実行します。実験的。
 
-**Usage**
+**使用方法**
+
 ```sh
 dlt transformation [-h] [--project PROJECT] [--profile PROFILE] pond_name
     {list,info,run,verify-inputs,verify-outputs,populate,flush,transform,populate-state,flush-state,render-t-layer}
     ...
 ```
 
-**Description**
+**説明**
 
-Commands to run transformations on local cache in dlt+ projects
+dlt+ プロジェクトでローカルキャッシュに対して変換を実行するコマンド
 
-**This is an experimental feature and will change substantially in the future.**
+**これは試験的な機能であり、将来的に大幅に変更される予定です。**
 
-**Do not use in production.**.
+**本番環境では使用しないでください。**
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Positional arguments**
-* `pond_name` - Name of the transformation, use '.' for the first one found in project.
+**位置引数**
+* `pond_name` - 変換の名前。プロジェクト内で最初に見つかったものには「.」を使用します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--project PROJECT` - Name or path to the dlt package with dlt.yml
-* `--profile PROFILE` - Profile to use from the project configuration file
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--project PROJECT` - dlt.yml を含む dlt パッケージの名前またはパス
+* `--profile PROFILE` - プロジェクト設定ファイルで使用するプロファイル
 
-**Available subcommands**
-* [`list`](#dlt-transformation-list) - List all transformations discovered in this directory
-* [`info`](#dlt-transformation-info) - Transformation info: locations, cache status etc.
-* [`run`](#dlt-transformation-run) - Sync cache, run transformation and commit the outputs
-* [`verify-inputs`](#dlt-transformation-verify-inputs) - Verify that cache can connect to all defined inputs and that tables declared are available
-* [`verify-outputs`](#dlt-transformation-verify-outputs) - Verify that the output cache dataset contains all tables declared
-* [`populate`](#dlt-transformation-populate) - Sync data from inputs to input cache dataset
-* [`flush`](#dlt-transformation-flush) - Flush data from output cache dataset to outputs
-* [`transform`](#dlt-transformation-transform) - Run transformations on input cache dataset and write to output cache dataset
-* [`populate-state`](#dlt-transformation-populate-state) - Populate transformation state from defined output
-* [`flush-state`](#dlt-transformation-flush-state) - Flush transformation state to defined output
-* [`render-t-layer`](#dlt-transformation-render-t-layer) - Render a starting point for the t-layer
+**使用可能なサブコマンド**
+* [`list`](#dlt-transformation-list) - このディレクトリで検出されたすべての変換を一覧表示します
+* [`info`](#dlt-transformation-info) - 変換情報（場所、キャッシュステータスなど）
+* [`run`](#dlt-transformation-run) - キャッシュを同期し、変換を実行して出力をコミットします
+* [`verify-inputs`](#dlt-transformation-verify-inputs) - キャッシュが定義済みのすべての入力に接続できること、および宣言されたテーブルが利用可能であることを検証します
+* [`verify-outputs`](#dlt-transformation-verify-outputs) - 出力キャッシュがデータセットには宣言されたすべてのテーブルが含まれます
+* [`populate`](#dlt-transformation-populate) - 入力から入力キャッシュデータセットにデータを同期します
+* [`flush`](#dlt-transformation-flush) - 出力キャッシュデータセットから出力にデータをフラッシュします
+* [`transform`](#dlt-transformation-transform) - 入力キャッシュデータセットに対して変換を実行し、出力キャッシュデータセットに書き込みます
+* [`populate-state`](#dlt-transformation-populate-state) - 定義された出力から変換状態を設定します
+* [`flush-state`](#dlt-transformation-flush-state) - 定義された出力に変換状態をフラッシュします
+* [`render-t-layer`](#dlt-transformation-render-t-layer) - Tレイヤーの開始点をレンダリングします
 
 </details>
 
 ### `dlt transformation list`
 
-List all transformations discovered in this directory.
+このディレクトリで検出されたすべての変換を一覧表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt transformation pond_name list [-h]
 ```
 
-**Description**
+**説明**
 
-List all transformations discovered in this directory.
+このディレクトリで検出されたすべての変換を一覧表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt transformation`](#dlt-transformation).
+[`dlt 変換`](#dlt-transformation) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt transformation info`
 
-Transformation info: locations, cache status etc.
+変換情報: 場所、キャッシュ ステータスなど。
 
-**Usage**
+**使用方法**
 ```sh
 dlt transformation pond_name info [-h]
 ```
 
-**Description**
+**説明**
 
-Transformation info: locations, cache status etc.
+変換情報: 場所、キャッシュ ステータスなど。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt transformation`](#dlt-transformation).
+[`dlt 変換`](#dlt-transformation) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt transformation run`
 
-Sync cache, run transformation and commit the outputs.
+キャッシュを同期し、変換を実行して出力をコミットします。
 
-**Usage**
+**使用方法**
 ```sh
 dlt transformation pond_name run [-h]
 ```
 
-**Description**
+**説明**
 
-Sync cache, run transformation and commit the outputs.
+キャッシュを同期し、変換を実行して出力をコミットします。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt transformation`](#dlt-transformation).
+[`dlt 変換`](#dlt-transformation) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt transformation verify-inputs`
 
-Verify that cache can connect to all defined inputs and that tables declared are available.
+キャッシュが定義されたすべての入力に接続できること、および宣言されたテーブルが使用可能であることを確認します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt transformation pond_name verify-inputs [-h]
 ```
 
-**Description**
+**説明**
 
-Verify that cache can connect to all defined inputs and that tables declared are available.
+キャッシュが定義されたすべての入力に接続できること、および宣言されたテーブルが使用可能であることを確認します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt transformation`](#dlt-transformation).
+[`dlt 変換`](#dlt-transformation) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt transformation verify-outputs`
 
-Verify that the output cache dataset contains all tables declared.
+出力キャッシュ データセットに宣言されたすべてのテーブルが含まれていることを確認します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt transformation pond_name verify-outputs [-h]
 ```
 
-**Description**
+**説明**
 
-Verify that the output cache dataset contains all tables declared.
+出力キャッシュ データセットに宣言されたすべてのテーブルが含まれていることを確認します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt transformation`](#dlt-transformation).
+[`dlt 変換`](#dlt-transformation) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt transformation populate`
 
-Sync data from inputs to input cache dataset.
+入力からのデータを入力キャッシュ データセットに同期します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt transformation pond_name populate [-h]
 ```
 
-**Description**
+**説明**
 
-Sync data from inputs to input cache dataset.
+入力からのデータを入力キャッシュ データセットに同期します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt transformation`](#dlt-transformation).
+[`dlt 変換`](#dlt-transformation) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt transformation flush`
 
-Flush data from output cache dataset to outputs.
+出力キャッシュ データセットから出力にデータをフラッシュします。
 
-**Usage**
+**使用方法**
 ```sh
 dlt transformation pond_name flush [-h]
 ```
 
-**Description**
+**説明**
 
-Flush data from output cache dataset to outputs.
+出力キャッシュ データセットから出力にデータをフラッシュします。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt transformation`](#dlt-transformation).
+[`dlt 変換`](#dlt-transformation) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt transformation transform`
 
-Run transformations on input cache dataset and write to output cache dataset.
+入力キャッシュ データセットに対して変換を実行し、出力キャッシュ データセットに書き込みます。
 
-**Usage**
+**使用方法**
 ```sh
 dlt transformation pond_name transform [-h]
 ```
 
-**Description**
+**説明**
 
-Run transformations on input cache dataset and write to output cache dataset.
+入力キャッシュ データセットに対して変換を実行し、出力キャッシュ データセットに書き込みます。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt transformation`](#dlt-transformation).
+[`dlt 変換`](#dlt-transformation) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt transformation populate-state`
 
-Populate transformation state from defined output.
+定義された出力から変換状態を入力します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt transformation pond_name populate-state [-h]
 ```
 
-**Description**
+**説明**
 
-Populate transformation state from defined output.
+定義された出力から変換状態を入力します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt transformation`](#dlt-transformation).
+[`dlt 変換`](#dlt-transformation) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt transformation flush-state`
 
-Flush transformation state to defined output.
+変換状態を定義された出力にフラッシュします。
 
-**Usage**
+**使用方法**
 ```sh
 dlt transformation pond_name flush-state [-h]
 ```
 
-**Description**
+**説明**
 
-Flush transformation state to defined output.
+変換状態を定義された出力にフラッシュします。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt transformation`](#dlt-transformation).
+[`dlt 変換`](#dlt-transformation) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt transformation render-t-layer`
 
-Render a starting point for the t-layer.
+T レイヤーの開始点をレンダリングします。
 
-**Usage**
+**使用方法**
 ```sh
 dlt transformation pond_name render-t-layer [-h]
 ```
 
-**Description**
+**説明**
 
-Render a starting point for the t-layer.
+T レイヤーの開始点をレンダリングします。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt transformation`](#dlt-transformation).
+[`dlt 変換`](#dlt-transformation) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ## `dlt source`
 
-Manage dlt+ project sources.
+dlt+ プロジェクト ソースを管理します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt source [-h] [--project PROJECT] [--profile PROFILE] [source_name]
     {check,list,add} ...
 ```
 
-**Description**
+**説明**
 
-Commands to manage sources for project.
-Run without arguments to list all sources in current project.
+プロジェクトのソースを管理するためのコマンド。
+引数なしで実行すると、現在のプロジェクト内のすべてのソースが一覧表示されます。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Positional arguments**
-* `source_name` - Name of the source to add.
+**位置引数**
+* `source_name` - 追加するソースの名前。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--project PROJECT` - Name or path to the dlt package with dlt.yml
-* `--profile PROFILE` - Profile to use from the project configuration file
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します。
+* `--project PROJECT` - dlt.yml を含む dlt パッケージの名前またはパス。
+* `--profile PROFILE` - プロジェクト設定ファイルで使用するプロファイル。
 
-**Available subcommands**
-* [`check`](#dlt-source-check) - (temporary feature) checks if the source is importable, only works for sources within the sources folder.
-* [`list`](#dlt-source-list) - List all sources in the project.
-* [`add`](#dlt-source-add) - Add a new source to the project.
+**利用可能なサブコマンド**
+* [`check`](#dlt-source-check) - (一時的な機能) ソースがインポート可能かどうかを確認します。sources フォルダ内のソースに対してのみ機能します。
+* [`list`](#dlt-source-list) - プロジェクト内のすべてのソースを一覧表示します。
+* [`add`](#dlt-source-add) - プロジェクトに新しいソースを追加します。
 
 </details>
 
 ### `dlt source check`
 
-(temporary feature) Checks if the source is importable, only works for sources within the sources folder.
+(一時的な機能) ソースがインポート可能かどうかを確認します。ソース フォルダー内のソースに対してのみ機能します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt source [source_name] check [-h]
 ```
 
-**Description**
+**説明**
 
-(temporary feature) Checks if the source is importable, only works for sources within the sources folder.
+(一時的な機能) ソースがインポート可能かどうかを確認します。ソース フォルダー内のソースに対してのみ機能します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt source`](#dlt-source).
+[`dlt source`](#dlt-source) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt source list`
 
-List all sources in the project.
+プロジェクト内のすべてのソースを一覧表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt source [source_name] list [-h]
 ```
 
-**Description**
+**説明**
 
-List all sources in the project context.
+プロジェクト コンテキスト内のすべてのソースを一覧表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt source`](#dlt-source).
+[`dlt source`](#dlt-source) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt source add`
 
-Add a new source to the project.
+プロジェクトに新しいソースを追加します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt source [source_name] add [-h] [source_type]
 ```
 
-**Description**
+**説明**
 
-Add a new source to the project context.
+プロジェクトコンテキストに新しいソースを追加します。
 
-* If source type is not specified, the source type will be the same as the source name.
-* If a give source_type is not found, a default source template will be used.
+* ソースタイプが指定されていない場合、ソースタイプはソース名と同じになります。
+* 指定されたソースタイプが見つからない場合は、デフォルトのソーステンプレートが使用されます。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt source`](#dlt-source).
+[`dlt source`](#dlt-source) から引数を継承します。
 
-**Positional arguments**
-* `source_type` - Type of the source to add. if not specified, the source type will be the same as the source name.
+**位置引数**
+* `source_type` - 追加するソースのタイプ。指定されていない場合、ソースタイプはソース名と同じになります。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ## `dlt project`
 
-Manage dlt+ projects.
+dlt+ プロジェクトを管理します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt project [-h] [--project PROJECT] [--profile PROFILE]
     {config,clean,init,list,info,audit} ...
 ```
 
-**Description**
+**説明**
 
-Commands to manage dlt+ projects. Run without arguments to list all projects in scope.
+dlt+プロジェクトを管理するためのコマンド。引数なしで実行すると、スコープ内のすべてのプロジェクトが一覧表示されます。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--project PROJECT` - Name or path to the dlt package with dlt.yml
-* `--profile PROFILE` - Profile to use from the project configuration file
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--project PROJECT` - dlt.yml を含む dlt パッケージの名前またはパス
+* `--profile PROFILE` - プロジェクト設定ファイルで使用するプロファイル
 
-**Available subcommands**
-* [`config`](#dlt-project-config) - Configuration management commands
-* [`clean`](#dlt-project-clean) - Cleans local data for the selected profile. if tmp_dir is defined in project file, it gets deleted. pipelines and transformations working dir are also deleted by default. data in remote destinations is not affected
-* [`init`](#dlt-project-init) - Initialize a new dlt+ project
-* [`list`](#dlt-project-list) - List all projects that could be found in installed dlt packages
-* [`info`](#dlt-project-info) - List basic project info of current project.
-* [`audit`](#dlt-project-audit) - Creates and locks resource and secrets audit for a current profile.
+**利用可能なサブコマンド**
+* [`config`](#dlt-project-config) - 設定管理コマンド
+* [`clean`](#dlt-project-clean) - 選択したプロファイルのローカルデータを消去します。プロジェクトファイルで tmp_dir が定義されている場合は削除されます。パイプラインと変換の作業ディレクトリもデフォルトで削除されます。リモートの保存先のデータは影響を受けません。
+* [`init`](#dlt-project-init) - 新しい dlt+ プロジェクトを初期化します。
+* [`list`](#dlt-project-list) - インストール済みの dlt パッケージに含まれるすべてのプロジェクトを一覧表示します。
+* [`info`](#dlt-project-info) - 現在のプロジェクトの基本情報を一覧表示します。
+* [`audit`](#dlt-project-audit) - 現在のプロファイルのリソースとシークレットの監査を作成し、ロックします。
 
 </details>
 
 ### `dlt project config`
 
-Configuration management commands.
+構成管理コマンド。
 
-**Usage**
+**使用方法**
 ```sh
 dlt project config [-h] {validate,show} ...
 ```
 
-**Description**
+**説明**
 
-Configuration management commands.
+構成管理コマンド。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt project`](#dlt-project).
+[`dlt project`](#dlt-project) から引数を継承します。
 
-**Positional arguments**
-* `validate` - Validate configuration file
-* `show` - Show configuration
+**位置引数**
+* `validate` - 設定ファイルを検証する
+* `show` - 設定を表示する
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt project config validate`
 
-Validate configuration file.
+構成ファイルを検証します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt project config validate [-h]
 ```
 
-**Description**
+**説明**
 
-Validate configuration file.
+構成ファイルを検証します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt project config`](#dlt-project-config).
+[`dlt プロジェクト設定`](#dlt-project-config) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt project config show`
 
-Show configuration.
+構成を表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt project config show [-h] [--format {json,yaml}] [--section SECTION]
 ```
 
-**Description**
+**説明**
 
-Show configuration.
+構成を表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt project config`](#dlt-project-config).
+[`dlt プロジェクト設定`](#dlt-project-config) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--format {json,yaml}` - Output format
-* `--section SECTION` - Show specific configuration section (e.g., sources, pipelines)
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--format {json,yaml}` - 出力フォーマット
+* `--section SECTION` - 特定の設定セクション（例：ソース、パイプライン）を表示します
 
 </details>
 
 ### `dlt project clean`
 
-Cleans local data for the selected profile. If tmp_dir is defined in project file, it gets deleted. Pipelines and transformations working dir are also deleted by default. Data in remote destinations is not affected.
+選択したプロファイルのローカルデータを消去します。
+プロジェクトファイルでtmp_dirが定義されている場合は削除されます。
+パイプラインと変換の作業ディレクトリもデフォルトで削除されます。
+リモートの保存先のデータは影響を受けません。
 
-**Usage**
+**使用方法**
 ```sh
 dlt project clean [-h] [--skip-data-dir]
 ```
 
-**Description**
+**説明**
 
-Cleans local data for the selected profile. If tmp_dir is defined in project file, it gets deleted. Pipelines and transformations working dir are also deleted by default. Data in remote destinations is not affected.
+選択したプロファイルのローカルデータを消去します。
+プロジェクトファイルでtmp_dirが定義されている場合は削除されます。
+パイプラインと変換の作業ディレクトリもデフォルトで削除されます。
+リモートの保存先のデータは影響を受けません。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt project`](#dlt-project).
+[`dlt project`](#dlt-project) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--skip-data-dir` - Do not delete pipelines and transformations working dir.
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--skip-data-dir` - パイプラインと変換の作業ディレクトリを削除しません。
 
 </details>
 
 ### `dlt project init`
 
-Initialize a new dlt+ project.
+新しい dlt+ プロジェクトを初期化します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt project init [-h] [--project-name PROJECT_NAME] [--package] [--force]
     [source] [destination]
 ```
 
-**Description**
+**説明**
 
-Initialize a new dlt+ project.
+新しい dlt+ プロジェクトを初期化します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt project`](#dlt-project).
+[`dlt project`](#dlt-project) から引数を継承します。
 
-**Positional arguments**
-* `source` - Name of a source for your dlt project
-* `destination` - Name of a destination for your dlt project
+**位置引数**
+* `source` - DLTプロジェクトのソース名
+* `destination` - DLTプロジェクトの宛先名
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--project-name PROJECT_NAME, -n PROJECT_NAME` - Optinal name of your dlt project
-* `--package` - Create a pip package instead of a flat project
-* `--force` - Overwrite project even if it already exists
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--project-name PROJECT_NAME, -n PROJECT_NAME` - DLTプロジェクトの任意の名前
+* `--package` - フラットプロジェクトではなくpipパッケージを作成します
+* `--force` - 既存のプロジェクトでも上書きします
 
 </details>
 
 ### `dlt project list`
 
-List all projects that could be found in installed dlt packages.
+インストールされた dlt パッケージ内にあるすべてのプロジェクトを一覧表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt project list [-h]
 ```
 
-**Description**
+**説明**
 
-List all projects that could be found in installed dlt packages.
+インストールされた dlt パッケージ内にあるすべてのプロジェクトを一覧表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt project`](#dlt-project).
+[`dlt project`](#dlt-project) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt project info`
 
-List basic project info of current project.
+現在のプロジェクトの基本プロジェクト情報を一覧表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt project info [-h]
 ```
 
-**Description**
+**説明**
 
-List basic project info of current project.
+現在のプロジェクトの基本プロジェクト情報を一覧表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt project`](#dlt-project).
+[`dlt project`](#dlt-project) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt project audit`
 
-Creates and locks resource and secrets audit for a current profile.
+現在のプロファイルのリソースとシークレット監査を作成してロックします。
 
-**Usage**
+**使用方法**
 ```sh
 dlt project audit [-h]
 ```
 
-**Description**
+**説明**
 
-Creates and locks resource and secrets audit for a current profile.
+現在のプロファイルのリソースとシークレット監査を作成してロックします。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt project`](#dlt-project).
+[`dlt project`](#dlt-project) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ## `dlt profile`
 
-Manage dlt+ project profiles.
+dlt+ プロジェクト プロファイルを管理します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt profile [-h] [--project PROJECT] [--profile PROFILE] [profile_name]
     {info,list,add,pin} ...
 ```
 
-**Description**
+**説明**
 
-Commands to manage profiles for project.
-Run without arguments to list all profiles, the default profile and the
-pinned profile in current project.
+プロジェクトのプロファイルを管理するためのコマンド。
+引数なしで実行すると、すべてのプロファイル、デフォルトプロファイル、および現在のプロジェクト内の固定プロファイルが一覧表示されます。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Positional arguments**
-* `profile_name` - Name of the profile to add
+**位置引数**
+* `profile_name` - 追加するプロファイルの名前
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--project PROJECT` - Name or path to the dlt package with dlt.yml
-* `--profile PROFILE` - Profile to use from the project configuration file
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--project PROJECT` - dlt.yml を含む dlt パッケージの名前またはパス
+* `--profile PROFILE` - プロジェクト設定ファイルで使用するプロファイル
 
-**Available subcommands**
-* [`info`](#dlt-profile-info) - Show information about profile settings.
-* [`list`](#dlt-profile-list) - Show list of all profiles in the project.
-* [`add`](#dlt-profile-add) - Add a new profile to the project.
-* [`pin`](#dlt-profile-pin) - Pin a profile to the project.
+**使用可能なサブコマンド**
+* [`info`](#dlt-profile-info) - プロファイル設定に関する情報を表示します。
+* [`list`](#dlt-profile-list) - プロジェクト内のすべてのプロファイルのリストを表示します。
+* [`add`](#dlt-profile-add) - プロジェクトに新しいプロファイルを追加します。
+* [`pin`](#dlt-profile-pin) - プロファイルをプロジェクトに固定します。
 
 </details>
 
 ### `dlt profile info`
 
-Show information about profile settings.
+プロフィール設定に関する情報を表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt profile [profile_name] info [-h]
 ```
 
-**Description**
+**説明**
 
-Show information about the current profile.
+プロフィール設定に関する情報を表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt profile`](#dlt-profile).
+[`dlt profile`](#dlt-profile) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt profile list`
 
-Show list of all profiles in the project.
+プロジェクト内のすべてのプロファイルのリストを表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt profile [profile_name] list [-h]
 ```
 
-**Description**
+**説明**
 
-Show list of all profiles in the project.
+プロジェクト内のすべてのプロファイルのリストを表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt profile`](#dlt-profile).
+[`dlt profile`](#dlt-profile) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt profile add`
 
-Add a new profile to the project.
+プロジェクトに新しいプロファイルを追加します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt profile [profile_name] add [-h]
 ```
 
-**Description**
+**説明**
 
-Add a new profile to the project.
+プロジェクトに新しいプロファイルを追加します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt profile`](#dlt-profile).
+[`dlt profile`](#dlt-profile) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt profile pin`
 
-Pin a profile to the project.
+プロジェクトにプロフィールをピン留めします。
 
-**Usage**
+**使用方法**
 ```sh
 dlt profile [profile_name] pin [-h]
 ```
 
-**Description**
+**説明**
 
-Pin a profile to the project, this will be the new default profile while it is pinned.
+プロファイルをプロジェクトにピン留めします。
+ピン留めされている間は、これが新しいデフォルト プロファイルになります。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt profile`](#dlt-profile).
+[`dlt profile`](#dlt-profile) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ## `dlt pipeline`
 
-Operations on pipelines that were ran locally.
+ローカルで実行されたパイプラインに対する操作。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [-h] [--project PROJECT] [--profile PROFILE] [--list-pipelines]
     [--hot-reload] [--pipelines-dir PIPELINES_DIR] [--verbose] [pipeline_name]
@@ -879,270 +888,262 @@ dlt pipeline [-h] [--project PROJECT] [--profile PROFILE] [--list-pipelines]
     ...
 ```
 
-**Description**
+**説明**
 
-The `dlt pipeline` command provides a set of commands to inspect the pipeline working directory,
-tables, and data in the destination and check for problems encountered during data loading.
+`dlt pipeline` コマンドは、パイプラインの作業ディレクトリ、テーブル、および宛先のデータを検査し、データのロード中に発生した問題をチェックするための一連のコマンドを提供します。
 
-Run without arguments to list all pipelines in the current project.
+引数なしで実行すると、現在のプロジェクト内のすべてのパイプラインが一覧表示されます。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Positional arguments**
-* `pipeline_name` - Pipeline name
+**位置引数**
+* `pipeline_name` - パイプライン名
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--project PROJECT` - Name or path to the dlt package with dlt.yml
-* `--profile PROFILE` - Profile to use from the project configuration file
-* `--list-pipelines, -l` - List local pipelines
-* `--hot-reload` - Reload streamlit app (for core development)
-* `--pipelines-dir PIPELINES_DIR` - Pipelines working directory
-* `--verbose, -v` - Provides more information for certain commands.
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--project PROJECT` - dlt.yml を含む dlt パッケージの名前またはパス
+* `--profile PROFILE` - プロジェクト設定ファイルで使用するプロファイル
+* `--list-pipelines, -l` - ローカルパイプラインを一覧表示します
+* `--hot-reload` - streamlit アプリをリロードします (コア開発用)
+* `--pipelines-dir PIPELINES_DIR` - パイプラインの作業ディレクトリ
+* `--verbose, -v` - 特定のコマンドの詳細情報を表示します
 
-**Available subcommands**
-* [`info`](#dlt-pipeline-info) - Displays state of the pipeline, use -v or -vv for more info
-* [`show`](#dlt-pipeline-show) - Generates and launches streamlit app with the loading status and dataset explorer
-* [`failed-jobs`](#dlt-pipeline-failed-jobs) - Displays information on all the failed loads in all completed packages, failed jobs and associated error messages
-* [`drop-pending-packages`](#dlt-pipeline-drop-pending-packages) - Deletes all extracted and normalized packages including those that are partially loaded.
-* [`sync`](#dlt-pipeline-sync) - Drops the local state of the pipeline and resets all the schemas and restores it from destination. the destination state, data and schemas are left intact.
-* [`trace`](#dlt-pipeline-trace) - Displays last run trace, use -v or -vv for more info
-* [`schema`](#dlt-pipeline-schema) - Displays default schema
-* [`drop`](#dlt-pipeline-drop) - Selectively drop tables and reset state
-* [`load-package`](#dlt-pipeline-load-package) - Displays information on load package, use -v or -vv for more info
-* [`list`](#dlt-pipeline-list) - List all pipelines in the project.
-* [`add`](#dlt-pipeline-add) - Add a new pipeline to the current project
-* [`run`](#dlt-pipeline-run) - Run a pipeline
-
+**利用可能なサブコマンド**
+* [`info`](#dlt-pipeline-info) - パイプラインの状態を表示します。詳細については -v または -vv を使用してください。
+* [`show`](#dlt-pipeline-show) - 読み込みステータスとデータセットエクスプローラーを備えた Streamlit アプリを生成して起動します。
+* [`failed-jobs`](#dlt-pipeline-failed-jobs) - 完了したパッケージ、失敗したジョブ、および関連するエラーメッセージに含まれる、失敗した読み込みに関する情報を表示します。
+* [`drop-pending-packages`](#dlt-pipeline-drop-pending-packages) - 部分的に読み込まれたパッケージも含め、抽出および正規化されたすべてのパッケージを削除します。
+* [`sync`](#dlt-pipeline-sync) - パイプラインのローカル状態を削除し、すべてのスキーマをリセットして、出力先から復元します。出力先の状態、データ、スキーマはそのまま残ります。
+* [`trace`](#dlt-pipeline-trace) - 前回の実行トレースを表示します。詳細については -v または -vv を使用してください。
+* [`schema`](#dlt-pipeline-schema) - デフォルトのスキーマを表示します。
+* [`drop`](#dlt-pipeline-drop) - 選択したテーブルを削除し、状態をリセットします。
+* [`load-package`](#dlt-pipeline-load-package) - ロードパッケージに関する情報を表示します。詳細については -v または -vv を使用してください。
+* [`list`](#dlt-pipeline-list) - プロジェクト内のすべてのパイプラインを一覧表示します。
+* [`add`](#dlt-pipeline-add) - 現在のプロジェクトに新しいパイプラインを追加します。
+* [`run`](#dlt-pipeline-run) - パイプラインを実行します。
 </details>
 
 ### `dlt pipeline info`
 
-Displays state of the pipeline, use -v or -vv for more info.
+パイプラインの状態を表示します。詳細については -v または -vv を使用してください。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [pipeline_name] info [-h]
 ```
 
-**Description**
+**説明**
 
-Displays the content of the working directory of the pipeline: dataset name, destination, list of
-schemas, resources in schemas, list of completed and normalized load packages, and optionally a
-pipeline state set by the resources during the extraction process.
+パイプラインの作業ディレクトリの内容を表示します。データセット名、宛先、スキーマのリスト、スキーマ内のリソース、完了して正規化されたロード パッケージのリスト、およびオプションで、抽出プロセス中にリソースによって設定されたパイプラインの状態。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt pipeline show`
 
-Generates and launches Streamlit app with the loading status and dataset explorer.
+読み込みステータスとデータセット エクスプローラーを備えた Streamlit アプリを生成して起動します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [pipeline_name] show [-h]
 ```
 
-**Description**
+**説明**
 
-Generates and launches Streamlit (https://streamlit.io/) app with the loading status and dataset explorer.
+読み込みステータスとデータセットエクスプローラーを備えた Streamlit (https://streamlit.io/) アプリを生成し、起動します。
 
-This is a simple app that you can use to inspect the schemas and data in the destination as well as your pipeline state and loading status/stats. It should be executed from the same folder from which you ran the pipeline script to access destination credentials.
+これは、出力先のスキーマとデータ、パイプラインの状態、読み込みステータス/統計情報を確認できるシンプルなアプリです。
+出力先の認証情報にアクセスするには、パイプラインスクリプトを実行したフォルダと同じフォルダから実行する必要があります。
 
-Requires `streamlit` to be installed in the current environment: `pip install streamlit`.
+現在の環境に `streamlit` がインストールされている必要があります: `pip install streamlit`。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt pipeline failed-jobs`
 
-Displays information on all the failed loads in all completed packages, failed jobs and associated error messages.
+すべての完了したパッケージ、失敗したジョブ、および関連するエラー メッセージ内のすべての失敗したロードに関する情報を表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [pipeline_name] failed-jobs [-h]
 ```
 
-**Description**
+**説明**
 
-This command scans all the load packages looking for failed jobs and then displays information on
-files that got loaded and the failure message from the destination.
+このコマンドは、すべてのロード パッケージをスキャンして失敗したジョブを探し、ロードされたファイルに関する情報と宛先からの失敗メッセージを表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt pipeline drop-pending-packages`
 
-Deletes all extracted and normalized packages including those that are partially loaded.
+部分的にロードされたものも含め、抽出され正規化されたすべてのパッケージを削除します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [pipeline_name] drop-pending-packages [-h]
 ```
 
-**Description**
+**説明**
 
-Removes all extracted and normalized packages in the pipeline's working dir.
-`dlt` keeps extracted and normalized load packages in the pipeline working directory. When the `run` method is called, it will attempt to normalize and load
-pending packages first. The command above removes such packages. Note that **pipeline state** is not reverted to the state at which the deleted packages
-were created. Using `dlt pipeline ... sync` is recommended if your destination supports state sync.
+パイプラインの作業ディレクトリにある、抽出および正規化されたすべてのパッケージを削除します。
+`dlt` は、抽出および正規化されたロードパッケージをパイプラインの作業ディレクトリに保持します。
+`run` メソッドが呼び出されると、まず保留中のパッケージの正規化とロードを試みます。
+上記のコマンドは、このようなパッケージを削除します。**パイプラインの状態** は、削除されたパッケージが作成された時点の状態に戻らないことに注意してください。
+出力先が状態同期をサポートしている場合は、`dlt pipeline ... sync` を使用することをお勧めします。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt pipeline sync`
 
-Drops the local state of the pipeline and resets all the schemas and restores it from destination. The destination state, data and schemas are left intact.
+パイプラインのローカル状態を削除し、すべてのスキーマをリセットして、宛先から復元します。宛先の状態、データ、スキーマはそのまま残ります。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [pipeline_name] sync [-h] [--destination DESTINATION]
     [--dataset-name DATASET_NAME]
 ```
 
-**Description**
+**説明**
 
-This command will remove the pipeline working directory with all pending packages, not synchronized
-state changes, and schemas and retrieve the last synchronized data from the destination. If you drop
-the dataset the pipeline is loading to, this command results in a complete reset of the pipeline state.
+このコマンドは、保留中のパッケージ、同期されていない状態の変更、スキーマを含むパイプラインの作業ディレクトリを削除し、宛先から最後に同期されたデータを取得します。
+パイプラインがロードしているデータセットを削除すると、このコマンドによってパイプラインの状態が完全にリセットされます。
 
-In case of a pipeline without a working directory, the command may be used to create one from the
-destination. In order to do that, you need to pass the dataset name and destination name to the CLI
-and provide the credentials to connect to the destination (i.e., in `.dlt/secrets.toml`) placed in the
-folder where you execute the `pipeline sync` command.
+作業ディレクトリのないパイプラインの場合は、このコマンドを使用して宛先から作業ディレクトリを作成できます。
+これを行うには、データセット名と宛先名をCLIに渡し、`pipeline sync`コマンドを実行するフォルダにある宛先（つまり、`.dlt/secrets.toml`）に接続するための認証情報を提供する必要があります。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--destination DESTINATION` - Sync from this destination when local pipeline state is missing.
-* `--dataset-name DATASET_NAME` - Dataset name to sync from when local pipeline state is missing.
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--destination DESTINATION` - ローカルパイプラインの状態が不明な場合に、この出力先から同期します。
+* `--dataset-name DATASET_NAME` - ローカルパイプラインの状態が不明な場合に、同期元のデータセット名を指定します。
 
 </details>
 
 ### `dlt pipeline trace`
 
-Displays last run trace, use -v or -vv for more info.
+最後の実行トレースを表示します。詳細については -v または -vv を使用してください。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [pipeline_name] trace [-h]
 ```
 
-**Description**
+**説明**
 
-Displays the trace of the last pipeline run containing the start date of the run, elapsed time, and the
-same information for all the steps (`extract`, `normalize`, and `load`). If any of the steps failed,
-you'll see the message of the exceptions that caused that problem. Successful `load` and `run` steps
-will display the load info instead.
+最後のパイプライン実行のトレースを表示します。実行開始日、経過時間、およびすべてのステップ（`extract`、`normalize`、`load`）の同じ情報が含まれます。
+いずれかのステップが失敗した場合は、その問題の原因となった例外のメッセージが表示されます。
+`load` および `run` ステップが成功した場合は、代わりにロード情報が表示されます。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt pipeline schema`
 
-Displays default schema.
+デフォルトのスキーマを表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [pipeline_name] schema [-h] [--format {json,yaml}]
     [--remove-defaults]
 ```
 
-**Description**
+**説明**
 
-Displays the default schema for the selected pipeline.
+選択したパイプラインのデフォルトのスキーマを表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--format {json,yaml}` - Display schema in this format
-* `--remove-defaults` - Does not show default hint values
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--format {json,yaml}` - この形式でスキーマを表示します
+* `--remove-defaults` - デフォルトのヒント値を表示しません
 
 </details>
 
 ### `dlt pipeline drop`
 
-Selectively drop tables and reset state.
+テーブルを選択的に削除し、状態をリセットします。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [pipeline_name] drop [-h] [--destination DESTINATION]
     [--dataset-name DATASET_NAME] [--drop-all] [--state-paths [STATE_PATHS ...]]
     [--schema SCHEMA_NAME] [--state-only] [resources ...]
 ```
 
-**Description**
+**説明**
 
-Selectively drop tables and reset state.
+テーブルを選択的に削除し、状態をリセットします。
 
 ```sh
 dlt pipeline <pipeline name> drop [resource_1] [resource_2]
 ```
 
-Drops tables generated by selected resources and resets the state associated with them. Mainly used
-to force a full refresh on selected tables. In the example below, we drop all tables generated by
-the `repo_events` resource in the GitHub pipeline:
+選択したリソースによって生成されたテーブルを削除し、それらに関連付けられた状態をリセットします。
+主に、選択したテーブルを強制的に完全更新するために使用されます。
+以下の例では、GitHub パイプラインの `repo_events` リソースによって生成されたすべてのテーブルを削除します。
 
 ```sh
 dlt pipeline github_events drop repo_events
 ```
 
-`dlt` will inform you of the names of dropped tables and the resource state slots that will be
-reset:
+`dlt` は、削除されたテーブルの名前とリセットされるリソース状態スロットを通知します:
 
 ```text
 About to drop the following data in dataset airflow_events_1 in destination dlt.destinations.duckdb:
@@ -1154,37 +1155,37 @@ Source state path(s) to reset:: []
 Do you want to apply these changes? [y/N]
 ```
 
-As a result of the command above the following will happen:
+上記のコマンドを実行すると、以下の処理が実行されます。
 
-1. All the indicated tables will be dropped in the destination. Note that `dlt` drops the nested
-   tables as well.
-2. All the indicated tables will be removed from the indicated schema.
-3. The state for the resource `repo_events` was found and will be reset.
-4. New schema and state will be stored in the destination.
+1. 指定されたすべてのテーブルが、コピー先から削除されます。
+`dlt` はネストされたテーブルも削除することに注意してください。
+2. 指定されたすべてのテーブルが、指定されたスキーマから削除されます。
+3. リソース `repo_events` の状態が検出され、リセットされます。
+4. 新しいスキーマと状態がコピー先に保存されます。
 
-The `drop` command accepts several advanced settings:
+`drop` コマンドは、いくつかの高度な設定を受け付けます。
 
-1. You can use regexes to select resources. Prepend the `re:` string to indicate a regex pattern. The example
-   below will select all resources starting with `repo`:
+1. 正規表現を使用してリソースを選択できます。正規表現パターンを指定するには、先頭に `re:` 文字列を追加します。
+以下の例では、`repo` で始まるすべてのリソースを選択します。
 
 ```sh
 dlt pipeline github_events drop "re:^repo"
 ```
 
-2. You can drop all tables in the indicated schema:
+2. 指定されたスキーマ内のすべてのテーブルを削除できます:
 
 ```sh
 dlt pipeline chess drop --drop-all
 ```
 
-3. You can indicate additional state slots to reset by passing JsonPath to the source state. In the example
-   below, we reset the `archives` slot in the source state:
+3. ソース状態にJsonPathを渡すことで、リセットする追加の状態スロットを指定できます。
+以下の例では、ソース状態の`archives`スロットをリセットしています:
 
 ```sh
 dlt pipeline chess_pipeline drop --state-paths archives
 ```
 
-This will select the `archives` key in the `chess` source.
+これにより、`chess` ソース内の `archives` キーが選択されます。
 
 ```json
 {
@@ -1198,936 +1199,937 @@ This will select the `archives` key in the `chess` source.
 }
 ```
 
-**This command is still experimental** and the interface will most probably change.
+**このコマンドはまだ実験的** であり、インターフェースは変更される可能性があります。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Positional arguments**
-* `resources` - One or more resources to drop. can be exact resource name(s) or regex pattern(s). regex patterns must start with re:
+**位置引数**
+* `resources` - 削除する1つ以上のリソース。リソース名（複数可）または正規表現パターン（複数可）を指定できます。正規表現パターンは re: で始まる必要があります。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--destination DESTINATION` - Sync from this destination when local pipeline state is missing.
-* `--dataset-name DATASET_NAME` - Dataset name to sync from when local pipeline state is missing.
-* `--drop-all` - Drop all resources found in schema. supersedes [resources] argument.
-* `--state-paths [STATE_PATHS ...]` - State keys or json paths to drop
-* `--schema SCHEMA_NAME` - Schema name to drop from (if other than default schema).
-* `--state-only` - Only wipe state for matching resources without dropping tables.
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します。
+* `--destination DESTINATION` - ローカルパイプラインの状態が不明な場合、この出力先から同期します。
+* `--dataset-name DATASET_NAME` - ローカルパイプラインの状態が不明な場合、同期元のデータセット名を指定します。
+* `--drop-all` - スキーマ内にあるすべてのリソースを削除します。[resources] 引数よりも優先されます。
+* `--state-paths [STATE_PATHS ...]` - 削除する状態キーまたはJSONパス
+* `--schema SCHEMA_NAME` - 削除するスキーマ名（デフォルトスキーマ以外の場合）。
+* `--state-only` - テーブルを削除せずに、一致するリソースの状態のみを消去します。
 
 </details>
 
 ### `dlt pipeline load-package`
 
-Displays information on load package, use -v or -vv for more info.
+ロード パッケージに関する情報を表示します。詳細については -v または -vv を使用してください。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [pipeline_name] load-package [-h] [load-id]
 ```
 
-**Description**
+**説明**
 
-Shows information on a load package with a given `load_id`. The `load_id` parameter defaults to the
-most recent package. Package information includes its state (`COMPLETED/PROCESSED`) and list of all
-jobs in a package with their statuses, file sizes, types, and in case of failed jobs—the error
-messages from the destination. With the verbose flag set `dlt pipeline -v ...`, you can also see the
-list of all tables and columns created at the destination during the loading of that package.
+指定された `load_id` を持つロードパッケージの情報を表示します。`load_id` パラメータはデフォルトで最新のパッケージに設定されます。
+パッケージ情報には、パッケージの状態（`COMPLETED/PROCESSED`）と、パッケージ内のすべてのジョブのリスト（ステータス、ファイルサイズ、タイプ、そして失敗したジョブの場合は出力先からのエラーメッセージ）が含まれます。
+`dlt pipeline -v ...` で詳細フラグを設定すると、そのパッケージのロード中に出力先に​​作成されたすべてのテーブルと列のリストも表示できます。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Positional arguments**
-* `load-id` - Load id of completed or normalized package. defaults to the most recent package.
+**位置引数**
+* `load-id` - 完了または正規化されたパッケージのロードID。デフォルトは最新のパッケージです。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt pipeline list`
 
-List all pipelines in the project.
+プロジェクト内のすべてのパイプラインを一覧表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [pipeline_name] list [-h]
 ```
 
-**Description**
+**説明**
 
-List all pipelines in the project.
+プロジェクト内のすべてのパイプラインを一覧表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt pipeline add`
 
-Add a new pipeline to the current project.
+現在のプロジェクトに新しいパイプラインを追加します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [pipeline_name] add [-h] [--dataset-name DATASET_NAME] source_name
     destination_name
 ```
 
-**Description**
+**説明**
 
-Adds a new pipeline to the current project. Will not create any sources
-or destinations, you can reference other entities by name.
+現在のプロジェクトに新しいパイプラインを追加します。
+ソースや宛先は作成されませんが、他のエンティティを名前で参照できます。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Positional arguments**
-* `source_name` - Name of the source to add
-* `destination_name` - Name of the destination to add
+**位置引数**
+* `source_name` - 追加するソースの名前
+* `destination_name` - 追加する宛先の名前
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--dataset-name DATASET_NAME` - Name of the dataset to add
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--dataset-name DATASET_NAME` - 追加するデータセットの名前
 
 </details>
 
 ### `dlt pipeline run`
 
-Run a pipeline.
+パイプラインを実行します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt pipeline [pipeline_name] run [-h] [--limit LIMIT] [--resources RESOURCES]
 ```
 
-**Description**
+**説明**
 
-Run a pipeline.
+パイプラインを実行します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
+[`dlt pipeline`](#dlt-pipeline) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--limit LIMIT` - Limits the number of extracted pages for all resources. see source.add_limit.
-* `--resources RESOURCES` - Comma-separated list of resource names.
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--limit LIMIT` - すべてのリソースの抽出ページ数を制限します。source.add_limit を参照してください。
+* `--resources RESOURCES` - リソース名のカンマ区切りリスト。
 
 </details>
 
 ## `dlt license`
 
-View dlt+ license status.
+dlt+ ライセンスのステータスを表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt license [-h] {show,scopes} ...
 ```
 
-**Description**
+**説明**
 
-View dlt+ license status.
+dlt+ ライセンスのステータスを表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
-**Available subcommands**
-* [`show`](#dlt-license-show) - Show the installed license
-* [`scopes`](#dlt-license-scopes) - Show available scopes
+**利用可能なサブコマンド**
+* [`show`](#dlt-license-show) - インストールされているライセンスを表示します
+* [`scopes`](#dlt-license-scopes) - 利用可能なスコープを表示します
 
 </details>
 
 ### `dlt license show`
 
-Show the installed license.
+インストールされているライセンスを表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt license show [-h]
 ```
 
-**Description**
+**説明**
 
-Show the installed license.
+インストールされているライセンスを表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt license`](#dlt-license).
+[`dlt license`](#dlt-license) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt license scopes`
 
-Show available scopes.
+利用可能なスコープを表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt license scopes [-h]
 ```
 
-**Description**
+**説明**
 
-Show available scopes.
+利用可能なスコープを表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt license`](#dlt-license).
+[`dlt license`](#dlt-license) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ## `dlt destination`
 
-Manage project destinations.
+プロジェクトの宛先を管理します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt destination [-h] [--project PROJECT] [--profile PROFILE] [destination_name]
     {list,list-available,add} ...
 ```
 
-**Description**
+**説明**
 
-Commands to manage destinations for project.
-Run without arguments to list all destinations in current project.
+プロジェクトの宛先を管理するためのコマンド。
+引数なしで実行すると、現在のプロジェクト内のすべての宛先が一覧表示されます。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Positional arguments**
-* `destination_name` - Name of the destination
+**位置引数**
+* `destination_name` - 出力先の名前
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--project PROJECT` - Name or path to the dlt package with dlt.yml
-* `--profile PROFILE` - Profile to use from the project configuration file
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--project PROJECT` - dlt.yml を含む dlt パッケージの名前またはパス
+* `--profile PROFILE` - プロジェクト設定ファイルで使用するプロファイル
 
-**Available subcommands**
-* [`list`](#dlt-destination-list) - List all destinations in the project.
-* [`list-available`](#dlt-destination-list-available) - List all destination types that can be added to the project.
-* [`add`](#dlt-destination-add) - Add a new destination to the project
+**使用可能なサブコマンド**
+* [`list`](#dlt-destination-list) - プロジェクト内のすべての出力先を一覧表示します。
+* [`list-available`](#dlt-destination-list-available) - プロジェクトに追加できるすべての出力先タイプを一覧表示します。
+* [`add`](#dlt-destination-add) - プロジェクトに新しい出力先を追加します
 
 </details>
 
 ### `dlt destination list`
 
-List all destinations in the project.
+プロジェクト内のすべての宛先を一覧表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt destination [destination_name] list [-h]
 ```
 
-**Description**
+**説明**
 
-List all destinations in the project.
+プロジェクト内のすべての宛先を一覧表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt destination`](#dlt-destination).
+[`dlt destination`](#dlt-destination) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt destination list-available`
 
-List all destination types that can be added to the project.
+プロジェクトに追加できるすべての宛先タイプを一覧表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt destination [destination_name] list-available [-h]
 ```
 
-**Description**
+**説明**
 
-List all destination types that can be added to the project.
+プロジェクトに追加できるすべての宛先タイプを一覧表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt destination`](#dlt-destination).
+[`dlt destination`](#dlt-destination) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt destination add`
 
-Add a new destination to the project.
+プロジェクトに新しい宛先を追加します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt destination [destination_name] add [-h] [--dataset-name DATASET_NAME]
     [destination_type]
 ```
 
-**Description**
+**説明**
 
-Add a new destination to the project.
+プロジェクトに新しい宛先を追加します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt destination`](#dlt-destination).
+[`dlt destination`](#dlt-destination) から引数を継承します。
 
-**Positional arguments**
-* `destination_type` - Will default to the destination name if not specified.
+**位置引数**
+* `destination_type` - 指定されていない場合は、デフォルトで保存先名が使用されます。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--dataset-name DATASET_NAME` - Name of the dataset to add in the datasets section. will add no dataset if not specified.
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します。
+* `--dataset-name DATASET_NAME` - データセットセクションに追加するデータセットの名前。指定されていない場合はデータセットは追加されません。
 
 </details>
 
 ## `dlt dbt`
 
-dlt+ dbt transformation generator.
+dlt+ dbt 変換ジェネレーター。
 
-**Usage**
+**使用方法**
 ```sh
 dlt dbt [-h] {generate} ...
 ```
 
-**Description**
+**説明**
 
-dlt+ dbt transformation generator.
+dlt+ dbt 変換ジェネレーター。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
-**Available subcommands**
-* [`generate`](#dlt-dbt-generate) - Generate dbt project
+**利用可能なサブコマンド**
+* [`generate`](#dlt-dbt-generate) - dbt プロジェクトを生成します
 
 </details>
 
 ### `dlt dbt generate`
 
-Generate dbt project.
+dbt プロジェクトを生成します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt dbt generate [-h] [--include_dlt_tables] [--fact [FACT]] [--force]
     [--mart_table_prefix [MART_TABLE_PREFIX]] pipeline_name
 ```
 
-**Description**
+**説明**
 
-Generate dbt project.
+dbt プロジェクトを生成します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt dbt`](#dlt-dbt).
+[`dlt dbt`](#dlt-dbt) から引数を継承します。
 
-**Positional arguments**
-* `pipeline_name` - The pipeline to create a dbt project for
+**位置引数**
+* `pipeline_name` - dbt プロジェクトを作成するパイプライン
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--include_dlt_tables` - Do not render _dlt tables
-* `--fact [FACT]` - Create a fact table for a given table
-* `--force` - Force overwrite of existing files
-* `--mart_table_prefix [MART_TABLE_PREFIX]` - Prefix for mart tables
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--include_dlt_tables` - _dlt テーブルをレンダリングしません
+* `--fact [FACT]` - 指定されたテーブルのファクトテーブルを作成します
+* `--force` - 既存のファイルを強制的に上書きします
+* `--mart_table_prefix [MART_TABLE_PREFIX]` - mart テーブルのプレフィックス
 
 </details>
 
 ## `dlt dataset`
 
-Manage dlt+ project datasets.
+dlt+ プロジェクト データセットを管理します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt dataset [-h] [--project PROJECT] [--profile PROFILE] [--destination
     DESTINATION] [--schema SCHEMA] [dataset-name]
     {list,info,drop,show,row-counts,head} ...
 ```
 
-**Description**
+**説明**
 
-Commands to manage datasets for project.
-Run without arguments to list all datasets in current project.
+プロジェクトのデータセットを管理するためのコマンド。
+引数なしで実行すると、現在のプロジェクト内のすべてのデータセットが一覧表示されます。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Positional arguments**
-* `dataset-name` - Dataset name
+**位置引数**
+* `dataset-name` - データセット名
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--project PROJECT` - Name or path to the dlt package with dlt.yml
-* `--profile PROFILE` - Profile to use from the project configuration file
-* `--destination DESTINATION` - Destination name, if many allowed
-* `--schema SCHEMA` - Limits to schema with name for multi-schema datasets
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--project PROJECT` - dlt.yml を含む dlt パッケージの名前またはパス
+* `--profile PROFILE` - プロジェクト設定ファイルで使用するプロファイル
+* `--destination DESTINATION` - 出力先名（複数指定可能な場合）
+* `--schema SCHEMA` - マルチスキーマデータセットの場合、名前付きスキーマに制限を設定します
 
-**Available subcommands**
-* [`list`](#dlt-dataset-list) - List datasets
-* [`info`](#dlt-dataset-info) - Dataset info
-* [`drop`](#dlt-dataset-drop) - Drops the dataset and all data in it
-* [`show`](#dlt-dataset-show) - Shows the content of dataset in streamlit
-* [`row-counts`](#dlt-dataset-row-counts) - Display the row counts of all tables in the dataset
-* [`head`](#dlt-dataset-head) - Display the first x rows of a table, defaults to 5
+**使用可能なサブコマンド**
+* [`list`](#dlt-dataset-list) - データセットを一覧表示します
+* [`info`](#dlt-dataset-info) - データセット情報
+* [`drop`](#dlt-dataset-drop) - データセットとそれに含まれるすべてのデータを削除します
+* [`show`](#dlt-dataset-show) - データセットの内容を表示しますstreamlit の場合
+* [`row-counts`](#dlt-dataset-row-counts) - データセット内のすべてのテーブルの行数を表示します
+* [`head`](#dlt-dataset-head) - テーブルの最初の x 行を表示します。デフォルトは 5 です
 
 </details>
 
 ### `dlt dataset list`
 
-List Datasets.
+データセットを一覧表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt dataset [dataset-name] list [-h]
 ```
 
-**Description**
+**説明**
 
-List Datasets.
+データセットを一覧表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt dataset`](#dlt-dataset).
+[`dlt データセット`](#dlt-dataset) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt dataset info`
 
-Dataset info.
+データセット情報。
 
-**Usage**
+**使用方法**
 ```sh
 dlt dataset [dataset-name] info [-h]
 ```
 
-**Description**
+**説明**
 
-Dataset info.
+データセット情報。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt dataset`](#dlt-dataset).
+[`dlt データセット`](#dlt-dataset) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt dataset drop`
 
-Drops the dataset and all data in it.
+データセットとそこに含まれるすべてのデータを削除します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt dataset [dataset-name] drop [-h]
 ```
 
-**Description**
+**説明**
 
-Drops the dataset and all data in it.
+データセットとそこに含まれるすべてのデータを削除します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt dataset`](#dlt-dataset).
+[`dlt データセット`](#dlt-dataset) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt dataset show`
 
-Shows the content of dataset in Streamlit.
+Streamlit 内のデータセットの内容を表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt dataset [dataset-name] show [-h]
 ```
 
-**Description**
+**説明**
 
-Shows the content of dataset in Streamlit.
+Streamlit 内のデータセットの内容を表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt dataset`](#dlt-dataset).
+[`dlt データセット`](#dlt-dataset) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt dataset row-counts`
 
-Display the row counts of all tables in the dataset.
+データセット内のすべてのテーブルの行数を表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt dataset [dataset-name] row-counts [-h]
 ```
 
-**Description**
+**説明**
 
-Display the row counts of all tables in the dataset.
+データセット内のすべてのテーブルの行数を表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt dataset`](#dlt-dataset).
+[`dlt データセット`](#dlt-dataset) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt dataset head`
 
-Display the first x rows of a table, defaults to 5.
+テーブルの最初の x 行を表示します。デフォルトは 5 です。
 
-**Usage**
+**使用方法**
 ```sh
 dlt dataset [dataset-name] head [-h] [--limit LIMIT] table_name
 ```
 
-**Description**
+**説明**
 
-Display the first x rows of a table, defaults to 5.
+テーブルの最初の x 行を表示します。デフォルトは 5 です。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt dataset`](#dlt-dataset).
+[`dlt データセット`](#dlt-dataset) から引数を継承します。
 
-**Positional arguments**
-* `table_name` - Table name
+**位置引数**
+* `table_name` - テーブル名
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--limit LIMIT` - Number of rows to display
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--limit LIMIT` - 表示する行数
 
 </details>
 
 ## `dlt cache`
 
-Manage dlt+ project local data cache. Experimental.
+dlt+ プロジェクトのローカル データ キャッシュを管理します。実験的。
 
-**Usage**
+**使用方法**
 ```sh
 dlt cache [-h] [--project PROJECT] [--profile PROFILE]
     {info,show,drop,populate,flush,create-persistent-secrets,clear-persistent-secrets}
     ...
 ```
 
-**Description**
+**説明**
 
-Commands to manage local data cache for dlt+ project.
+dlt+ プロジェクトのローカルデータキャッシュを管理するためのコマンドです。
 
-**This is an experimental feature and will change substantially in the future.**
+**これは試験的な機能であり、将来大幅に変更される予定です。**
 
-**Do not use in production.**.
+**本番環境では使用しないでください。**
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--project PROJECT` - Name or path to the dlt package with dlt.yml
-* `--profile PROFILE` - Profile to use from the project configuration file
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--project PROJECT` - dlt.yml を含む dlt パッケージの名前またはパス
+* `--profile PROFILE` - プロジェクト設定ファイルで使用するプロファイル
 
-**Available subcommands**
-* [`info`](#dlt-cache-info) - Shows cache info
-* [`show`](#dlt-cache-show) - Connects to cache engine
-* [`drop`](#dlt-cache-drop) - Drop the cache
-* [`populate`](#dlt-cache-populate) - Populate the cache from the defined inputs
-* [`flush`](#dlt-cache-flush) - Flush the cache to the defined outputs
-* [`create-persistent-secrets`](#dlt-cache-create-persistent-secrets) - Create persistent secrets on cache for remote access.
-* [`clear-persistent-secrets`](#dlt-cache-clear-persistent-secrets) - Clear persistent secrets from cache for remote access.
+**利用可能なサブコマンド**
+* [`info`](#dlt-cache-info) - キャッシュ情報を表示します
+* [`show`](#dlt-cache-show) - キャッシュエンジンに接続します
+* [`drop`](#dlt-cache-drop) - キャッシュを削除します
+* [`populate`](#dlt-cache-populate) - 定義された入力からキャッシュにデータを入力します
+* [`flush`](#dlt-cache-flush) - 定義された出力にキャッシュをフラッシュします
+* [`create-persistent-secrets`](#dlt-cache-create-persistent-secrets) - キャッシュに永続シークレットを作成しますリモートアクセス用。
+* [`clear-persistent-secrets`](#dlt-cache-clear-persistent-secrets) - リモートアクセス用のキャッシュから永続的なシークレットをクリアします。
 
 </details>
 
 ### `dlt cache info`
 
-Shows cache info.
+キャッシュ情報を表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt cache info [-h]
 ```
 
-**Description**
+**説明**
 
-Shows cache info.
+キャッシュ情報を表示します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt cache`](#dlt-cache).
+[`dlt cache`](#dlt-cache) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt cache show`
 
-Connects to cache engine.
+キャッシュ エンジンに接続します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt cache show [-h]
 ```
 
-**Description**
+**説明**
 
-Connects to cache engine.
+キャッシュ エンジンに接続します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt cache`](#dlt-cache).
+[`dlt cache`](#dlt-cache) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt cache drop`
 
-Drop the cache.
+キャッシュを削除します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt cache drop [-h]
 ```
 
-**Description**
+**説明**
 
-Drop the cache.
+キャッシュを削除します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt cache`](#dlt-cache).
+[`dlt cache`](#dlt-cache) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt cache populate`
 
-Populate the cache from the defined inputs.
+定義された入力からキャッシュを作成します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt cache populate [-h]
 ```
 
-**Description**
+**説明**
 
-Populate the cache from the defined inputs.
+定義された入力からキャッシュを作成します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt cache`](#dlt-cache).
+[`dlt cache`](#dlt-cache) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt cache flush`
 
-Flush the cache to the defined outputs.
+定義された出力にキャッシュをフラッシュします。
 
-**Usage**
+**使用方法**
 ```sh
 dlt cache flush [-h]
 ```
 
-**Description**
+**説明**
 
-Flush the cache to the defined outputs.
+定義された出力にキャッシュをフラッシュします。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt cache`](#dlt-cache).
+[`dlt cache`](#dlt-cache) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt cache create-persistent-secrets`
 
-Create persistent secrets on cache for remote access.
+リモート アクセス用にキャッシュ上に永続的なシークレットを作成します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt cache create-persistent-secrets [-h]
 ```
 
-**Description**
+**説明**
 
-Create persistent secrets on cache for remote access.
+リモート アクセス用にキャッシュ上に永続的なシークレットを作成します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt cache`](#dlt-cache).
+[`dlt cache`](#dlt-cache) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ### `dlt cache clear-persistent-secrets`
 
-Clear persistent secrets from cache for remote access.
+リモート アクセス用のキャッシュから永続的な秘密をクリアします。
 
-**Usage**
+**使用方法**
 ```sh
 dlt cache clear-persistent-secrets [-h]
 ```
 
-**Description**
+**説明**
 
-Clear persistent secrets from cache for remote access.
+リモート アクセス用のキャッシュから永続的な秘密をクリアします。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt cache`](#dlt-cache).
+[`dlt cache`](#dlt-cache) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ## `dlt telemetry`
 
-Shows telemetry status.
+テレメトリのステータスを表示します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt telemetry [-h]
 ```
 
-**Description**
+**説明**
 
-The `dlt telemetry` command shows the current status of dlt telemetry. Lern more about telemetry and what we send in our telemetry docs.
+`dlt telemetry` コマンドは、dlt テレメトリの現在のステータスを表示します。
+テレメトリと送信される内容の詳細については、テレメトリのドキュメントをご覧ください。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 
 ## `dlt schema`
 
-Shows, converts and upgrades schemas.
+スキーマを表示、変換、アップグレードします。
 
-**Usage**
+**使用方法**
 ```sh
 dlt schema [-h] [--format {json,yaml}] [--remove-defaults] file
 ```
 
-**Description**
+**説明**
 
-The `dlt schema` command will load, validate and print out a dlt schema: `dlt schema path/to/my_schema_file.yaml`.
+`dlt schema` コマンドは、dlt スキーマ `dlt schema path/to/my_schema_file.yaml` を読み込み、検証して出力します。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Positional arguments**
-* `file` - Schema file name, in yaml or json format, will autodetect based on extension
+**位置引数**
+* `file` - スキーマファイル名（yaml または json 形式）。拡張子に基づいて自動検出されます。
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--format {json,yaml}` - Display schema in this format
-* `--remove-defaults` - Does not show default hint values
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します。
+* `--format {json,yaml}` - この形式でスキーマを表示します。
+* `--remove-defaults` - デフォルトのヒント値を表示しません。
 
 </details>
 
 ## `dlt init`
 
-Creates a pipeline project in the current folder by adding existing verified source or creating a new one from template.
+既存の検証済みソースを追加するか、テンプレートから新しいソースを作成して、現在のフォルダーにパイプライン プロジェクトを作成します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt init [-h] [--list-sources] [--location LOCATION] [--branch BRANCH] [--eject]
     [source] [destination]
 ```
 
-**Description**
+**説明**
 
-The `dlt init` command creates a new dlt pipeline script that loads data from `source` to `destination`. When you run the command, several things happen:
+`dlt init` コマンドは、`source` から `destination` にデータをロードする新しい dlt パイプライン スクリプトを作成します。このコマンドを実行すると、以下の処理が行われます。
 
-1. Creates a basic project structure if the current folder is empty by adding `.dlt/config.toml`, `.dlt/secrets.toml`, and `.gitignore` files.
-2. Checks if the `source` argument matches one of our verified sources and, if so, adds it to your project.
-3. If the `source` is unknown, uses a generic template to get you started.
-4. Rewrites the pipeline scripts to use your `destination`.
-5. Creates sample config and credentials in `secrets.toml` and `config.toml` for the specified source and destination.
-6. Creates `requirements.txt` with dependencies required by the source and destination. If one exists, prints instructions on what to add to it.
+1. 現在のフォルダが空の場合、`.dlt/config.toml`、`.dlt/secrets.toml`、`.gitignore` ファイルを追加して、基本的なプロジェクト構造を作成します。
+2. `source` 引数が検証済みのソースのいずれかと一致するかどうかを確認し、一致する場合はプロジェクトに追加します。
+3. `source` が不明な場合は、汎用テンプレートを使用して開始します。
+4. `destination` を使用するようにパイプライン スクリプトを書き換えます。
+5. 指定されたソースと宛先のサンプル構成と認証情報を `secrets.toml` と `config.toml` に作成します。
+6. ソースと宛先に必要な依存関係を含む `requirements.txt` を作成します。存在する場合は、それに追加する内容の指示を表示します。
 
-This command can be used several times in the same folder to add more sources, destinations, and pipelines. It will also update the verified source code to the newest
-version if run again with an existing `source` name. You will be warned if files will be overwritten or if the `dlt` version needs an upgrade to run a particular pipeline.
+このコマンドは同じフォルダ内で複数回使用して、ソース、宛先、パイプラインを追加できます。
+また、既存の `source` 名で再度実行すると、検証済みのソースコードが最新バージョンに更新されます。
+ファイルが上書きされる場合、または特定のパイプラインを実行するために `dlt` バージョンのアップグレードが必要な場合は、警告が表示されます。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Positional arguments**
-* `source` - Name of data source for which to create a pipeline. adds existing verified source or creates a new pipeline template if verified source for your data source is not yet implemented.
-* `destination` - Name of a destination ie. bigquery or redshift
+**位置引数**
+* `source` - パイプラインを作成するデータソースの名前。既存の検証済みソースを追加するか、データソースの検証済みソースがまだ実装されていない場合は新しいパイプラインテンプレートを作成します。
+* `destination` - 出力先の名前（例：BigQuery または Redshift）
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--list-sources, -l` - Shows all available verified sources and their short descriptions. for each source, it checks if your local `dlt` version requires an update and prints the relevant warning.
-* `--location LOCATION` - Advanced. uses a specific url or local path to verified sources repository.
-* `--branch BRANCH` - Advanced. uses specific branch of the verified sources repository to fetch the template.
-* `--eject` - Ejects the source code of the core source like sql_database or rest_api so they will be editable by you.
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します。
+* `--list-sources, -l` - 利用可能なすべての検証済みソースとその簡単な説明を表示します。各ソースについて、ローカルの `dlt` バージョンの更新が必要かどうかを確認し、関連する警告を出力します。
+* `--location LOCATION` - 高度なオプション。検証済みソースリポジトリへの特定の URL またはローカルパスを使用します。
+* `--branch BRANCH` - 高度なオプション。検証済みソースリポジトリの特定のブランチを使用してテンプレートを取得します。
+* `--eject` - sql_database や rest_api などのコア ソースのソース コードが排出され、編集できるようになります。
 
 </details>
 
 ## `dlt render-docs`
 
-Renders markdown version of cli docs.
+cli ドキュメントのマークダウン バージョンをレンダリングします。
 
-**Usage**
+**使用方法**
 ```sh
 dlt render-docs [-h] [--compare] file_name
 ```
 
-**Description**
+**説明**
 
-The `dlt render-docs` command renders markdown version of cli docs by parsing the argparse help output and generating a markdown file.
-If you are reading this on the docs website, you are looking at the rendered version of the cli docs generated by this command.
+`dlt render-docs` コマンドは、argparse ヘルプ出力を解析してマークダウン ファイルを生成することで、cli ドキュメントのマークダウン バージョンをレンダリングします。
+ドキュメント Web サイトでこれを読んでいる場合は、このコマンドによって生成された cli ドキュメントのレンダリング バージョンを見ていることになります。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Positional arguments**
-* `file_name` - Output file name
+**位置引数**
+* `file_name` - 出力ファイル名
 
-**Options**
-* `-h, --help` - Show this help message and exit
-* `--compare` - Compare the changes and raise if output would be updated
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
+* `--compare` - 変更を比較し、出力が更新される場合は例外を発生します
 
 </details>
 
 ## `dlt deploy`
 
-Creates a deployment package for a selected pipeline script.
+選択したパイプライン スクリプトのデプロイメント パッケージを作成します。
 
-**Usage**
+**使用方法**
 ```sh
 dlt deploy [-h] pipeline-script-path
 ```
 
-**Description**
+**説明**
 
-The `dlt deploy` command prepares your pipeline for deployment and gives you step-by-step instructions on how to accomplish it. To enable this functionality, please first execute `pip install "dlt[cli]"` which will add additional packages to the current environment.
+`dlt deploy` コマンドは、パイプラインのデプロイメントを準備し、その実行方法を段階的に説明します。
+この機能を有効にするには、まず `pip install "dlt[cli]"` を実行して、現在の環境にパッケージを追加してください。
 
 <details>
 
-<summary>Show Arguments and Options</summary>
+<summary>引数とオプションを表示</summary>
 
-Inherits arguments from [`dlt`](#dlt).
+[`dlt`](#dlt) から引数を継承します。
 
-**Positional arguments**
-* `pipeline-script-path` - Path to a pipeline script
+**位置引数**
+* `pipeline-script-path` - パイプラインスクリプトへのパス
 
-**Options**
-* `-h, --help` - Show this help message and exit
+**オプション**
+* `-h, --help` - このヘルプメッセージを表示して終了します
 
 </details>
 

@@ -5,21 +5,19 @@ description: Extract text from PDF and load it into a vector database
 keywords: [pdf, weaviate, vector store, vector database, ]
 ---
 
-We'll use PyPDF2 to extract text from PDFs. Make sure you have it installed:
+PDFからテキストを抽出するにはPyPDF2を使います。インストールしておいてください:
 
 ```sh
 pip install PyPDF2
 ```
 
-We start with a simple resource that lists files in specified folder. To that we add a **filter** function that removes all files that are not pdfs.
+まず、指定されたフォルダ内のファイルを一覧表示するシンプルなリソースを作成します。これに、PDF以外のファイルをすべて除外する**filter**関数を追加します。
 
-To parse PDFs we use [PyPDF](https://pypdf2.readthedocs.io/en/3.0.0/user/extract-text.html) and return each page from a given PDF as separate data item.
+PDFを解析するには、[PyPDF](https://pypdf2.readthedocs.io/en/3.0.0/user/extract-text.html) を使用し、指定されたPDFの各ページを個別のデータ項目として返します。
 
-Parsing happens in `@dlt.transformer` which receives data from `list_files` resource. It splits PDF into pages, extracts text and yields pages separately
-so each PDF will correspond to many items in Weaviate `InvoiceText` class. We set the primary key and use merge disposition so if the same PDF comes twice
-we'll just update the vectors, and not duplicate.
+解析は、`list_files`リソースからデータを受け取る`@dlt.transformer`で行われます。この関数はPDFをページに分割し、テキストを抽出してページを個別に生成します。そのため、各PDFはWeaviateの`InvoiceText`クラスの複数の項目に対応します。主キーを設定し、merge dispositionを使用することで、同じPDFが2回送信された場合、ベクトルを更新するだけで重複は発生しません。
 
-Look how we pipe data from `list_files` resource (note that resource is deselected so we do not load raw file items to destination) into `pdf_to_text` using **|** operator.
+**|** 演算子を使用して、`list_files` リソース (リソースは選択解除されているため、生のファイル項目が宛先にロードされないことに注意してください) から `pdf_to_text` にデータをパイプする方法を確認します。
 
 """
 

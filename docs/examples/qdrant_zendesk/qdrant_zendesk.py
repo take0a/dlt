@@ -5,18 +5,18 @@ description: Learn how to use the dlt source, Zendesk and dlt destination, Qdran
 keywords: [similarity search, example]
 ---
 
-This article outlines a system to map vectorized ticket data from Zendesk to Qdrant, similar to our guide on the topic concerning [Weaviate](https://dlthub.com/docs/dlt-ecosystem/destinations/qdrant). In this example, we will:
-- Connect to our [Zendesk source](https://dlthub.com/docs/dlt-ecosystem/verified-sources/zendesk).
-- Extract tickets data from our Zendesk source.
-- [Create a dlt pipeline](https://dlthub.com/docs/walkthroughs/create-a-pipeline) with Qdrant as destination.
-- Vectorize/embed the tickets data from Zendesk.
-- Pass the vectorized data to be stored in Qdrant via the dlt pipeline.
-- Query data that we stored in Qdrant.
-- Explore the similarity search results.
+この記事では、[Weaviate](https://dlthub.com/docs/dlt-ecosystem/destinations/qdrant)に関するガイドと同様に、ZendeskからQdrantへベクトル化されたチケットデータをマッピングするシステムの概要を説明します。この例では、以下の手順を実行します。
+- [Zendeskソース](https://dlthub.com/docs/dlt-ecosystem/verified-sources/zendesk)に接続します。
+- Zendeskソースからチケットデータを抽出します。
+- Qdrantを宛先として[dltパイプラインを作成](https://dlthub.com/docs/walkthroughs/create-a-pipeline)します。
+- Zendeskからのチケットデータをベクトル化/埋め込みます。
+- ベクトル化されたデータをdltパイプライン経由でQdrantに渡します。
+- Qdrantに保存したデータをクエリします。
+- 類似度検索結果を確認します。
 
-First, configure the destination credentials for [Qdrant](https://dlthub.com/docs/dlt-ecosystem/destinations/qdrant#setup-guide) and [Zendesk](https://dlthub.com/docs/walkthroughs/zendesk-weaviate#configuration) in `.dlt/secrets.toml`.
+まず、`.dlt/secrets.toml` で [Qdrant](https://dlthub.com/docs/dlt-ecosystem/destinations/qdrant#setup-guide) と [Zendesk](https://dlthub.com/docs/walkthroughs/zendesk-weaviate#configuration) の送信先認証情報を設定します。
 
-Next, make sure you have the following dependencies installed:
+次に、以下の依存関係がインストールされていることを確認します:
 
 ```sh
 pip install qdrant-client>=1.6.9

@@ -5,16 +5,16 @@ description: Learn how do incremental loading in consecutive runs
 keywords: [incremental loading, example]
 ---
 
-In this example, you'll find a Python script that interacts with the Zendesk Support API to extract ticket events data.
+この例では、Zendesk Support API と連携してチケットイベントデータを抽出する Python スクリプトを紹介します。
 
-We'll learn:
+学習内容:
 
-- How to pass [credentials](../general-usage/credentials) as dict and how to type the `@dlt.source` function arguments.
-- How to set [the nesting level](../general-usage/source#reduce-the-nesting-level-of-generated-tables).
-- How to enable [incremental loading](../general-usage/incremental-loading) for efficient data extraction.
-- How to specify [the start and end dates](../general-usage/incremental/cursor.md#using-end_value-for-backfill) for the data loading and how to [opt-in to Airflow scheduler](../general-usage/incremental/cursor.md#using-airflow-schedule-for-backfill-and-incremental-loading) by setting `allow_external_schedulers` to `True`.
-- How to work with timestamps, specifically converting them to Unix timestamps for incremental data extraction.
-- How to use the `start_time` parameter in API requests to retrieve data starting from a specific timestamp.
+- [資格情報](../general-usage/credentials) を辞書として渡す方法と、`@dlt.source` 関数の引数の型指定方法。
+- [ネストレベル](../general-usage/source#reduce-the-nesting-level-of-generated-tables) を設定する方法。
+- [増分ロード](../general-usage/incremental-loading) を有効にして効率的なデータ抽出を行う方法。
+- データ読み込みの[開始日と終了日](../general-usage/incremental/cursor.md#using-end_value-for-backfill)を指定する方法と、`allow_external_schedulers` を `True` に設定して[Airflow スケジューラにオプトイン](../general-usage/incremental/cursor.md#using-airflow-schedule-for-backfill-and-incremental-loading)する方法。
+- タイムスタンプの操作方法、具体的には増分データ抽出のためにタイムスタンプを Unix タイムスタンプに変換する方法。
+- API リクエストで `start_time` パラメータを使用して、特定のタイムスタンプからデータを取得する方法。
 """
 
 # NOTE: this line is only for dlt CI purposes, you may delete it if you are using this example

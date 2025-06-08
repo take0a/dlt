@@ -4,35 +4,36 @@ description: dlt+ Test utils
 keywords: ["dlt+", "data tests", "test"]
 ---
 
-## Introduction
+## はじめに
 
-dlt+ provides a `pytest` plugin with a set of powerful fixtures and utilities that simplify testing for dlt+ projects. These testing utilities are packaged separately in `dlt-plus-tests`, making it easy to install them as a development dependency. Check the [installation guide](#installation) for instructions on how to install the package.
+dlt+ は、dlt+ プロジェクトのテストを簡素化する強力なフィクスチャとユーティリティを備えた `pytest` プラグインを提供します。これらのテストユーティリティは `dlt-plus-tests` に個別にパッケージ化されているため、開発依存関係として簡単にインストールできます。パッケージのインストール方法については、[インストールガイド](#installation) をご覧ください。
 
-The `dlt-plus-tests` package includes:
+`dlt-plus-tests` パッケージには以下が含まれます。
 
-- [predefined fixtures and utils](#predefined-fixtures-and-utils)
-- [additional `pytest.ini` options](#pytestini-options)
-- [`pytest_config` setup](#pytest-config-setup) to ensure tests run in the correct context and switch to the `tests` profile.
+- [定義済みのフィクスチャとユーティリティ](#predefined-fixtures-and-utils)
+- [追加の `pytest.ini` オプション](#pytestini-options)
+- [`pytest_config` セットアップ](#pytest-config-setup) により、テストが正しいコンテキストで実行され、`tests` プロファイルに切り替わります。
 
 
-## Installation
+## インストール
 
-Currently, `dlt-plus-tests` is available on the dltHub PyPI registry. However, it will soon be moved to `pypi.org`.
+現在、`dlt-plus-tests` は dltHub PyPI レジストリで利用可能です。
+ただし、まもなく `pypi.org` に移行される予定です。
 
 ```sh
 pip install --index-url https://pypi.dlthub.com --no-deps  dlt-plus-tests
 ```
 
-## Predefined fixtures and utils
+## 定義済みのフィクスチャとユーティリティ
 
-The dlt-plus-tests package provides a set of predefined fixtures and utility functions:
+dlt-plus-tests パッケージは、定義済みのフィクスチャとユーティリティ関数のセットを提供します。
 
-* Fixtures are available under `dlt_plus_tests.fixtures`
-* Utility functions can be found in `dlt_plus_tests.utils`
+* フィクスチャは `dlt_plus_tests.fixtures` で利用できます。
+* ユーティリティ関数は `dlt_plus_tests.utils` で見つかります。
 
-### Fixtures
+### フィクスチャ
 
-To enable essential fixtures, add the following imports to your `conftest.py`:
+必須フィクスチャを有効にするには、`conftest.py` に以下のインポートを追加します。
 
 ```py
 from dlt_plus_tests.fixtures import (
@@ -42,55 +43,55 @@ from dlt_plus_tests.fixtures import (
 )
 ```
 
-These fixtures must be explicitly imported to be activated. Please find the short description for the fixtures below:
+これらのフィクスチャを有効にするには、明示的にインポートする必要があります。フィクスチャの簡単な説明は以下をご覧ください:
 
 | Fixture Name                     | Description                                                                   | Fixture Settings                 |
 | -------------------------------- | ----------------------------------------------------------------------------- | -------------------------------- |
-| `auto_preserve_environ`          | Preserves environment variables before the test and restores them afterward.  | `autouse=True`                   |
-| `auto_drop_pipeline`             | Drops active pipeline data after test execution unless marked with 'no_load'. | `autouse=True`                   |
-| `autouse_test_storage`           | Cleans and provides test storage for the project context.                     | `autouse=True`                   |
-| `auto_unload_modules`            | Unloads all modules inspected in these tests.                                 | `autouse=True`                   |
-| `auto_preserve_run_context`      | Restores the initial run context when the test completes.                     | `autouse=True`                   |
-| `auto_preserve_sources_registry` | Preserves and restores the source registry for tests.                         | `autouse=True, scope="function"` |
-| `auto_cwd_to_local_dir`          | Changes the working directory to a temporary directory for test execution.    | `autouse=True`                   |
-| `auto_test_access_profile`       | Mocks the access profile by prefixing 'tests-' to the returned profile name.  | `autouse=True`                   |
+| `auto_preserve_environ`          | テスト前に環境変数を保存し、テスト後に復元します。 | `autouse=True`                   |
+| `auto_drop_pipeline`             | 'no_load' でマークされていない限り、テスト実行後にアクティブなパイプライン データを削除します。 | `autouse=True`                   |
+| `autouse_test_storage`           | プロジェクト コンテキストのテスト ストレージをクリーンアップして提供します。 | `autouse=True`                   |
+| `auto_unload_modules`            | これらのテストで検査されたすべてのモジュールをアンロードします。  | `autouse=True`                   |
+| `auto_preserve_run_context`      | テストが完了したら、初期実行コンテキストを復元します。 | `autouse=True`                   |
+| `auto_preserve_sources_registry` | テストのソース レジストリを保存および復元します。 | `autouse=True, scope="function"` |
+| `auto_cwd_to_local_dir`          | テスト実行のために作業ディレクトリを一時ディレクトリに変更します。 | `autouse=True`                   |
+| `auto_test_access_profile`       | 返されるプロファイル名に 'tests-' をプレフィックスとして追加して、アクセス プロファイルをモックします。  | `autouse=True`                   |
 |                                  |                                                                               |                                  |
 
-### Tests execution
+### テスト実行
 
-Config setup will activate the run context with `dlt.yml` of the Project being tested. The `tests` profile will be activated (and must be present).
+設定により、テスト対象プロジェクトの `dlt.yml` で実行コンテキストが有効化されます。`tests` プロファイルが有効化されます（必ず存在する必要があります）。
 
-In the test project run context:
-- `run_dir` points to the project being tested
-- `data_dir` points to `_data/tests/`
+テストプロジェクトの実行コンテキストでは、以下のようになります。
+- `run_dir` はテスト対象プロジェクトを指します。
+- `data_dir` は `_data/tests/` を指します。
 
 :::note
-`autouse_test_storage` fixture:
-* cleans up `data_dir` (typically `_data/tests`) folder (in relation to project root dir)
-* cleans up `local_dir` (typically `_data/tests/local`) folder (in relation to project root dir)
+`autouse_test_storage` フィクスチャ:
+* `data_dir` (通常は `_data/tests`) フォルダをクリーンアップします (プロジェクトのルートディレクトリを基準とします)
+* `local_dir` (通常は `_data/tests/local`) フォルダをクリーンアップします (プロジェクトのルートディレクトリを基準とします)
 :::
 
-### Utils
+### ユーティリティ
 
-Additional cool 😎 utilities for verifying loads, checking table counts, and inspecting metrics can be imported from `utils.py`:
+負荷の検証、テーブル数の確認、メトリクスの検査などを行うための便利なユーティリティを `utils.py` からインポートできます。
 
 | Name                        | Type     | Description                                                                                                                                                                               |
 | --------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `IsInstanceMockMatch`       | Class    | A helper for mocking comparisons: its `__eq__` method returns `True` if the compared object is an instance of a specified class.                                                          |
-| `get_test_project_context`  | Function | Retrieves the current `ProjectRunContext` from `dlt_plus`.                                                                                                                                |
-| `get_local_dir`             | Function | Fetches the path to the local directory from the current project's configuration.                                                                                                          |
-| `clean_test_storage`        | Function | Removes any existing data directory, recreates it, and sets up a `FileStorage` in the project's temporary directory. Optionally copies configuration files from `tests/.dlt`.             |
-| `delete_test_storage`       | Function | Deletes the folder used by the test storage if it exists.                                                                                                                                 |
-| `drop_active_pipeline_data` | Function | Drops all datasets for the currently active pipeline, attempts to remove its working folder, and then deactivates the pipeline context.                                                   |
-| `assert_load_info`          | Function | Ensures that the specified number of load packages have been loaded successfully, with no failed jobs. Raises an error if any failed jobs are present.                                    |
-| `load_table_counts`         | Function | Returns a dictionary of row counts for the given table names by querying the pipeline's SQL client.                                                                                       |
-| `load_tables_to_dicts`      | Function | Retrieves the contents of specified tables from the pipeline as lists of dictionaries, optionally excluding system columns (`_dlt*`) and allowing the result to be sorted by a given key. |
-| `assert_records_as_set`     | Function | Compares two lists of dictionaries by converting each to a set of key-value pairs, ensuring they match regardless of order.                                                               |
+| `IsInstanceMockMatch`       | Class    |比較をモックするためのヘルパー: 比較対象のオブジェクトが指定されたクラスのインスタンスである場合、`__eq__` メソッドは `True` を返します。|
+| `get_test_project_context`  | Function | `dlt_plus` から現在の `ProjectRunContext` を取得します。|
+| `get_local_dir`             | Function | 現在のプロジェクトの構成からローカル ディレクトリへのパスを取得します。|
+| `clean_test_storage`        | Function | 既存のデータディレクトリを削除して再作成し、プロジェクトの一時ディレクトリに `FileStorage` を設定します。オプションで `tests/.dlt` から設定ファイルをコピーします。|
+| `delete_test_storage`       | Function |テスト ストレージで使用されるフォルダーが存在する場合は削除します。 |
+| `drop_active_pipeline_data` | Function | 現在アクティブなパイプラインのすべてのデータセットを削除し、その作業フォルダーを削除しようとしてから、パイプライン コンテキストを非アクティブ化します。 |
+| `assert_load_info`          | Function | 指定された数のロードパッケージが正常にロードされ、失敗したジョブがないことを確認します。失敗したジョブが存在する場合はエラーが発生します。 |
+| `load_table_counts`         | Function | パイプラインの SQL クライアントをクエリして、指定されたテーブル名の行数の辞書を返します。 |
+| `load_tables_to_dicts`      | Function | 指定されたテーブルの内容を辞書のリストとしてパイプラインから取得します。オプションでシステム列 (`_dlt*`) を除外し、結果を指定されたキーで並べ替えることができます。 |
+| `assert_records_as_set`     | Function | 2 つの辞書リストをそれぞれキーと値のペアのセットに変換して比較し、順序に関係なく一致することを確認します。 |
 
 
-## pytest.ini options
+## pytest.ini オプション
 
-The plugin introduces two additional `pytest.ini` options, which are automatically set and usually do not need modifications:
+このプラグインは、2 つの追加の `pytest.ini` オプションを導入します。これらは自動的に設定され、通常は変更する必要はありません。
 
 ```toml
 [tool.pytest.ini_options]
@@ -98,9 +99,9 @@ dlt_tests_project_path="..."
 dlt_tests_project_profile="..."
 ```
 
-## Pytest config setup
+## Pytest の設定
 
-Below is an example pyproject.toml configuration for uv:
+以下は、UV 用の pyproject.toml 設定の例です。
 
 ```toml
 [project]
@@ -128,9 +129,9 @@ dlt-plus = { index = "dlt-hub" }
 dlt-plus-tests = { index = "dlt-hub" }
 ```
 
-## Writing tests
+## テストの作成
 
-When writing tests, you can use the dlt project API to request project entities and run them. For example:
+テストを作成する際は、dlt プロジェクト API を使用してプロジェクトエンティティをリクエストし、実行することができます。例:
 
 ```py
 from dlt_plus.project import Project
@@ -161,8 +162,6 @@ def test_t_layer(dpt_project_config: Project) -> None:
     assert_load_info(info)
 ```
 
-Here, we get the current project via the `dpt_project_config` fixture and use `EntityFactory` and `PipelineManager` to
-get instances of the entities and run them. The test plugin ensures that each test starts with a clean
-state, with the `test` profile active, and that any datasets created by pipelines (also on remote destinations)
-are dropped.
+ここでは、`dpt_project_config` フィクスチャを介して現在のプロジェクトを取得し、`EntityFactory` と `PipelineManager` を使用してエンティティのインスタンスを取得して実行します。
+テストプラグインは、各テストがクリーンな状態で開始され、`test` プロファイルがアクティブになり、パイプラインによって作成されたデータセット（リモートの宛先でも）が削除されることを保証します。
 

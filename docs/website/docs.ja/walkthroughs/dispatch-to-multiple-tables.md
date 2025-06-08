@@ -4,18 +4,19 @@ description: Learn how to efficiently dispatch a stream of GitHub events, catego
 keywords: [dispatch, stream, events, tables, event type]
 ---
 
-This is a practical example of how to process [GitHub events](https://docs.github.com/en/rest/activity/events?apiVersion=2022-11-28) from the [dlt](https://github.com/dlt-hub/dlt) repository, such as issues or pull request creation, comments addition, etc.
-We'll use the [GitHub API](https://docs.github.com/en/rest) to fetch the events and [duckdb](https://duckdb.org/) as a destination. Each event type will be sent to a separate table in DuckDB.
+これは、[GitHub イベント](https://docs.github.com/en/rest/activity/events?apiVersion=2022-11-28) を [dlt](https://github.com/dlt-hub/dlt) リポジトリから処理する方法の実践的な例です。イベントには Issue や Pull Request の作成、コメントの追加などがあります。
+[GitHub API](https://docs.github.com/en/rest) を使用してイベントを取得し、送信先として [duckdb](https://duckdb.org/) を使用します。
+各イベントタイプは、DuckDB 内の個別のテーブルに送信されます。
 
 # Setup
 
-1. Install dlt with duckdb support:
+1. duckdb サポート付きの dlt をインストールします:
 
 ```sh
 pip install "dlt[duckdb]"
 ```
 
-2. Create a new file `github_events_dispatch.py` and paste the following code:
+2. 新しいファイル `github_events_dispatch.py​​` を作成し、次のコードを貼り付けます:
 
 ```py
 import dlt
@@ -60,40 +61,40 @@ print("------")
 print(load_info)
 ```
 
-In the code above, we define a resource `repo_events` that fetches events from the GitHub API.
+上記のコードでは、GitHub API からイベントを取得するリソース `repo_events` を定義しています。
 
-Events content never changes, so we can use the `append` write disposition and track new events using the `created_at` field.
+イベントの内容は変更されないため、`append` 書き込み処理を使用し、`created_at` フィールドを使用して新しいイベントを追跡できます。
 
-We name the tables using a function that receives event data and returns the table name: `table_name=lambda i: i["type"]`
+イベントデータを受け取ってテーブル名を返す関数 `table_name=lambda i: i["type"]` を使用してテーブルに名前を付けます。
 
-3. Now run the script:
+3. スクリプトを実行します:@
 
 ```sh
 python github_events_dispatch.py
 ```
 
-4. Peek at the created tables:
+4. 作成されたテーブルを確認します:
 
 ```sh
 dlt pipeline -v github_events info
 dlt pipeline github_events trace
 ```
 
-5. And preview the data:
+5. データをプレビューします:
 
 ```sh
 dlt pipeline -v github_events show
 ```
 
 :::tip
-Some of the events produce tables with many nested tables. You can [control the level of table nesting](general-usage/source.md#reduce-the-nesting-level-of-generated-tables) with a decorator.
+一部のイベントは、多数のネストされたテーブルを含むテーブルを生成します。
+デコレータを使用することで、[テーブルのネストレベルを制御](general-usage/source.md#reduce-the-nesting-level-of-generated-tables)できます。
 
-
-Another fun [Colab Demo](https://colab.research.google.com/drive/1BXvma_9R9MX8p_iSvHE4ebg90sUroty2#scrollTo=a3OcZolbaWGf) - we analyze reactions on the duckdb repo!
+もう一つの楽しい[Colabデモ](https://colab.research.google.com/drive/1BXvma_9R9MX8p_iSvHE4ebg90sUroty2#scrollTo=a3OcZolbaWGf) - duckdbリポジトリでの反応を分析します！
 
 :::
 
-Learn more:
-* [Change the nesting of the tables](general-usage/source.md#reduce-the-nesting-level-of-generated-tables) with a decorator.
+詳細:
+* デコレータを使用して [テーブルのネストレベルを変更する](general-usage/source.md#reduce-the-nesting-level-of-generated-tables)。
 
 
