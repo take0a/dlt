@@ -581,7 +581,7 @@ repo_name = "dlt-hub/dlt"
 1. これまではパイプラインをローカルで実行していました。[パイプラインをクラウドにデプロイして実行する](../walkthroughs/deploy-a-pipeline/)方法を学習します。
 2. [dltの使用](../general-usage)セクションを読んで、dltの仕組みについてさらに詳しく学びましょう:
     - [インクリメンタルローディングで「最後の値」を設定する](../general-usage/incremental/cursor.md).
-    - Learn about data loading strategies: append, [replace](../general-usage/full-loading.md), and [merge](../general-usage/merge-loading.md).
+    - データ読み込み戦略（追加、[置換](../general-usage/full-loading.md)、[マージ](../general-usage/merge-loading.md)）について学習します。
     - [トランスフォーマーをリソースに接続](../general-usage/resource#feeding-data-from-one-resource-into-another)して、追加のデータを読み込んだり、データを拡充したりします。
     - [データ スキーマをカスタマイズします。主キーとマージ キーを設定し、列の NULL 値許容性を定義し、データ型を指定します](../general-usage/resource#define-schema)。
     - [データからリソースを動的に作成します](../general-usage/source#create-resources-dynamically)。

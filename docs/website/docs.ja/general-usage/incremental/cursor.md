@@ -4,16 +4,16 @@ description: Track changes using cursor fields with dlt
 keywords: [incremental loading, cursor, timestamp, last_value]
 ---
 
-# Cursor-based incremental loading
+# カーソルベースの増分ロード
 
-In most REST APIs (and other data sources, i.e., database tables), you can request new or updated data by passing a timestamp or ID of the "last" record to a query. The API/database returns just the new/updated records from which you take the maximum/minimum timestamp/ID for the next load.
+ほとんどのREST API（およびその他のデータソース、つまりデータベーステーブル）では、「最後の」レコードのタイムスタンプまたはIDをクエリに渡すことで、新規データまたは更新データをリクエストできます。API/データベースは、次回のロード時に最大/最小のタイムスタンプ/IDを取得するために、新規/更新されたレコードのみを返します。
 
-To do incremental loading this way, we need to:
+この方法で増分ロードを行うには、以下の手順が必要です。
 
-- Figure out which field is used to track changes (the so-called **cursor field**) (e.g., "inserted_at", "updated_at", etc.);
-- Determine how to pass the "last" (maximum/minimum) value of the cursor field to an API to get just new or modified data (how we do this depends on the source API).
+- 変更を追跡するために使用するフィールド（いわゆる**カーソルフィールド**）を特定します（例："inserted_at"、"updated_at" など）。
+- 新規データまたは変更されたデータのみを取得するために、カーソルフィールドの「最後の」（最大/最小）値をAPIに渡す方法を決定します（方法はソースAPIによって異なります）。
 
-Once you've figured that out, `dlt` takes care of finding maximum/minimum cursor field values, removing duplicates, and managing the state with the last values of the cursor. Take a look at the GitHub example below, where we request recently created issues.
+一度理解してしまえば、`dlt` はカーソルフィールドの最大値/最小値の検出、重複の削除、そしてカーソルの最後の値による状態管理などをすべて処理してくれます。以下の GitHub の例をご覧ください。ここでは最近作成された Issue をリクエストしています。
 
 ```py
 @dlt.resource(primary_key="id")
@@ -29,19 +29,19 @@ def repo_issues(
         print(updated_at.last_value)
 ```
 
-Here we add an `updated_at` argument that will receive incremental state, initialized to `1970-01-01T00:00:00Z`. It is configured to track the `updated_at` field in issues yielded by the `repo_issues` resource. It will store the newest `updated_at` value in `dlt` [state](../state.md) and make it available in `updated_at.start_value` on the next pipeline run. This value is inserted in the `_get_issues_page` function into the request query param **since** to the [GitHub API](https://docs.github.com/en/rest/issues/issues?#list-repository-issues).
+ここでは、`1970-01-01T00:00:00Z` に初期化された増分状態を受け取る `updated_at` 引数を追加します。これは、`repo_issues` リソースによって生成された Issue の `updated_at` フィールドを追跡するように構成されています。最新の `updated_at` 値が `dlt` [state](../state.md) に保存され、次回のパイプライン実行時に `updated_at.start_value` で使用できるようになります。この値は、`_get_issues_page` 関数の [GitHub API](https://docs.github.com/en/rest/issues/issues?#list-repository-issues) へのリクエストクエリパラメータ **since** に挿入されます。
 
-In essence, the `dlt.sources.incremental` instance above:
-* **updated_at.initial_value** which is always equal to "1970-01-01T00:00:00Z" passed in the constructor
-* **updated_at.start_value** a maximum `updated_at` value from the previous run or the **initial_value** on the first run
-* **updated_at.last_value** a "real-time" `updated_at` value updated with each yielded item or page. Before the first yield, it equals **start_value**
-* **updated_at.end_value** (here not used) [marking the end of the backfill range](#using-end_value-for-backfill)
+本質的には、上記の `dlt.sources.incremental` インスタンスは以下のようになります。
+* **updated_at.initial_value** は、コンストラクタに渡される「1970-01-01T00:00:00Z」と常に等しくなります。
+* **updated_at.start_value** は、前回の実行時の最大の `updated_at` 値、または初回実​​行時の **initial_value** です。
+* **updated_at.last_value** は、生成されるアイテムまたはページごとに更新される「リアルタイム」の `updated_at` 値です。最初のyieldの前は、**start_value** と等しくなります。
+* **updated_at.end_value** (ここでは使用されません) [バックフィル範囲の終了を示す](#using-end_value-for-backfill)
 
-When paginating, you probably need the **start_value** which does not change during the execution of the resource, however, most paginators will return a **next page** link which you should use.
+ページネーションを行う場合、リソースの実行中に変化しない **start_value** が必要になる可能性があります。ただし、ほとんどのページネータは **次のページ** へのリンクを返すので、これを使用する必要があります。
 
-Behind the scenes, dlt will deduplicate the results, i.e., in case the last issue is returned again (`updated_at` filter is inclusive) and skip already loaded ones.
+dltは、バックグラウンドで結果の重複を排除します。つまり、最後の問題が再度返される場合（`updated_at`フィルタは含まれます）、すでにロードされている問題はスキップします。
 
-In the example below, we incrementally load the GitHub events, where the API does not let us filter for the newest events - it always returns all of them. Nevertheless, `dlt` will load only the new items, filtering out all the duplicates and past issues.
+以下の例では、GitHubイベントを段階的にロードします。APIでは最新のイベントをフィルタリングできず、常にすべてのイベントが返されます。それでも、`dlt`は新しい項目のみをロードし、重複と過去の問題をすべて除外します。
 ```py
 # Use naming function in table name to generate separate tables for each event
 @dlt.resource(primary_key="id", table_name=lambda i: i['type'])  # type: ignore
@@ -53,31 +53,27 @@ def repo_events(
         yield page
 ```
 
-We just yield all the events and `dlt` does the filtering (using the `id` column declared as `primary_key`).
+すべてのイベントをyieldし、`dlt`がフィルタリングを行います（`primary_key`として宣言された`id`列を使用）。
 
-GitHub returns events ordered from newest to oldest. So we declare the `rows_order` as **descending** to [stop requesting more pages once the incremental value is out of range](#declare-row-order-to-not-request-unnecessary-data). We stop requesting more data from the API after finding the first event with `created_at` earlier than `initial_value`.
+GitHubは新しいイベントから古いイベントの順に返します。そこで、`rows_order`を**descending**として宣言し、[増分値が範囲外になった場合にそれ以上のページをリクエストしないようにする](#declare-row-order-to-not-request-unnecessary-data)。`created_at`が`initial_value`よりも前の最初のイベントを見つけた後、APIからそれ以上のデータをリクエストしないようにします。
 
 :::note
-`dlt.sources.incremental` is implemented as a [filter function](../resource.md#filter-transform-and-pivot-data) that is executed **after** all other transforms you add with `add_map` or  `add_filter`. This means that you can manipulate the data item before the incremental filter sees it. For example:
-* You can create a surrogate primary key from other columns
-* You can modify the cursor value or create a new field composed of other fields
-* Dump Pydantic models to Python dicts to allow incremental to find custom values
+`dlt.sources.incremental` は [フィルター関数](../resource.md#filter-transform-and-pivot-data) として実装されており、`add_map` または `add_filter` で追加した他のすべての変換の **後** に実行されます。つまり、増分フィルターがデータ項目を認識する前に、そのデータ項目を操作できます。例:
+* 他の列から代理主キーを作成できます。
+* カーソル値を変更したり、他のフィールドで構成される新しいフィールドを作成したりできます。
+* Pydantic モデルを Python 辞書にダンプして、増分フィルターがカスタム値を検出できるようにします。
 
-[Data validation with Pydantic](../schema-contracts.md#use-pydantic-models-for-data-validation) happens **before** incremental filtering.
+[Pydantic によるデータ検証](../schema-contracts.md#use-pydantic-models-for-data-validation) は、増分フィルタリングの **前** に実行されます。
 :::
 
-## Max, min, or custom `last_value_func`
+## 最大値、最小値、またはカスタムの `last_value_func`
 
-`dlt.sources.incremental` allows you to choose a function that orders (compares) cursor values to the current `last_value`.
-* The default function is the built-in `max`, which returns the larger value of the two.
-* Another built-in, `min`, returns the smaller value.
+`dlt.sources.incremental` を使用すると、カーソル値を現在の `last_value` に順序付け（比較）する関数を選択できます。
+* デフォルトの関数は組み込み関数の `max` で、2 つの値のうち大きい方の値を返します。
+* もう一つの組み込み関数である `min` は、小さい方の値を返します。
 
-You can also pass your custom function. This lets you define
-`last_value` on nested types, i.e., dictionaries, and store indexes of last values, not just simple
-types. The `last_value` argument is a [JSON Path](https://github.com/json-path/JsonPath#operators)
-and lets you select nested data (including the whole data item when `$` is used).
-The example below creates a last value which is a dictionary holding a max `created_at` value for each
-created table name:
+カスタム関数を渡すこともできます。これにより、ネストされた型（つまり辞書）に `last_value` を定義し、単純な型だけでなく、最後の値のインデックスを格納できます。`last_value` 引数は [JSON パス](https://github.com/json-path/JsonPath#operators) であり、ネストされたデータ（`$` を使用した場合はデータ項目全体を含む）を選択できます。
+以下の例では、作成されたテーブル名ごとに最大の `created_at` 値を保持する辞書である最後の値を作成します。
 
 ```py
 def by_event_type(event):
@@ -101,9 +97,9 @@ def get_events(last_created_at = dlt.sources.incremental("$", last_value_func=by
         yield json.load(f)
 ```
 
-## Using `end_value` for backfill
+## バックフィルに `end_value` を使用する
 
-You can specify both initial and end dates when defining incremental loading. Let's go back to our Github example:
+増分ロードを定義する際に、開始日と終了日の両方を指定できます。GitHub の例に戻りましょう。
 ```py
 @dlt.resource(primary_key="id")
 def repo_issues(
@@ -115,15 +111,13 @@ def repo_issues(
     for page in _get_issues_page(access_token, repository, since=updated_at.start_value, until=updated_at.end_value):
         yield page
 ```
-Above, we use the `initial_value` and `end_value` arguments of the `incremental` to define the range of issues that we want to retrieve
-and pass this range to the Github API (`since` and `until`). As in the examples above, `dlt` will make sure that only the issues from
-the defined range are returned.
+上記では、`incremental` の `initial_value` 引数と `end_value` 引数を使用して、取得する問題の範囲を定義し、この範囲を Github API に渡しています（`since` と `until`）。上記の例と同様に、`dlt` は定義された範囲の問題のみが返されるようにします。
 
-Please note that when `end_date` is specified, `dlt` **will not modify the existing incremental state**. The backfill is **stateless** and:
-1. You can run backfill and incremental load in parallel (i.e., in an Airflow DAG) in a single pipeline.
-2. You can partition your backfill into several smaller chunks and run them in parallel as well.
+`end_date` が指定されている場合、`dlt` は**既存の増分状態を変更しない**ことに注意してください。バックフィルは**ステートレス**であり、次のようになります。
+1. バックフィルと増分ロードを単一のパイプラインで並行して（つまり、Airflow DAG 内で）実行できます。
+2. バックフィルを複数の小さなチャンクに分割し、それらを並行して実行することもできます。
 
-To define specific ranges to load, you can simply override the incremental argument in the resource, for example:
+ロードする特定の範囲を定義するには、リソースの incremental 引数をオーバーライドするだけです。例:
 
 ```py
 july_issues = repo_issues(
@@ -139,36 +133,32 @@ august_issues = repo_issues(
 ...
 ```
 
-Note that dlt's incremental filtering considers the ranges half-closed. `initial_value` is inclusive, `end_value` is exclusive, so chaining ranges like above works without overlaps. This behaviour can be changed with the `range_start` (default `"closed"`) and `range_end` (default `"open"`) arguments.
+dlt の増分フィルタリングでは、範囲が半分閉じているとみなされることに注意してください。`initial_value` は範囲を含み、`end_value` は範囲を含まないため、上記のように範囲を連結しても重複は発生しません。この動作は、`range_start`（デフォルトは `"closed"`）および `range_end`（デフォルトは `"open"`）引数で変更できます。
 
-## Declare row order to not request unnecessary data
+## 不要なデータを要求しないように行順序を宣言します。
 
-With the `row_order` argument set, dlt will stop retrieving data from the data source (e.g., GitHub API) if it detects that the values of the cursor field are out of the range of **start** and **end** values.
+`row_order` 引数を設定すると、カーソルフィールドの値が **start** と **end** の範囲外にあることを検出すると、dlt はデータソース（GitHub API など）からのデータの取得を停止します。
 
-In particular:
-* dlt stops processing when the resource yields any item with a cursor value _equal to or greater than_ the `end_value` and `row_order` is set to **asc**. (`end_value` is not included)
-* dlt stops processing when the resource yields any item with a cursor value _lower_ than the `last_value` and `row_order` is set to **desc**. (`last_value` is included)
+具体的には、次のようになります。
+* dlt は、リソースが `end_value` 以上のカーソル値を持つアイテムを生成し、かつ `row_order` が **asc** に設定されている場合に処理を停止します。(`end_value` は含まれません)
+* dlt は、リソースが `last_value` より小さいカーソル値を持つアイテムを生成し、かつ `row_order` が **desc** に設定されている場合に処理を停止します。(`last_value` は含まれます)
 
 :::note
-"higher" and "lower" here refer to when the default `last_value_func` is used (`max()`),
-when using `min()` "higher" and "lower" are inverted.
+ここでの「高い」と「低い」は、デフォルトの `last_value_func` (`max()`) が使用される場合を指し、`min()` を使用する場合は「高い」と「低い」が逆になります。
 :::
 
 :::caution
-If you use `row_order`, **make sure that the data source returns ordered records** (ascending / descending) on the cursor field,
-e.g., if an API returns results both higher and lower
-than the given `end_value` in no particular order, data reading stops and you'll miss the data items that were out of order.
+`row_order` を使用する場合は、**データ ソースがカーソル フィールドで順序付けられたレコード (昇順 / 降順) を返すことを確認してください**。たとえば、API が指定された `end_value` よりも高い結果と低い結果を特定の順序なしで返す場合、データの読み取りが停止し、順序が狂ったデータ項目が失われます。
 :::
 
-Row order is most useful when:
+行順序は、次のような場合に最も役立ちます。
 
-1. The data source does **not** offer start/end filtering of results (e.g., there is no `start_time/end_time` query parameter or similar).
-2. The source returns results **ordered by the cursor field**.
+1. データソースが結果の開始/終了フィルタリングを**提供していない**場合（例：`start_time/end_time` クエリパラメータなどがない場合）。
+2. ソースが **カーソルフィールドで順序付けられた** 結果を返す場合。
 
-The GitHub events example is exactly such a case. The results are ordered on cursor value descending, but there's no way to tell the API to limit returned items to those created before a certain date. Without the `row_order` setting, we'd be getting all events, each time we extract the `github_events` resource.
+GitHub イベントの例はまさにこのようなケースです。結果はカーソル値の降順で順序付けられますが、返される項目を特定の日付より前に作成されたものに限定するように API に指示する方法がありません。`row_order` 設定がないと、`github_events` リソースを抽出するたびにすべてのイベントが取得されてしまいます。
 
-In the same fashion, the `row_order` can be used to **optimize backfill** so we don't continue
-making unnecessary API requests after the end of the range is reached. For example:
+同様に、`row_order` を使用して **バックフィルを最適化** することで、範囲の終わりに達した後も不要な API リクエストが繰り返されないようにすることができます。例:
 
 ```py
 @dlt.resource(primary_key="id")
@@ -187,22 +177,16 @@ def tickets(
         yield page
 ```
 
-In this example, we're loading tickets from Zendesk. The Zendesk API yields items paginated and ordered from oldest to newest,
-but only offers a `start_time` parameter for filtering, so we cannot tell it to
-stop retrieving data at `end_value`. Instead, we set `row_order` to `asc` and `dlt` will stop
-getting more pages from the API after the first page with a cursor value `updated_at` is found older
-than `end_value`.
+この例では、Zendeskからチケットを読み込んでいます。Zendesk APIは、古いものから新しいものの順にページ分けされたアイテムを返しますが、フィルタリングには`start_time`パラメータしか提供されていないため、`end_value`でデータの取得を停止することはできません。代わりに、`row_order`を`asc`に設定すると、`dlt`はカーソル値`updated_at`を持つ最初のページが`end_value`よりも古いことが検出された時点で、APIからそれ以上のページを取得できなくなります。
 
 :::caution
-In rare cases when you use Incremental with a transformer, `dlt` will not be able to automatically close
-the generator associated with a row that is out of range. You can still call the `can_close()` method on
-incremental and exit the yield loop when true.
+稀に、Incremental をトランスフォーマーと併用すると、`dlt` は範囲外の行に関連付けられたジェネレーターを自動的に閉じることができません。
+それでも、incremental で `can_close()` メソッドを呼び出し、true の場合は yield ループを終了することができます。
 :::
 
 :::tip
-The `dlt.sources.incremental` instance provides `start_out_of_range` and `end_out_of_range`
-attributes which are set when the resource yields an element with a higher/lower cursor value than the
-initial or end values. If you do not want `dlt` to stop processing automatically and instead want to handle such events yourself, do not specify `row_order`:
+`dlt.sources.incremental` インスタンスは、`start_out_of_range` 属性と `end_out_of_range` 属性を提供します。これらの属性は、リソースが初期値または終了値よりも高い/低いカーソル値を持つ要素を生成したときに設定されます。
+`dlt` による処理を自動的に停止せず、このようなイベントを自分で処理したい場合は、`row_order` を指定しないでください。
 ```py
 @dlt.transformer(primary_key="id")
 def tickets(
@@ -225,11 +209,11 @@ def tickets(
 ```
 :::
 
-## Deduplicate overlapping ranges with primary key
+## 主キーによる重複範囲の重複排除
 
-`Incremental` **does not** deduplicate datasets like the **merge** write disposition does. However, it ensures that when another portion of data is extracted, records that were previously loaded won't be included again. `dlt` assumes that you load a range of data, where the lower bound is inclusive (i.e., greater than or equal). This ensures that you never lose any data but will also re-acquire some rows. For example, if you have a database table with a cursor field on `updated_at` which has a day resolution, then there's a high chance that after you extract data on a given day, more records will still be added. When you extract on the next day, you should reacquire data from the last day to ensure all records are present; however, this will create overlap with data from the previous extract.
+`Incremental` は、**merge** 書き込み処理のようにデータセットの重複排除は**行いません**。ただし、データの別の部分を抽出する際に、以前にロードされたレコードが再び含まれないようにします。`dlt` は、下限値が包含的（つまり、より大きいか等しい）なデータ範囲をロードすることを前提としています。これにより、データが失われることはありませんが、一部の行は再取得されます。例えば、`updated_at` に日単位のカーソルフィールドを持つデータベーステーブルがある場合、特定の日にデータを抽出した後でも、さらにレコードが追加される可能性が高くなります。翌日にデータを抽出する際は、すべてのレコードが揃っていることを確認するために、最終日のデータを再取得する必要があります。ただし、これにより、前回の抽出データとの重複が発生します。
 
-By default, a content hash (a hash of the JSON representation of a row) will be used to deduplicate. This may be slow, so `dlt.sources.incremental` will inherit the primary key that is set on the resource. You can optionally set a `primary_key` that is used exclusively to deduplicate and which does not become a table hint. The same setting lets you disable the deduplication altogether when an empty tuple is passed. Below, we pass `primary_key` directly to `incremental` to disable deduplication. That overrides the `delta` primary_key set in the resource:
+デフォルトでは、コンテンツハッシュ（行の JSON 表現のハッシュ）が重複排除に使用されます。これは遅くなる可能性があるため、`dlt.sources.incremental` はリソースに設定されている主キーを継承します。オプションで、重複排除専用でテーブルヒントにならない `primary_key` を設定することもできます。同じ設定で、空のタプルが渡されたときに重複排除を完全に無効にすることもできます。以下では、重複排除を無効にするために `primary_key` を `incremental` に直接渡しています。これにより、リソースに設定されている `delta` primary_key がオーバーライドされます。
 
 ```py
 @dlt.resource(primary_key="delta")
@@ -239,12 +223,12 @@ def some_data(last_timestamp=dlt.sources.incremental("item.ts", primary_key=()))
         yield {"delta": i, "item": {"ts": pendulum.now().timestamp()}}
 ```
 
-This deduplication process is always enabled when `range_start` is set to `"closed"` (default).
-When you pass `range_start="open"` no deduplication is done as it is not needed as rows with the previous cursor value are excluded. This can be a useful optimization to avoid the performance overhead of deduplication if the cursor field is guaranteed to be unique.
+この重複排除プロセスは、`range_start` が `"closed"` (デフォルト) に設定されている場合は常に有効です。
+`range_start="open"` を指定した場合は、前のカーソル値を持つ行が除外されるため重複排除は不要となり、実行されません。カーソルフィールドが一意であることが保証されている場合、これは重複排除によるパフォーマンスのオーバーヘッドを回避するための有効な最適化となります。
 
-## Using `dlt.sources.incremental` with dynamically created resources
+## 動的に作成されたリソースで `dlt.sources.incremental` を使用する
 
-When resources are [created dynamically](../source.md#create-resources-dynamically), it is possible to use the `dlt.sources.incremental` definition as well.
+リソースが[動的に作成](../source.md#create-resources-dynamically)される場合も、`dlt.sources.incremental` 定義を使用できます。
 
 ```py
 @dlt.source
@@ -266,19 +250,19 @@ def stripe():
         )(endpoint)
 ```
 
-Please note that in the example above, `get_resource` is passed as a function to `dlt.resource` to which we bind the endpoint: **dlt.resource(...)(endpoint)**.
+上記の例では、`get_resource` が関数として `dlt.resource` に渡され、エンドポイントがバインドされていることに注意してください: **dlt.resource(...)(endpoint)**。
 
 :::caution
-The typical mistake is to pass a generator (not a function) as below:
+よくある間違いは、以下のようにジェネレーター（関数ではなく）を渡すことです。
 
 `yield dlt.resource(get_resource(endpoint), name=endpoint.value, write_disposition="merge", primary_key="id")`.
 
-Here we call **get_resource(endpoint)** and that creates an un-evaluated generator on which the resource is created. That prevents `dlt` from controlling the **created** argument during runtime and will result in an `IncrementalUnboundError` exception.
+ここでは **get_resource(endpoint)** を呼び出し、リソースを作成するための未評価のジェネレータを作成します。これにより、`dlt` は実行時に **created** 引数を制御できなくなり、`IncrementalUnboundError` 例外が発生します。
 :::
 
-## Using Airflow schedule for backfill and incremental loading
+## Airflow スケジュールを使用したバックフィルと増分ロード
 
-When [running an Airflow task](../../walkthroughs/deploy-a-pipeline/deploy-with-airflow-composer.md#2-modify-dag-file), you can opt-in your resource to get the `initial_value`/`start_value` and `end_value` from the Airflow schedule associated with your DAG. Let's assume that the **Zendesk tickets** resource contains a year of data with thousands of tickets. We want to backfill the last year of data week by week and then continue with incremental loading daily.
+[Airflow タスクの実行](../../walkthroughs/deploy-a-pipeline/deploy-with-airflow-composer.md#2-modify-dag-file) 時に、DAG に関連付けられた Airflow スケジュールから `initial_value`/`start_value` および `end_value` を取得するようにリソースをオプトインできます。**Zendesk チケット** リソースに、数千件のチケットを含む 1 年分のデータが含まれていると仮定します。過去 1 年間のデータを週ごとにバックフィルし、その後は毎日増分ロードを継続します。
 
 ```py
 @dlt.resource(primary_key="id")
@@ -295,11 +279,11 @@ def tickets(
         yield page
 ```
 
-We opt-in to the Airflow scheduler by setting `allow_external_schedulers` to `True`:
-1. When running on Airflow, the start and end values are controlled by Airflow and the dlt [state](../state.md) is not used.
-2. In all other environments, the `incremental` behaves as usual, maintaining the dlt state.
+`allow_external_schedulers` を `True` に設定することで、Airflow スケジューラを有効にします。
+1. Airflow 上で実行する場合、開始値と終了値は Airflow によって制御され、dlt [state](../state.md) は使用されません。
+2. その他の環境では、`incremental` は通常どおり動作し、dlt の状態が維持されます。
 
-Let's generate a deployment with `dlt deploy zendesk_pipeline.py airflow-composer` and customize the DAG:
+`dlt deploy zendesk_pipeline.py airflow-composer` でデプロイメントを生成し、DAG をカスタマイズしてみましょう。
 
 ```py
 from dlt.helpers.airflow_helper import PipelineTasksGroup
@@ -332,14 +316,14 @@ def zendesk_backfill_bigquery():
 zendesk_backfill_bigquery()
 ```
 
-What got customized:
-1. We use a weekly schedule and want to get the data from February 2023 (`start_date`) until the end of July (`end_date`).
-2. We make Airflow generate all weekly runs (`catchup` is True).
-3. We create `zendesk_support` resources where we select only the incremental resources we want to backfill.
+カスタマイズ内容：
+1. 週次スケジュールを使用し、2023年2月（`start_date`）から7月末（`end_date`）までのデータを取得します。
+2. Airflow ですべての週次実行を生成するようにします（`catchup` は True）。
+3. バックフィルする増分リソースのみを選択する `zendesk_support` リソースを作成します。
 
-When you enable the DAG in Airflow, it will generate several runs and start executing them, starting in February and ending in August. Your resource will receive subsequent weekly intervals starting with `2023-02-12, 00:00:00 UTC` to `2023-02-19, 00:00:00 UTC`.
+Airflow で DAG を有効にすると、2月から8月まで複数の実行が生成され、実行されます。リソースには、`2023-02-12, 00:00:00 UTC` から `2023-02-19, 00:00:00 UTC` までの週次間隔が送信されます。
 
-You can repurpose the DAG above to start loading new data incrementally after (or during) the backfill:
+上記の DAG を再利用して、バックフィル後（またはバックフィル中）に新しいデータを増分的にロードできます。
 
 ```py
 @dag(
@@ -363,26 +347,26 @@ def zendesk_new_bigquery():
     tasks.add_run(pipeline, zendesk_support(), decompose="serialize", trigger_rule="all_done", retries=0, provide_context=True)
 ```
 
-Above, we switch to a daily schedule and disable catchup and end date. We also load all the support resources to the same dataset as backfill (`zendesk_support_data`).
-If you want to run this DAG parallel with the backfill DAG, change the pipeline name, for example, to `zendesk_support_new` as above.
+上記では、日次スケジュールに切り替え、キャッチアップと終了日の設定を無効にしています。また、すべてのサポートリソースをバックフィルと同じデータセット（`zendesk_support_data`）にロードしています。
+このDAGをバックフィルDAGと並行して実行する場合は、パイプライン名を上記のように（例えば`zendesk_support_new`）に変更してください。
 
-**Under the hood**
+**内部処理**
 
-Before `dlt` starts executing incremental resources, it looks for `data_interval_start` and `data_interval_end` Airflow task context variables. These are mapped to `initial_value` and `end_value` of the `Incremental` class:
-1. `dlt` is smart enough to convert Airflow datetime to ISO strings or Unix timestamps if your resource is using them. In our example, we instantiate `updated_at=dlt.sources.incremental[int]`, where we declare the last value type to be **int**. `dlt` can also infer the type if you provide the `initial_value` argument.
-2. If `data_interval_end` is in the future or is None, `dlt` sets the `end_value` to **now**.
-3. If `data_interval_start` == `data_interval_end`, we have a manually triggered DAG run. In that case, `data_interval_end` will also be set to **now**.
+`dlt` は増分リソースの実行を開始する前に、Airflow タスクコンテキスト変数 `data_interval_start` と `data_interval_end` を探します。これらは、`Incremental` クラスの `initial_value` と `end_value` にマッピングされます。
+1. `dlt` は、リソースが ISO 文字列または Unix タイムスタンプを使用している場合、Airflow の datetime をそれらに変換します。この例では、`updated_at=dlt.sources.incremental[int]` をインスタンス化し、最後の値の型を **int** として宣言しています。`dlt` は、`initial_value` 引数を指定すれば型を推論することもできます。
+2. `data_interval_end` が将来の日付または None の場合、`dlt` は `end_value` を **now** に設定します。
+3. `data_interval_start` == `data_interval_end` の場合、DAG 実行は手動でトリガーされます。この場合、`data_interval_end` も **now** に設定されます。
 
-**Manual runs**
+**手動実行**
 
-You can run DAGs manually, but you must remember to specify the Airflow logical date of the run in the past (use the Run with config option). For such a run, `dlt` will load all data from that past date until now.
-If you do not specify the past date, a run with a range (now, now) will happen, yielding no data.
+DAG を手動で実行することは可能ですが、Airflow の論理日付を過去の日付で指定する必要があります（「Run with config」オプションを使用）。このような実行では、`dlt` は指定された日付から現在までのすべてのデータを読み込みます。
+過去の日付を指定しない場合は、範囲指定（現在、現在）による実行となり、データは生成されません。
 
-## Reading incremental loading parameters from configuration
+## 設定から増分読み込みパラメータを読み取る
 
-Consider the example below for reading incremental loading parameters from "config.toml". We create a `generate_incremental_records` resource that yields "id", "idAfter", and "name". This resource retrieves `cursor_path` and `initial_value` from "config.toml".
+「config.toml」から増分読み込みパラメータを読み取る以下の例を考えてみましょう。「id」、「idAfter」、「name」を生成する `generate_incremental_records` リソースを作成します。このリソースは、「config.toml」から `cursor_path` と `initial_value` を取得します。
 
-1. In "config.toml", define the `cursor_path` and `initial_value` as:
+1. 「config.toml」で、`cursor_path` と `initial_value` を次のように定義します。
    ```toml
    # Configuration snippet for an incremental resource
    [pipeline_with_incremental.sources.id_after]
@@ -390,9 +374,9 @@ Consider the example below for reading incremental loading parameters from "conf
    initial_value = 10
    ```
 
-   `cursor_path` is assigned the value "idAfter" with an initial value of 10.
+`cursor_path` には、初期値 10 の「idAfter」という値が割り当てられます。
 
-1. Here's how the `generate_incremental_records` resource uses the `cursor_path` defined in "config.toml":
+1. `generate_incremental_records` リソースが「config.toml」で定義された `cursor_path` を使用する方法を以下に示します。
    ```py
    @dlt.resource(table_name="incremental_records")
    def generate_incremental_records(id_after: dlt.sources.incremental = dlt.config.value):
@@ -408,15 +392,15 @@ Consider the example below for reading incremental loading parameters from "conf
    ```
    `id_after` incrementally stores the latest `cursor_path` value for future pipeline runs.
 
-## Loading when incremental cursor path is missing or value is None/NULL
+## 増分カーソルパスが欠落しているか、値が None/NULL の場合のロード
 
-You can customize the incremental processing of dlt by setting the parameter `on_cursor_value_missing`.
+パラメータ `on_cursor_value_missing` を設定することで、dlt の増分処理をカスタマイズできます。
 
-When loading incrementally with the default settings, there are two assumptions:
-1. Each row contains the cursor path.
-2. Each row is expected to contain a value at the cursor path that is not `None`.
+デフォルト設定で増分ロードする場合、次の 2 つの前提があります。
+1. 各行にカーソルパスが含まれます。
+2. 各行には、カーソルパスに `None` 以外の値が含まれていることが想定されます。
 
-For example, the two following source data will raise an error:
+例えば、次の 2 つのソースデータはエラーになります。
 ```py
 @dlt.resource
 def some_data_without_cursor_path(updated_at=dlt.sources.incremental("updated_at")):
@@ -438,14 +422,14 @@ list(some_data_without_cursor_value())
 ```
 
 
-To process a data set where some records do not include the incremental cursor path or where the values at the cursor path are `None`, there are the following four options:
+一部のレコードに増分カーソルパスが含まれていない、またはカーソルパスの値が「None」であるデータセットを処理するには、次の4つのオプションがあります。
 
-1. Configure the incremental load to raise an exception in case there is a row where the cursor path is missing or has the value `None` using `incremental(..., on_cursor_value_missing="raise")`. This is the default behavior.
-2. Configure the incremental load to tolerate the missing cursor path and `None` values using `incremental(..., on_cursor_value_missing="include")`.
-3. Configure the incremental load to exclude the missing cursor path and `None` values using `incremental(..., on_cursor_value_missing="exclude")`.
-4. Before the incremental processing begins: Ensure that the incremental field is present and transform the values at the incremental cursor to a value different from `None`. [See docs below](#transform-records-before-incremental-processing)
+1. `incremental(..., on_cursor_value_missing="raise")` を使用して、カーソルパスが欠落している行またはカーソルパスの値が「None」である行がある場合に例外を発生させるように増分ロードを設定します。これはデフォルトの動作です。
+2. `incremental(..., on_cursor_value_missing="include")` を使用して、欠落しているカーソルパスと「None」値を許容するように増分ロードを設定します。
+3. `incremental(..., on_cursor_value_missing="exclude")` を使用して、欠落しているカーソルパスと「None」値を除外するように増分ロードを設定します。
+4. 増分処理を開始する前に、増分フィールドが存在することを確認し、増分カーソルの値を「None」以外の値に変換します。 [以下のドキュメントを参照](#transform-records-before-incremental-processing)
 
-Here is an example of including rows where the incremental cursor value is missing or `None`:
+増分カーソル値が欠落しているか「None」である行を含める例を次に示します。
 ```py
 @dlt.resource
 def some_data(updated_at=dlt.sources.incremental("updated_at", on_cursor_value_missing="include")):
@@ -461,7 +445,7 @@ assert result[1] == {"id": 2, "created_at": 2}
 assert result[2] == {"id": 3, "created_at": 4, "updated_at": None}
 ```
 
-If you do not want to import records without the cursor path or where the value at the cursor path is `None`, use the following incremental configuration:
+カーソル パスのないレコード、またはカーソル パスの値が `None` であるレコードをインポートしたくない場合は、次の増分構成を使用します。
 
 ```py
 @dlt.resource
@@ -476,16 +460,16 @@ result = list(some_data())
 assert len(result) == 1
 ```
 
-## Transform records before incremental processing
-If you want to load data that includes `None` values, you can transform the records before the incremental processing.
-You can add steps to the pipeline that [filter, transform, or pivot your data](../resource.md#filter-transform-and-pivot-data).
+## 増分処理の前にレコードを変換する
+「None」値を含むデータをロードする場合は、増分処理の前にレコードを変換できます。
+パイプラインに[データのフィルタリング、変換、またはピボット](../resource.md#filter-transform-and-pivot-data)を実行するステップを追加できます。
 
 :::caution
-It is important to set the `insert_at` parameter of the `add_map` function to control the order of execution and ensure that your custom steps are executed before the incremental processing starts.
-In the following example, the step of data yielding is at `index = 0`, the custom transformation at `index = 1`, and the incremental processing at `index = 2`.
+実行順序を制御し、増分処理の開始前にカスタムステップが実行されるようにするには、`add_map` 関数の `insert_at` パラメータを設定することが重要です。
+次の例では、データ生成のステップは `index = 0`、カスタム変換は `index = 1`、増分処理は `index = 2` で実行されます。
 :::
 
-See below how you can modify rows before the incremental processing using `add_map()` and filter rows using `add_filter()`.
+`add_map()` を使用して増分処理の前に行を変更する方法と、`add_filter()` を使用して行をフィルター処理する方法については、以下を参照してください。
 
 ```py
 @dlt.resource

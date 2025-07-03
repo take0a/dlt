@@ -159,7 +159,7 @@ load_info = pipeline.run(data, table_name="users")
 何らかの理由で、次回のロード時に `answer` に整数値と文字列値が含まれる場合、不一致なデータはそれぞれ `answer__v_bigint` 列と `answer__v_text` 列に振り分けられます。
 バリアント列の一般的な命名規則は `<original name>__v_<type>` です。ここで、`original_name` は既存の列名（データ型が衝突する列）、`type` はバリアントに格納されているデータ型の名前です。
 
-## ロードパッケージとロードID
+## ロードパッケージとロードID {#load-packages-and-load-ids}
 
 パイプラインを実行するたびに、1つ以上のロードパッケージが生成されます。
 ロードパッケージには通常、特定の[ソース](glossary.md#source)のすべての[リソース](glossary.md#resource)から取得されたデータが含まれます。
