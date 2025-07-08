@@ -1,40 +1,43 @@
 ---
-title: Overview and examples
-description: Learn where configs are stored and how to write them
+title: 概要と例
+description: 構成がどこに保存され、どのように記述されるかを学びます
 keywords: [credentials, secrets.toml, secrets, config, configuration, environment variables, provider]
 ---
 
-`dlt` retrieves configuration and secrets from several [locations](#choose-where-to-store-configuration) like environment variables, dedicated
-files or secure vaults. It understands both simple and verbose layouts of [configuration sections](#select-a-configuration-layout). You can use one of
-[built-in](#use-built-in-credential-types) credentials for popular external systems. Functions decorated with`@dlt.source`, `@dlt.resource`, or `@dlt.destination` can be configured without writing additional code - `dlt` will automatically [inject](advanced/#injection-rules) missing arguments (like passwords or API keys) when you call them.
+`dlt` は、環境変数、専用ファイル、セキュアボールトなど、複数の [場所](#choose-where-to-store-configuration) から設定とシークレットを取得します。
+[設定セクション](#select-a-configuration-layout) のシンプルなレイアウトと詳細なレイアウトの両方を理解します。
+一般的な外部システムの [組み込み](#use-built-in-credential-types) 認証情報のいずれかを使用できます。
+`@dlt.source`、`@dlt.resource`、または `@dlt.destination` で修飾された関数は、追加コードを記述せずに設定できます。`dlt` は、呼び出されたときに、不足している引数（パスワードや API キーなど）を自動的に [挿入](advanced/#injection-rules) します。
 
-## Choose where to store configuration
+## 設定を保存する場所を選択する {#choose-where-to-store-configuration}
 
 :::tip dlt+
-To define your configuration (including sources, destinations, pipeline and parameters) in a declarative way using YAML files, check out [dlt+](../../plus/features/projects.md).
+YAML ファイルを使用して宣言的に構成 (ソース、宛先、パイプライン、パラメーターを含む) を定義するには、[dlt+](../../plus/features/projects.md) を参照してください。
 :::
 
-`dlt` looks for configuration and secrets in various locations (environment variables, toml files or secure vaults) through **config providers** that are queried when your pipeline runs. You can pick a single location or combine them - for example, define secret `api_key` in environment variables and `api_url` in a TOML file. Providers are queried in the following order:
+`dlt` は、パイプライン実行時にクエリされる **config プロバイダ** を通じて、さまざまな場所（環境変数、toml ファイル、またはセキュアボールト）にある設定とシークレットを検索します。
+単一の場所を選択することも、複数の場所を組み合わせることもできます。たとえば、シークレット `api_key` を環境変数で定義し、`api_url` を TOML ファイルで定義することもできます。
+プロバイダは次の順序でクエリされます。
 
-1. [Environment Variables](#environment-variables): If a value is found in an environment variable, `dlt` uses it and doesn't check lower-priority providers.
+1. [環境変数](#environment-variables): 環境変数に値が見つかった場合、`dlt` はその値を使用し、優先度の低いプロバイダはチェックしません。
 
-2. [secrets.toml and config.toml files](#secretstoml-and-configtoml): These files store configuration values and secrets. `secrets.toml` contains sensitive information, while `config.toml` holds non-sensitive configuration.
+2. [secrets.toml ファイルと config.toml ファイル](#secretstoml-and-configtoml): これらのファイルには、設定値とシークレットが保存されます。`secrets.toml` には機密情報が含まれ、`config.toml` には機密でない設定が保持されます。
 
-3. [Vaults](#vaults): Credentials stored in secure vaults like Google Secrets Manager, Azure Key Vault, or AWS Secrets Manager.
+3. [Vaults](#vaults): Google Secrets Manager、Azure Key Vault、AWS Secrets Manager などの安全な Vault に保存された認証情報。
 
-4. [Custom Providers](#custom-providers) added with `register_provider`: These are custom implementations you can create to use your own configuration formats or perform specialized preprocessing.
+4. [カスタムプロバイダー](#custom-providers) (`register_provider` で追加): 独自の構成形式を使用したり、特殊な前処理を実行したりするために作成できるカスタム実装です。
 
-5. [Default Argument Values](./advanced#injection-rules): The values specified in the function signature.
+5. [デフォルトの引数値](./advanced#injection-rules): 関数シグネチャで指定された値。
 
 :::tip
-Make sure your pipeline name contains only alphanumeric characters, hyphens (`-`), and underscores (`_`). Avoid whitespace and other punctuation to ensure compatibility with all configuration providers.
+パイプライン名には、英数字、ハイフン（`-`）、アンダースコア（`_`）のみを使用してください。すべての構成プロバイダーとの互換性を確保するため、空白文字やその他の句読点は使用しないでください。
 :::
 
-## Select a configuration layout
+## 設定レイアウトを選択 {#select-a-configuration-layout}
 
-You can define configuration in different ways depending on your project's complexity. For a simple pipeline with a single source and destination, your configuration can be straightforward:
+プロジェクトの複雑さに応じて、さまざまな方法で設定を定義できます。ソースと宛先が1つだけのシンプルなパイプラインの場合、設定はシンプルになります。
 
-Simplest **source** configuration:
+最もシンプルな**ソース**設定：
 <Tabs
   groupId="config-provider-type"
   defaultValue="toml"
@@ -56,7 +59,7 @@ export API_KEY="some_value"
   </TabItem>
 </Tabs>
 
-For **destination**, you typically need to configure [credentials](#use-built-in-credential-types) which group multiple related keys together. `dlt` places these under a `credentials` section.
+**destination** の場合、通常は複数の関連するキーをグループ化する [credentials](#use-built-in-credential-types) を構成する必要があります。`dlt` はこれらを `credentials` セクションに配置します。
 
 <Tabs
   groupId="config-provider-type"
@@ -82,14 +85,15 @@ export CREDENTIALS__PASSWORD="some_value"
   </TabItem>
 </Tabs>
 
-### Recommended section layout
+### 推奨されるセクションレイアウト {#recommended-section-layout}
 
-When using multiple sources with potentially conflicting argument names, or multiple destinations where you want separate credentials, you can organize your config keys with **sections**. Here's the **recommended section layout** that is most often used in this documentation
-and is also generated by `dlt init` command. 
+引数名が競合する可能性のある複数のソースを使用する場合、または複数の宛先で別々の認証情報が必要な場合は、**セクション** を使用して設定キーを整理できます。
 
-* Use `sources` and `destination` top-level sections to separate their configurations
-* Use the Python module name where the source function is defined to separate configuration of sources defined in different modules
-* Use destination type to separate destinations
+以下は、このドキュメントで最も頻繁に使用され、`dlt init` コマンドによって生成される**推奨セクションレイアウト**です。
+
+* 最上位セクションの `sources` と `destination` を使用して、それぞれの設定を分離します。
+* ソース関数が定義されている Python モジュール名を使用して、異なるモジュールで定義されたソースの設定を分離します。
+* 宛先タイプを使用して、宛先を分離します。
 
 <Tabs
   groupId="config-provider-type"
@@ -142,15 +146,13 @@ export DESTINATION__POSTGRES__CREDENTIALS__PASSWORD="some_value"
   </TabItem>
 </Tabs>
 
-Refer to [Add credentials](../../walkthroughs/add_credentials.md) guide for more examples and tips
-how to configure particular source and destination.
+特定のソースと宛先を構成する方法の詳細な例とヒントについては、[資格情報の追加](../../walkthroughs/add_credentials.md)ガイドを参照してください。
 
-### How dlt looks for values
+### dlt が値を探す方法
 
-`dlt` starts looking for a particular value with all possible sections present and if value is not found,
-it will eliminate rightmost section and try again.
+`dlt` は、すべての可能なセクションを対象に特定の値の検索を開始し、値が見つからない場合は右端のセクションを削除して再試行します。
 
-For example, if the source function is in module `notion.py`:
+例えば、ソース関数がモジュール `notion.py` 内にある場合:
 
 ```py
 # module: notion.py
@@ -160,26 +162,26 @@ def notion_databases(api_key: str = dlt.secrets.value):
     pass
 ```
 
-`dlt` will search for the following keys in this order:
+`dlt` は以下のキーを以下の順序で検索します。
 
 1. `sources.notion.notion_databases.api_key`
 2. `sources.notion.api_key`
 3. `sources.api_key`
 4. `api_key`
 
-Similarly with destination credentials. In that case `credentials` sections is considered a required grouping
-and won't be eliminated:
+出力先の認証情報も同様です。この場合、`credentials` セクションは必須のグループとみなされ、削除されません。
 
 1. `destination.postgres.credentials.password`
 2. `destination.credentials.password`
 3. `credentials.password`
 
 :::tip
-For more detailed information about configuration organization, see [configuration and secrets structure](advanced.md#organize-configuration-and-secrets-with-sections).
+構成の構成の詳細については、[構成とシークレットの構造](advanced.md#organize-configuration-and-secrets-with-sections)を参照してください。
 :::
 
 :::tip
-You can use pipeline name to create separate configurations for each pipeline in your project. Configuration values are searched first with the pipeline name prefix, then without it:
+パイプライン名を使用して、プロジェクト内のパイプラインごとに個別の設定を作成できます。
+設定値は、最初にパイプライン名のプレフィックス付きで検索され、次にプレフィックスなしで検索されます:
 
 ```toml
 [pipeline_name_1.sources.google_sheets.credentials]
@@ -194,20 +196,20 @@ project_id = "<project_id_2>"
 ```
 :::
 
-### Use built-in credential types
+### 組み込みの認証情報タイプを使用する {#use-built-in-credential-types}
 
-Credentials are groups of configs and secrets that are defined together in order to access external systems.
-`dlt` implements several [built-in credential types](./complex_types)) to access AWS, Azure, Google Cloud and other common systems
+認証情報とは、外部システムにアクセスするためにまとめて定義される構成情報とシークレットのグループです。
+`dlt` は、AWS、Azure、Google Cloud などの一般的なシステムにアクセスするために、複数の [組み込みの認証情報タイプ](./complex_types) を実装しています。
 
-Some of the credential types give you options how you specify them:
-For example, to connect to a `sql_database` source, you can either use a connection string:
+一部の認証情報タイプでは、指定方法が異なります。
+たとえば、`sql_database` ソースに接続するには、接続文字列を使用するか、次の接続文字列を使用します。
 
 ```toml
 [sources.sql_database]
 credentials="snowflake://user:password@service-account/database?warehouse=warehouse_name&role=role"
 ```
 
-Or set up the connection parameters separately:
+または、接続パラメータを個別に設定します:
 
 ```toml
 [sources.sql_database.credentials]
@@ -221,66 +223,64 @@ role="role"
 ```
 
 :::tip
-`dlt` can discover **default credentials** of all major cloud providers: it is able to use what is already present in
-the runtime environment: ie. when running in Colab or Google VM it has access to cloud credentials and if
-nothing is specified in the configuration it will use them instead.
+`dlt` はすべての主要なクラウド プロバイダーの **デフォルトの認証情報** を検出できます。つまり、ランタイム環境にすでに存在するものを使用できます。つまり、Colab または Google VM で実行しているときはクラウド認証情報にアクセスでき、構成で何も指定されていない場合は代わりにそれらを使用します。
 :::
 
-## Environment variables
+## 環境変数 {#environment-variables}
 
-Environment variables provide a convenient way to specify configuration and secrets, especially in deployment environments. When using environment variables, names are capitalized and sections are separated with double underscores (`__`).
+環境変数は、特にデプロイメント環境において、設定やシークレットを指定するための便利な手段となります。環境変数を使用する場合は、名前を大文字にし、セクションは二重のアンダースコア (`__`) で区切ります。
 
-For example, to set the Facebook Ads access token:
+例えば、Facebook 広告のアクセストークンを設定するには、次のようにします:
 
 ```sh
 export SOURCES__FACEBOOK_ADS__ACCESS_TOKEN="<access_token>"
 ```
 
-See the [examples section](#examples) for more details on setting up credentials with environment variables.
+環境変数を使用して資格情報を設定する方法の詳細については、[例のセクション](#examples)を参照してください。
 
 :::tip
-For local development, you can use [python-dotenv](https://pypi.org/project/python-dotenv/) to automatically load variables from an `.env` file, making credential management easier and more secure.
+ローカル開発の場合、[python-dotenv](https://pypi.org/project/python-dotenv/) を使用して `.env` ファイルから変数を自動的に読み込むことができ、資格情報の管理がより簡単かつ安全になります。
 :::
 
 :::tip
-Environment variables can also retrieve secret values from `/run/secrets/<secret-name>` to seamlessly work with **Kubernetes/Docker secrets**.
+環境変数は `/run/secrets/<secret-name>` からシークレット値を取得して、**Kubernetes/Docker シークレット** とシームレスに連携することもできます。
 
-For these secrets, `dlt` uses an alternative name format with lowercase letters, dashes (`-`) as separators, and underscores converted to dashes. For example, `sources--facebook-ads--access-token` would be checked for the above environment variable.
+これらのシークレットに対して、`dlt` は小文字を使用し、ダッシュ (`-`) を区切り文字として使い、アンダースコアをダッシュ​​に変換した代替名形式を使用します。たとえば、上記の環境変数では `sources--facebook-ads--access-token` がチェックされます。
 
-Only values marked as secrets (with `dlt.secrets.value` or using types like `TSecretStrValue`) are checked this way. Remember to name your secrets appropriately in Kubernetes resources or Docker Compose files.
+この方法でチェックされるのは、シークレットとしてマークされた値 (`dlt.secrets.value` でマークされている値、または `TSecretStrValue` などの型を使用) のみです。Kubernetes リソースまたは Docker Compose ファイルでは、シークレットに適切な名前を付けることを忘れないでください。
 :::
 
 ## Vaults
 
-`dlt` may read configuration from secure vaults - specialized services for storing credentials.
+`dlt` は、認証情報を保存するための専用サービスであるセキュア Vault から構成を読み取る場合があります。
 
-* For Google Cloud Secrets Manager, see our [example walkthrough](../../walkthroughs/add_credentials.md#retrieving-credentials-from-google-cloud-secret-manager).
+* Google Cloud Secrets Manager については、[サンプルチュートリアル](../../walkthroughs/add_credentials.md#retrieving-credentials-from-google-cloud-secret-manager)をご覧ください。
 
-* For other vault integrations like AWS Secrets Manager or Azure Key Vault, [contact our sales team](https://dlthub.com/contact-sales) to learn about our [secure building blocks for data platform teams](https://dlthub.com/product/data-platform-teams#secure).
+* AWS Secrets Manager や Azure Key Vault などのその他の Vault 統合については、[営業チーム](https://dlthub.com/contact-sales) までお問い合わせいただき、[データプラットフォーム チーム向けのセキュアな構成要素](https://dlthub.com/product/data-platform-teams#secure) についてご確認ください。
 
-## secrets.toml and config.toml
+## secrets.toml と config.toml {#secretstoml-and-configtoml}
 
-The TOML configuration provider uses two separate files:
+TOML 構成プロバイダーは、2 つの別々のファイルを使用します。
 
 **config.toml**:
-- Contains non-sensitive configuration data that defines pipeline behavior
-- Includes settings like file paths, database hosts, timeouts, API URLs, and performance options
-- Values are accessible in code through the `dlt.config` dictionary
-- Can be safely committed to version control
+- パイプラインの動作を定義する、機密性のない構成データが含まれます。
+- ファイルパス、データベースホスト、タイムアウト、API URL、パフォーマンスオプションなどの設定が含まれます。
+- 値は、`dlt.config` ディクショナリを介してコードからアクセスできます。
+- バージョン管理に安全にコミットできます。
 
 **secrets.toml**:
-- Contains sensitive information that must be kept confidential
-- Includes credentials like passwords, API keys, and private keys
-- Values are accessible in code through the `dlt.secrets` dictionary
-- Should never be committed to version control
+- 機密性を維持する必要がある機密情報が含まれます。
+- パスワード、API キー、秘密鍵などの認証情報が含まれます。
+- 値は、`dlt.secrets` ディクショナリを介してコードからアクセスできます。
+- バージョン管理にコミットしないでください。
 
-By default, the `.gitignore` file in your project prevents `secrets.toml` from being added to version control, while `config.toml` can be freely included.
+デフォルトでは、プロジェクトの `.gitignore` ファイルによって `secrets.toml` がバージョン管理に追加されるのがブロックされますが、`config.toml` は自由に含めることができます。
 
-### File locations
+### ファイルの場所
 
-The TOML provider loads files from the `.dlt` folder **relative to your current working directory**.
+TOMLプロバイダーは、**現在の作業ディレクトリを基準とした** `.dlt` フォルダからファイルを読み込みます。
 
-For example, if your working directory is `my_dlt_project` with this structure:
+例えば、作業ディレクトリが `my_dlt_project` で、次のような構造になっている場合:
 
 ```text
 my_dlt_project:
@@ -290,35 +290,35 @@ my_dlt_project:
     |---- google_sheets.py
 ```
 
-When you run:
+実行すると:
 ```sh
 python pipelines/google_sheets.py
 ```
 
-`dlt` will look for secrets in `my_dlt_project/.dlt/secrets.toml` and ignore `my_dlt_project/pipelines/.dlt/secrets.toml`.
+`dlt` は `my_dlt_project/.dlt/secrets.toml` 内のシークレットを検索し、`my_dlt_project/pipelines/.dlt/secrets.toml` は無視します。
 
-If you change your working directory to `pipelines` and run:
+作業ディレクトリを `pipelines` に変更して次のコマンドを実行します。
 ```sh
 python google_sheets.py
 ```
 
-`dlt` will look for `my_dlt_project/pipelines/.dlt/secrets.toml` instead.
+`dlt` は代わりに `my_dlt_project/pipelines/.dlt/secrets.toml` を検索します。
 
-### Special locations
+### 特別な場所
 
-The TOML provider also reads configuration from special locations depending on your runtime environment:
+TOML プロバイダーは、ランタイム環境に応じて特別な場所から設定を読み取ります。
 
-1. **Home directory**: If available, `dlt` checks `~/.dlt/` for `config.toml` and `secrets.toml`. These values are merged with project-specific configurations, with project values taking precedence. This is useful for sharing global settings (like telemetry preferences) across all pipelines on a machine.
+1. **ホームディレクトリ**: `dlt` は、`~/.dlt/` で `config.toml` と `secrets.toml` を検索します。これらの値はプロジェクト固有の設定とマージされ、プロジェクトの値が優先されます。これは、マシン上のすべてのパイプラインでグローバル設定（テレメトリの設定など）を共有する場合に便利です。
 
-2. **Google Colab**: When running in Colab, you can use Colab Secrets named `secrets.toml` and `config.toml`. The provider reads these as if they were TOML files. This functionality is disabled if files exist in the `.dlt` folder.
+2. **Google Colab**: Colab で実行する場合、`secrets.toml` および `config.toml` という名前の Colab Secret を使用できます。プロバイダーは、これらを TOML ファイルのように読み取ります。`.dlt` フォルダにファイルが存在する場合、この機能は無効になります。
 
-3. **Streamlit**: When running in Streamlit without local `.dlt/secrets.toml`, the provider uses Streamlit secrets. You can add `dlt` secrets directly to your Streamlit secrets.
+3. **Streamlit**: Streamlit で実行する場合、ローカルの `.dlt/secrets.toml` が存在しないため、プロバイダーは Streamlit Secret を使用します。 `dlt` シークレットを Streamlit シークレットに直接追加できます。
 
-## Custom providers
+## カスタムプロバイダー {#custom-providers}
 
-You can create and register your own configuration providers to customize how `dlt` accesses configuration values. The simplest approach is to write a function that returns a nested dictionary where keys correspond to sections and argument names.
+独自の設定プロバイダーを作成して登録することで、`dlt` が設定値にアクセスする方法をカスタマイズできます。最も簡単な方法は、セクション名と引数名をキーとするネストされた辞書を返す関数を作成することです。
 
-This example demonstrates how to create a custom provider that loads configuration from a JSON file:
+以下の例は、JSON ファイルから設定を読み込むカスタムプロバイダーの作成方法を示しています。
 
 ```py
 import dlt
@@ -342,16 +342,16 @@ dlt.config.register_provider(provider)
 ```
 
 :::tip
-Check out our [example YAML provider](../../examples/custom_config_provider) that supports switchable configuration profiles.
+切り替え可能な構成プロファイルをサポートする [サンプル YAML プロバイダー](../../examples/custom_config_provider) を確認してください。
 :::
 
-## Examples
+## 例
 
-### Configure both config and secrets
+### 設定とシークレットの両方を設定します
 
-This example uses the [Notion](../../dlt-ecosystem/verified-sources/notion) source and [filesystem](../../dlt-ecosystem/destinations/filesystem) destination to demonstrate how to organize configuration in TOML files using the [recommended section layout](#recommended-section-layout).
+この例では、[Notion](../../dlt-ecosystem/verified-sources/notion) ソースと [filesystem](../../dlt-ecosystem/destinations/filesystem) 宛先を使用して、[推奨セクションレイアウト](#recommended-section-layout) を用いて TOML ファイル内の設定を整理する方法を示します。
 
-The Notion source is defined in a file named `notion.py`, so we use that module name in the configuration. We configure the `api_key` in our configuration while passing the list of database IDs explicitly in code. For the filesystem destination, we split configuration between `config.toml` (for `bucket_url`) and `secrets.toml` (for AWS credentials).
+Notion のソースは `notion.py` というファイルで定義されているため、設定ではそのモジュール名を使用します。設定では `api_key` を設定し、データベース ID のリストはコードで明示的に渡します。ファイルシステムの宛先については、設定を `config.toml` (`bucket_url` 用) と `secrets.toml` (AWS 認証情報用) に分割します。
 
 ```py
 import dlt
@@ -463,17 +463,17 @@ dlt.secrets["destination.filesystem.credentials"] = credentials
 </Tabs>
 
 :::caution
-While you can put all configuration and credentials in `secrets.toml` for convenience, sensitive information should never be placed in `config.toml` or other non-secure locations. `dlt` will raise an exception if it detects secrets in inappropriate locations.
+利便性のため、すべての構成と認証情報を `secrets.toml` に置くことができますが、機密情報は `config.toml` やその他の安全でない場所に置かないでください。`dlt` は、不適切な場所に秘密情報が存在することを検出すると例外を発生させます。
 :::
 
 
-### Use different Google credentials for source and destination
+### ソースと宛先に異なる Google 認証情報を使用する
 
-This example shows how to configure different credentials for Google-based sources and destinations:
+この例は、Google ベースのソースと宛先に異なる認証情報を設定する方法を示しています。
 
-#### Option 1: Share credentials between source and destination
+#### オプション 1: ソースとターゲット間で認証情報を共有する
 
-If you want both the BigQuery destination and Google Sheets source to use the same credentials:
+BigQuery のターゲットと Google スプレッドシートのソースの両方で同じ認証情報を使用する場合:
 
 <Tabs
   groupId="config-provider-type"
@@ -521,9 +521,9 @@ os.environ["CREDENTIALS__PROJECT_ID"] = os.environ.get("GOOGLE_PROJECT_ID")
 
 </Tabs>
 
-#### Option 2: Use separate credentials for sources and destinations
+#### オプション2: ソースと宛先に別々の認証情報を使用する
 
-To keep source and destination credentials separate:
+ソースと宛先の認証情報を別々にするには:
 
 <Tabs
   groupId="config-provider-type"
@@ -589,22 +589,22 @@ dlt.secrets["sources.credentials.project_id"] = os.environ.get("SHEETS_PROJECT_I
 
 </Tabs>
 
-With this setup, `dlt` looks for destination credentials in this order:
+この設定では、`dlt` は次の順序で宛先の資格情報を検索します。
 ```sh
 destination.bigquery.credentials --> Not found
 destination.credentials --> Found
 ```
 
-And for source credentials:
+ソースの資格情報の場合:
 ```sh
 sources.google_sheets_module.google_sheets_function.credentials --> Not found
 sources.google_sheets_function.credentials --> Not found
 sources.credentials --> Found
 ```
 
-### Configure credentials for multiple sources and destinations
+### 複数のソースと宛先の認証情報を設定する
 
-When working with multiple Google-based sources and destinations, you can use recommended sections layout:
+複数の Google ベースのソースと宛先を扱う場合は、推奨セクションレイアウトを使用できます。
 
 <Tabs
   groupId="config-provider-type"
@@ -686,9 +686,9 @@ dlt.secrets["sources.google_sheets.credentials.project_id"] = os.environ.get("SH
 
 </Tabs>
 
-### Configure multiple instances of the same source
+### 同じソースの複数のインスタンスを設定する
 
-If you need to extract data from the same source type with different configurations, you can run them in different pipeline names:
+同じソースタイプから異なる設定でデータを抽出する必要がある場合は、異なるパイプライン名で実行できます。
 
 <Tabs
   groupId="config-provider-type"
@@ -738,18 +738,18 @@ dlt.secrets["pipeline_name_2.sources.sql_database.credentials"] = os.environ.get
 </Tabs>
 
 :::tip
-You have additional options for using multiple instances of the same source:
+同じソースの複数のインスタンスを利用するための追加オプションがあります。
 
-1. Use the `clone()` method as explained in the [sql_database documentation](../../dlt-ecosystem/verified-sources/sql_database/advanced.md#configure-many-sources-side-by-side-with-custom-sections).
+1. [sql_database ドキュメント](../../dlt-ecosystem/verified-sources/sql_database/advanced.md#configure-many-sources-side-by-side-with-custom-sections)で説明されているように、`clone()`メソッドを使用します。
 
-2. Create [named destinations](../destination.md#configure-multiple-destinations-in-a-pipeline) to use the same destination type with different configurations.
+2. 同じ宛先タイプを異なる構成で使用するには、[名前付き宛先](../destination.md#configure-multiple-destinations-in-a-pipeline)を作成します。
 :::
 
-## Troubleshoot configuration errors
+## 構成エラーのトラブルシューティング
 
-If `dlt` can't find a required configuration value or secret, it raises a `ConfigFieldMissingException` that provides detailed information about what was searched for and where.
+`dlt` が必要な構成値またはシークレットを見つけられない場合、`ConfigFieldMissingException` 例外が発生します。この例外は、検索内容と検索場所に関する詳細情報を提供します。
 
-For example, running the `chess.py` example without providing the password:
+例えば、パスワードを指定せずに `chess.py` サンプルを実行すると、次のようになります。
 
 ```sh
 $ CREDENTIALS="postgres://loader@localhost:5432/dlt_data" python chess.py
@@ -771,12 +771,12 @@ dlt.common.configuration.exceptions.ConfigFieldMissingException: Following field
 Please refer to https://dlthub.com/docs/general-usage/credentials/ for more information
 ```
 
-This error message shows exactly:
+このエラーメッセージは、以下の点を正確に示しています。
 
-1. Which field is missing (`password` in this case)
-2. All the keys and locations `dlt` checked, in order of priority
-3. That it first looked with the pipeline name (`chess_games`) prefix, then without it
-4. That it searched environment variables first, then `secrets.toml`
+1. どのフィールドが欠落しているか（この場合は「password」）
+2. `dlt` がチェックしたすべてのキーと場所（優先度順）
+3. 最初にパイプライン名（「chess_games」）のプレフィックス付きで検索し、次にプレフィックスなしで検索した
+4. 最初に環境変数を検索し、次に `secrets.toml` を検索した
 
-Note that `config.toml` wasn't checked since it's not appropriate for storing secrets.
+`config.toml` はシークレットの保存に適していないため、チェックされていないことに注意してください。
 

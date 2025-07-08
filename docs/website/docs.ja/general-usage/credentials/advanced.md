@@ -1,17 +1,17 @@
 ---
-title: Access to configuration in code
-description: Access configuration via dlt function arguments or explicitly
+title: コード内の構成へのアクセス
+description: dlt関数の引数または明示的に設定にアクセスする
 keywords: [credentials, secrets.toml, secrets, config, configuration, environment variables, provider]
 ---
 
 
-## Access to configuration in dlt decorated functions
+## dlt で装飾された関数の設定へのアクセス
 
-`dlt` automatically generates configuration **specs** for functions decorated with `@dlt.source`, `@dlt.resource`, and `@dlt.destination`, without additional code needed. You can configure these functions using any of the [standard configuration methods](setup.md) including environment variables and TOML files. You can call them like regular Python functions - dlt injects configuration values for any argument you don't explicitly provide.
+`dlt` は、`@dlt.source`、`@dlt.resource`、`@dlt.destination` で装飾された関数の設定 **spec** を自動生成します。追加コードは不要です。これらの関数は、環境変数や TOML ファイルなどの [標準設定方法](setup.md) を使用して設定できます。これらの関数は通常の Python 関数のように呼び出すことができ、明示的に指定されていない引数には dlt が設定値を挿入します。
 
-### Injection rules
+### インジェクションルール
 
-1. Arguments passed explicitly are **never injected**. This makes the injection mechanism optional. Example with the Pipedrive source:
+1. 明示的に渡された引数は**決してインジェクションされません**。そのため、インジェクションメカニズムはオプションとなります。Pipedriveソースの例：
   ```py
   @dlt.source(name="pipedrive")
   def pipedrive_source(
@@ -23,9 +23,9 @@ keywords: [credentials, secrets.toml, secrets, config, configuration, environmen
   my_key = os.environ["MY_PIPEDRIVE_KEY"]
   my_source = pipedrive_source(pipedrive_api_key=my_key)
   ```
-  You can specify `pipedrive_api_key` explicitly if you prefer not to use the [standard options](setup) for credential handling.
+認証情報の処理に[標準オプション](setup)を使用しない場合は、`pipedrive_api_key`を明示的に指定できます。
 
-2. Required arguments (without default values) **are never injected** and must be specified explicitly when calling. Example:
+2. 必須引数（デフォルト値なし）は**挿入されることはありません**。呼び出し時に明示的に指定する必要があります。例：
 
   ```py
   @dlt.source
@@ -34,7 +34,7 @@ keywords: [credentials, secrets.toml, secrets, config, configuration, environmen
   ```
   The `channels_list` argument won't be injected and will produce an error if not specified explicitly.
 
-3. Arguments with default values are injected if found in config providers. Otherwise, the default values from the function signature are used. Example:
+3. デフォルト値を持つ引数は、設定プロバイダに見つかった場合は挿入されます。見つからない場合は、関数シグネチャのデフォルト値が使用されます。例:
 
   ```py
   @dlt.source
@@ -45,23 +45,23 @@ keywords: [credentials, secrets.toml, secrets, config, configuration, environmen
   ):
     ...
   ```
-  `dlt` first searches for `page_size`, `access_token`, and `start_date` in config providers in a [specific order](setup). If these values aren't found, it falls back to the default values.
+`dlt` はまず、設定プロバイダ内で `page_size`、`access_token`、`start_date` を [特定の順序](setup) で検索します。これらの値が見つからない場合は、デフォルト値にフォールバックします。
 
-4. Arguments with special defaults `dlt.secrets.value` and `dlt.config.value` **must be injected** (or explicitly passed). If not found in config providers, `dlt` raises an exception.
+4. 特別なデフォルト値を持つ引数 `dlt.secrets.value` と `dlt.config.value` は**挿入**（または明示的に渡す）必要があります。設定プロバイダ内で見つからない場合、`dlt` は例外を発生させます。
 
-  Additionally, `dlt.secrets.value` indicates to `dlt` that the value is a secret, meaning it will only be injected from secure config providers.
+さらに、`dlt.secrets.value` は `dlt` に値がシークレットであることを示します。つまり、その値はセキュアな設定プロバイダからのみ挿入されます。
 
-### Add typing to your sources and resources
+### ソースとリソースに型指定を追加する
 
-We recommend adding type annotations to your function signatures. This requires minimal effort and provides several important benefits:
+関数シグネチャに型アノテーションを追加することをお勧めします。これにより、最小限の労力で、いくつかの重要なメリットが得られます。
 
-1. You won't receive invalid data types in your code.
-2. `dlt` automatically parses and converts types for you, eliminating the need for manual parsing.
-3. `dlt` can generate sample config and secret files for your source automatically.
-4. You can request [built-in and custom credentials](complex_types) (connection strings, AWS/GCP/Azure credentials).
-5. You can specify multiple possible types via `Union`, such as OAuth or API Key authorization.
+1. コード内で無効なデータ型が返されることがなくなります。
+2. `dlt` が自動的に型の解析と変換を行うため、手動での解析が不要になります。
+3. `dlt` は、ソースのサンプル構成ファイルとシークレットファイルを自動的に生成できます。
+4. [組み込みおよびカスタムの認証情報](complex_types) (接続文字列、AWS/GCP/Azure の認証情報) をリクエストできます。
+5. `Union` を使用して、OAuth や API キー認証など、複数の可能な型を指定できます。
 
-Example:
+例:
 
 ```py
 @dlt.source
@@ -74,18 +74,18 @@ def google_sheets(
     ...
 ```
 
-Benefits:
-1. You'll receive a properly typed list of strings as `tab_names`.
-2. You'll receive properly configured Google credentials (see [GCP Credential Configuration](complex_types#gcp-credentials)), which users can provide in different forms:
-   * `service.json` as a string or dictionary (in code or via config providers)
-   * Connection string (used in SQL Alchemy)
-   * Default credentials if nothing is passed (such as those available on Cloud Function runners)
+メリット:
+1. `tab_names` として、適切に型指定された文字列のリストが返されます。
+2. 適切に構成された Google 認証情報（[GCP 認証情報の構成](complex_types#gcp-credentials) を参照）が返されます。ユーザーはこの認証情報をさまざまな形式で提供できます。
+    * `service.json` を文字列または辞書として（コード内または構成プロバイダ経由）
+    * 接続文字列（SQL Alchemy で使用）
+    * 何も渡されない場合のデフォルトの認証情報（Cloud Function ランナーで利用可能なものなど）
 
-## Organize configuration and secrets with sections
+## セクションを使用して構成とシークレットを整理する
 
-`dlt` organizes configuration and secrets sections in a **configuration layout** that integrates with the [injection mechanism](#injection-rules). This structure applies to all [configuration providers](setup), including TOML files, environment variables, and other sources.
+`dlt` は、構成とシークレットのセクションを、[インジェクションメカニズム](#injection-rules) と統合された **構成レイアウト** に整理します。この構造は、TOML ファイル、環境変数、その他のソースを含むすべての [構成プロバイダ](setup) に適用されます。
 
-This hierarchical structure efficiently handles simple cases while supporting more complex scenarios, such as multiple sources with different credentials or multiple pipelines sharing configuration in the same project.
+この階層構造は、単純なケースを効率的に処理するだけでなく、異なる認証情報を持つ複数のソースや、同じプロジェクト内で複数のパイプラインが構成を共有するなど、より複雑なシナリオもサポートします。
 
 ```text
 pipeline_name
@@ -113,11 +113,11 @@ pipeline_name
     |-normalize
 ```
 
-When using TOML files, this structure is represented as nested sections with dotted keys. For environment variables and other config providers, the layout is flattened using double underscores (e.g., `PIPELINE_NAME__SOURCES__MODULE_NAME__FUNCTION_NAME__OPTION`).
+TOMLファイルを使用する場合、この構造はドットで区切られたキーを持つネストされたセクションとして表現されます。環境変数やその他の設定プロバイダの場合、レイアウトは二重のアンダースコアを使用してフラット化されます（例：`PIPELINE_NAME__SOURCES__MODULE_NAME__FUNCTION_NAME__OPTION`）。
 
-## Access configs and secrets in code
+## コード内で構成情報とシークレットにアクセス
 
-While `dlt` handles credentials automatically, you can also access them directly in your code. The `dlt.secrets` and `dlt.config` objects provide dictionary-like access to configuration values and secrets, enabling custom preprocessing if required. You can also store custom settings in the same configuration files.
+`dlt` は認証情報を自動的に処理しますが、コード内で直接アクセスすることもできます。`dlt.secrets` オブジェクトと `dlt.config` オブジェクトは、構成値とシークレットへの辞書的なアクセスを提供し、必要に応じてカスタムの前処理を可能にします。また、同じ構成ファイルにカスタム設定を保存することもできます。
 
 ```py
 # Use `dlt.secrets` and `dlt.config` to explicitly retrieve values from providers
@@ -130,26 +130,26 @@ source_instance = google_sheets(
 source_instance.run(destination="bigquery")
 ```
 
-`dlt.config` and `dlt.secrets` function as dictionaries. `dlt` examines all [config providers](setup) - environment variables, TOML files, etc. - to populate these dictionaries. You can also use `dlt.config.get()` or `dlt.secrets.get()` to retrieve a value and convert it to a specific type:
+`dlt.config` と `dlt.secrets` は辞書として機能します。`dlt` はすべての [config プロバイダ](setup)（環境変数、TOML ファイルなど）を調べて、これらの辞書に値を入力します。`dlt.config.get()` または `dlt.secrets.get()` を使用して値を取得し、特定の型に変換することもできます。
 
 ```py
 credentials = dlt.secrets.get("my_section.gcp_credentials", GcpServiceAccountCredentials)
 ```
-This creates a `GcpServiceAccountCredentials` instance from the values stored under the `my_section.gcp_credentials` key.
+これにより、`my_section.gcp_credentials` キーの下に保存されている値から `GcpServiceAccountCredentials` インスタンスが作成されます。
 
-## Write configs and secrets in code
+## 設定とシークレットをコードで記述する
 
-You can also set values programmatically using `dlt.config` and `dlt.secrets`:
+`dlt.config` と `dlt.secrets` を使用して、プログラムで値を設定することもできます。
 ```py
 dlt.config["sheet_id"] = "23029402349032049"
 dlt.secrets["destination.postgres.credentials"] = BaseHook.get_connection('postgres_dsn').extra
 ```
 
-This effectively mocks the TOML provider with your specified values.
+これにより、指定した値を使用して TOML プロバイダーを効果的にモックします。
 
-## Configure destination credentials in code
+## コードで宛先認証情報を設定する
 
-You can programmatically set destination credentials when needed. This example demonstrates how to use [GcpServiceAccountCredentials](complex_types#gcp-credentials) **spec** with a BigQuery destination:
+必要に応じて、プログラムで宛先認証情報を設定できます。次の例は、[GcpServiceAccountCredentials](complex_types#gcp-credentials) **仕様** を BigQuery の宛先で使用する方法を示しています。
 
 ```py
 import os
@@ -170,9 +170,9 @@ pipeline = dlt.pipeline(destination=bigquery(credentials=gcp_credentials))
 pipeline.run([{"key1": "value1"}], table_name="temp")
 ```
 
-### Google Sheets source example
+### Google スプレッドシートのソース例
 
-This example demonstrates a `google_sheets` source function that reads selected tabs from Google Sheets:
+この例は、Google スプレッドシートから選択されたタブを読み取る `google_sheets` ソース関数を示しています。
 
 ```py
 @dlt.source
@@ -196,32 +196,32 @@ def google_sheets(
     return tabs
 ```
 
-The `@dlt.source` decorator makes all arguments in the function configurable. The special defaults `dlt.secrets.value` and `dlt.config.value` indicate to `dlt` that these arguments are required and must either be passed explicitly or exist in the configuration. Additionally, `dlt.secrets.value` designates an argument as a secret.
+`@dlt.source` デコレータは、関数内のすべての引数を設定可能にします。特別なデフォルト値である `dlt.secrets.value` と `dlt.config.value` は、`dlt` に対してこれらの引数が必須であり、明示的に渡すか、設定ファイル内に存在する必要があることを示します。さらに、`dlt.secrets.value` は引数をシークレットとして指定します。
 
-In this example:
-- `spreadsheet_id` is a **required config** argument
-- `tab_names` is a **required config** argument
-- `credentials` is a **required secret** argument (Google Sheets credentials as a dictionary)
-- `only_strings` is an **optional config** argument with a default value
+この例では、次のようになります。
+- `spreadsheet_id` は **必須の設定** 引数です。
+- `tab_names` は **必須の設定** 引数です。
+- `credentials` は **必須のシークレット** 引数です（Google スプレッドシートの認証情報を辞書として格納）。
+- `only_strings` はデフォルト値を持つ **オプションの設定** 引数です。
 
 :::tip
-`dlt.resource` functions in the same way, so [standalone resources](../resource.md#declare-a-standalone-resource) (not defined as inner functions of a **source**) follow the same injection rules
+`dlt.resource` も同様に機能するため、[スタンドアロン リソース](../resource.md#declare-a-standalone-resource) (**ソース** の内部関数として定義されていない) は同じ注入ルールに従います。
 :::
 
-## Write custom specs
+## カスタム仕様の作成
 
-**Custom specifications** let you take full control over the function arguments. You can:
+**カスタム仕様** を使用すると、関数の引数を完全に制御できます。以下のことが可能です。
 
-- Control which values should be injected, the types, default values.
-- Specify optional and final fields.
-- Form hierarchical configurations (specs in specs).
-- Provide your own handlers for `on_partial` (called before failing on missing config key) or `on_resolved`.
-- Provide your own native value parsers.
-- Provide your own default credentials logic.
-- Utilize Python dataclass functionality.
-- Utilize Python `dict` functionality (`specs` instances can be created from dicts and serialized from dicts).
+- 注入する値、型、デフォルト値を制御できます。
+- 省略可能フィールドと最終フィールドを指定できます。
+- 階層的な設定（仕様の中に仕様を記述する）を作成できます。
+- `on_partial`（設定キーが見つからない場合に失敗する前に呼び出される）または `on_resolved` 用の独自のハンドラーを定義できます。
+- 独自のネイティブ値パーサーを定義できます。
+- 独自のデフォルト認証情報ロジックを定義できます。
+- Python データクラス機能を利用できます。
+- Python の `dict` 機能を利用できます（`specs` インスタンスは辞書から作成でき、辞書からシリアル化できます）。
 
-In fact, `dlt` synthesizes a unique spec for each decorated function. For example, in the case of `google_sheets`, the following class is created:
+実際、`dlt` はデコレートされた関数ごとに固有の仕様を生成します。例えば、`google_sheets` の場合、次のクラスが作成されます。
 
 ```py
 from dlt.sources.config import configspec, with_config
@@ -233,22 +233,22 @@ class GoogleSheetsConfiguration(BaseConfiguration):
   only_strings: Optional[bool] = False
 ```
 
-### All specs derive from [BaseConfiguration](https://github.com/dlt-hub/dlt/blob/devel/dlt/common/configuration/specs/base_configuration.py#L170)
-This class serves as a foundation for creating configuration objects with specific characteristics:
+### すべての仕様は [BaseConfiguration](https://github.com/dlt-hub/dlt/blob/devel/dlt/common/configuration/specs/base_configuration.py#L170) から派生しています。
+このクラスは、特定の特性を持つ設定オブジェクトを作成するための基盤として機能します。
 
-- It provides methods to parse and represent the configuration in native form (`parse_native_representation` and `to_native_representation`).
+- 設定を解析し、ネイティブ形式で表現するためのメソッド (`parse_native_representation` および `to_native_representation`) を提供します。
 
-- It defines methods for accessing and manipulating configuration fields.
+- 設定フィールドにアクセスし、操作するためのメソッドを定義します。
 
-- It implements a dictionary-compatible interface on top of the dataclass. This allows instances of this class to be treated like dictionaries.
+- データクラス上に辞書互換のインターフェースを実装します。これにより、このクラスのインスタンスを辞書のように扱うことができます。
 
-- It defines helper functions for checking if a certain attribute is present, if a field is valid, and for calling methods in the method resolution order (MRO).
+- 特定の属性が存在するかどうか、フィールドが有効かどうか、メソッド解決順序 (MRO) に従ってメソッドを呼び出すためのヘルパー関数を定義します。
 
-More information about this class can be found in the class docstrings.
+このクラスの詳細については、クラスのドキュメント文字列を参照してください。
 
-### All credentials derive from [CredentialsConfiguration](https://github.com/dlt-hub/dlt/blob/devel/dlt/common/configuration/specs/base_configuration.py#L307)
+### すべての認証情報は [CredentialsConfiguration](https://github.com/dlt-hub/dlt/blob/devel/dlt/common/configuration/specs/base_configuration.py#L307) から派生します。
 
-This class is a subclass of `BaseConfiguration` and is meant to serve as a base class for handling various types of credentials. It defines methods for initializing credentials, converting them to native representations, and generating string representations while ensuring sensitive information is appropriately handled.
+このクラスは `BaseConfiguration` のサブクラスであり、様々な種類の認証情報を扱うための基本クラスとして機能します。認証情報の初期化、ネイティブ表現への変換、そして機密情報の適切な取り扱いを確保しながら文字列表現を生成するためのメソッドを定義します。
 
-More information about this class can be found in the class docstrings.
+このクラスの詳細については、クラスのドキュメント文字列をご覧ください。
 

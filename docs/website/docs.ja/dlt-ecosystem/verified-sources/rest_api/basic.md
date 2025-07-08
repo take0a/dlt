@@ -359,7 +359,7 @@ dlt リソースを構成するために使用される追加のリソースパ�
 - `response_actions`: 応答データの処理方法を定義するアクションのリスト。詳細については、[応答アクション](./advanced#response-actions)セクションを参照してください。
 - `incremental`: [インクリメンタルローディング](#incremental-loading)の設定
 
-### ページネーション
+### ページネーション {#pagination}
 
 REST API ソースは、ページ区切りを自動的に処理しようとします。これは、最初の API 応答からページ区切りの詳細を検出することによって機能します。
 
@@ -976,12 +976,12 @@ config: RESTAPIConfig = {
 4. 連続する `map` ステップを 1 つの関数に結合して、実行を高速化します。
 :::
 
-## インクリメンタルなローディング
+## インクリメンタルなローディング {#incremental-loading}
 
 一部の API では、新しいデータまたは変更されたデータのみを取得する方法が提供されています (ほとんどの場合、`updated_at`、`created_at` などのタイムスタンプ フィールドや増分 ID を使用します)。
 これは [インクリメンタルなローディング](../../../general-usage/incremental-loading.md) と呼ばれ、読み込み時間と転送されるデータ量を削減できるため非常に便利です。
 
-Let's continue with our imaginary blog API example to understand incremental loading with query parameters.
+クエリ パラメータを使用した増分読み込みを理解するために、架空のブログ API の例を続けましょう。
 
 次のようなエンドポイント「https://api.example.com/posts」があるとします:
 
@@ -1000,25 +1000,25 @@ Let's continue with our imaginary blog API example to understand incremental loa
 }
 ```
 
-When the API endpoint supports incremental loading, you can configure dlt to load only the new or changed data using these three methods:
+APIエンドポイントが増分ロードをサポートしている場合、以下の3つの方法を使用して、新規データまたは変更されたデータのみをロードするようにdltを設定できます。
 
-1. Using [placeholders for incremental loading](#using-placeholders-for-incremental-loading)
-2. Defining a special parameter in the `params` section of the [endpoint configuration](#endpoint-configuration) (DEPRECATED)
-3. Using the `incremental` field in the [endpoint configuration](#endpoint-configuration) with the `start_param` field (DEPRECATED)
+1. [増分ロード用のプレースホルダ](#using-placeholders-for-incremental-loading)を使用する
+2. [エンドポイント設定](#endpoint-configuration)の`params`セクションで特別なパラメータを定義する(非推奨)
+3. [エンドポイント設定](#endpoint-configuration)の`incremental`フィールドを`start_param`フィールドと共に使用する(非推奨)
 
 :::caution
-The last two methods are deprecated and will be removed in a future dlt version.
+最後の 2 つのメソッドは非推奨であり、将来の dlt バージョンでは削除される予定です。
 :::
 
-### Using placeholders for incremental loading
+### 増分読み込みにおけるプレースホルダの使用
 
-The most flexible way to configure incremental loading is to use placeholders in the request configuration along with the `incremental` section.
-Here's how it works:
+増分読み込みを設定する最も柔軟な方法は、リクエスト設定で `incremental` セクションと共にプレースホルダを使用することです。
+仕組みは以下のとおりです。
 
-1. Define the `incremental` section in the [endpoint configuration](#endpoint-configuration) to specify the cursor path (where to find the incremental value in the response) and initial value (the value to start the incremental loading from).
-2. Use the placeholder `{incremental.start_value}` in the request configuration to reference the incremental value.
+1. [エンドポイント設定](#endpoint-configuration) で `incremental` セクションを定義し、カーソルパス（レスポンス内で増分値を検索する場所）と初期値（増分読み込みを開始する値）を指定します。
+2. リクエスト設定でプレースホルダ `{incremental.start_value}` を使用して増分値を参照します。
 
-Let's take the example from the previous section and configure it using placeholders:
+前のセクションの例を取り上げ、プレースホルダを使用して設定してみましょう。
 
 ```py
 {
@@ -1034,26 +1034,26 @@ Let's take the example from the previous section and configure it using placehol
 }
 ```
 
-When you first run this pipeline, dlt will:
-1. Replace `{incremental.start_value}` with `2024-01-25T00:00:00Z` (the initial value)
-2. Make a GET request to `https://api.example.com/posts?created_since=2024-01-25T00:00:00Z`
-3. Parse the response (e.g., posts with created_at values like "2024-01-26", "2024-01-27", "2024-01-28")
-4. Track the maximum value found in the "created_at" field (in this case, "2024-01-28")
+このパイプラインを初めて実行すると、dlt は以下の処理を行います。
+1. `{incremental.start_value}` を `2024-01-25T00:00:00Z`（初期値）に置き換えます。
+2. `https://api.example.com/posts?created_since=2024-01-25T00:00:00Z` に GET リクエストを送信します。
+3. レスポンスを解析します（例：created_at の値が "2024-01-26"、"2024-01-27"、"2024-01-28" のような投稿）。
+4. "created_at" フィールドで見つかった最大値（この場合は "2024-01-28"）を追跡します。
 
-On the next pipeline run, dlt will:
-1. Replace `{incremental.start_value}` with "2024-01-28" (the last seen maximum value)
-2. Make a GET request to `https://api.example.com/posts?created_since=2024-01-28`
-3. The API will only return posts created on or after January 28th
+次回のパイプライン実行時に、dlt は以下の処理を行います。
+1. `{incremental.start_value}` を "2024-01-28"（最終値）に置き換えます。 （最大値を確認済み）
+2. `https://api.example.com/posts?created_since=2024-01-28` に GET リクエストを送信します。
+3. API は 1 月 28 日以降に作成された投稿のみを返します。
 
-Let's break down the configuration:
-1. We explicitly set `data_selector` to `"results"` to select the list of posts from the response. This is optional; if not set, dlt will try to auto-detect the data location.
-2. We define the `created_since` parameter in `params` section and use the placeholder `{incremental.start_value}` to reference the incremental value.
+設定を詳しく見ていきましょう。
+1. レスポンスから投稿リストを選択するために、`data_selector` を `"results"` に明示的に設定します。これはオプションです。設定されていない場合、dlt はデータの場所を自動検出しようとします。
+2. `params` セクションで `created_since` パラメータを定義し、増分値を参照するためにプレースホルダ `{incremental.start_value}` を使用します。
 
-Placeholders are versatile and can be used in various request components. Here are some examples:
+プレースホルダは汎用性が高く、さまざまなリクエストコンポーネントで使用できます。以下に例を示します。
 
-#### In JSON body (for POST requests)
+#### JSON ボディ内（POST リクエストの場合）
 
-If the API lets you filter the data by a range of dates (e.g. `fromDate` and `toDate`), you can use the placeholder in the JSON body:
+API で日付の範囲（例: `fromDate` と `toDate`）でデータをフィルタリングできる場合は、JSON ボディ内でプレースホルダを使用できます。
 
 ```py
 {
@@ -1073,9 +1073,9 @@ If the API lets you filter the data by a range of dates (e.g. `fromDate` and `to
 }
 ```
 
-#### In path parameters
+#### パスパラメータ内
 
-Some APIs use path parameters to filter the data:
+一部の API では、パスパラメータを使用してデータをフィルタリングします。
 
 ```py
 {
@@ -1087,9 +1087,9 @@ Some APIs use path parameters to filter the data:
 }
 ```
 
-#### In request headers
+#### リクエストヘッダー内
 
-It's not so common, but you can also use placeholders in the request headers:
+あまり一般的ではありませんが、リクエストヘッダー内でプレースホルダーを使用することもできます。
 
 ```py
 {
@@ -1104,27 +1104,27 @@ It's not so common, but you can also use placeholders in the request headers:
 }
 ```
 
-You can also use different placeholder variants depending on your needs:
+ニーズに応じて、異なるプレースホルダーのバリエーションを使用することもできます。
 
-| Placeholder | Description |
+| プレースホルダー | 説明 |
 | ----------- | ----------- |
-| `{incremental.start_value}` | The value to use as the starting point for this request (either the initial value or the last tracked maximum value) |
-| `{incremental.initial_value}` | Always uses the initial value specified in the configuration |
-| `{incremental.last_value}` | The last seen value (same as start_value in most cases, see the [incremental loading](../../../general-usage/incremental/cursor.md) guide for more details) |
-| `{incremental.end_value}` | The end value if specified in the configuration |
+| `{incremental.start_value}` | このリクエストの開始点として使用する値（初期値または最後に追跡された最大値） |
+| `{incremental.initial_value}` | 常に設定で指定された初期値を使用します |
+| `{incremental.last_value}` | 最後に表示された値（ほとんどの場合、start_value と同じです。詳細については、[増分読み込み](../../../general-usage/incremental/cursor.md) ガイドを参照してください） |
+| `{incremental.end_value}` | 設定で指定されている場合の終了値 |
 
 
-### Legacy method: Incremental loading in `params` (DEPRECATED)
+### 従来の方法: `params` での増分ロード (非推奨)
 
 :::caution
-DEPRECATED: This method is deprecated and will be removed in a future version. Use the [placeholder method](#using-placeholders-for-incremental-loading) instead.
+非推奨: このメソッドは非推奨であり、将来のバージョンで削除される予定です。代わりに[プレースホルダーメソッド](#using-placeholders-for-incremental-loading)を使用してください。
 :::
 
 :::note
-This method only works for query string parameters. For other request parts (path, JSON body, headers), use the [placeholder method](#using-placeholders-for-incremental-loading).
+この方法はクエリ文字列パラメータに対してのみ機能します。その他のリクエスト部分（パス、JSONボディ、ヘッダー）には、[プレースホルダー方式](#増分ロード用のプレースホルダーの使用)を使用してください。
 :::
 
-For query string parameters, you can also specify incremental loading directly in the `params` section:
+クエリ文字列パラメータの場合、`params` セクションで直接増分読み込みを指定することもできます。
 
 ```py
 {
@@ -1140,7 +1140,7 @@ For query string parameters, you can also specify incremental loading directly i
 }
 ```
 
-Above we define the `created_since` parameter as an incremental parameter as:
+上記では、`created_since` パラメータを増分パラメータとして次のように定義しています。
 
 ```py
 {
@@ -1152,19 +1152,19 @@ Above we define the `created_since` parameter as an incremental parameter as:
 }
 ```
 
-The fields are:
+フィールドは次のとおりです:
 
 - `type`: パラメータ定義のタイプ。この場合、`incremental` に設定する必要があります。
 - `cursor_path`: リスト内の各アイテム内のフィールドへの JSONPath。このフィールドの値は、次のリクエストで使用されます。上記の例では、アイテムは `{"id": 1, "title": "Post 1", "created_at": "2024-01-26"}` のようになっているため、作成時間を追跡するには、`cursor_path` を `"created_at"` に設定します。JSONPath は、レスポンスのルートからではなく、アイテム (dict) のルートから始まることに注意してください。
 - `initial_value`: カーソルの初期値。これはインクリメンタルローディングの状態を初期化する値です。この場合、`2024-01-25` です。値の型は、データ項目内のフィールドの型と一致する必要があります。
 
-### Incremental loading using the `incremental` field (DEPRECATED)
+### `incremental` フィールドを使用した増分ロード (非推奨)
 
 :::caution
-DEPRECATED: This method is deprecated and will be removed in a future dlt version. Use the [placeholder method](#using-placeholders-for-incremental-loading) instead.
+非推奨: このメソッドは非推奨であり、将来のdltバージョンで削除される予定です。代わりに[プレースホルダーメソッド](#using-placeholders-for-incremental-loading)を使用してください。
 :::
 
-Another alternative method is to use the `incremental` field in the [endpoint configuration](#endpoint-configuration) while specifying names of the query string parameters to be used as start and end conditions.
+もう 1 つの方法としては、[エンドポイント構成](#endpoint-configuration) の `incremental` フィールドを使用し、開始条件と終了条件として使用するクエリ文字列パラメータの名前を指定する方法があります。
 
 上記と同じ例を取り上げ、`incremental`フィールドを使用して設定してみましょう:
 

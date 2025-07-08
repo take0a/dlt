@@ -1,16 +1,16 @@
 ---
-title: How to add credentials
-description: How to add credentials locally and in production
+title: 資格情報を追加する方法
+description: ローカルおよび本番環境で認証情報を追加する方法
 keywords: [credentials, secrets.toml, environment variables]
 ---
 
-# How to add credentials
+# 資格情報を追加する方法
 
-## Adding credentials locally
+## ローカルでの認証情報の追加
 
-When using a pipeline locally, we recommend using the `.dlt/secrets.toml` method.
+パイプラインをローカルで使用する場合は、`.dlt/secrets.toml` メソッドを使用することをお勧めします。
 
-To do so, open your dlt secrets file and match the source names and credentials to the ones in your script, for example:
+これを行うには、dlt secrets ファイルを開き、ソース名と認証情報をスクリプト内のものと一致させます。例:
 
 ```toml
 [sources.pipedrive]
@@ -26,27 +26,27 @@ client_email = "client_email" # please set me up!
 ```
 
 :::note
-Keys in TOML files are case-sensitive and sections are separated with a period (`.`).
+TOML ファイル内のキーは大文字と小文字が区別され、セクションはピリオド (`.`) で区切られます。
 :::
 
-For destination credentials, read the [documentation pages for each destination](../dlt-ecosystem/destinations) to create and configure credentials.
+宛先の認証情報については、[各宛先のドキュメントページ](../dlt-ecosystem/destinations) を参照して認証情報を作成および設定してください。
 
-For Verified Source credentials, read the [Setup Guides](../dlt-ecosystem/verified-sources) for each source to find how to get credentials.
+検証済みソースの認証情報については、各ソースの[セットアップガイド](../dlt-ecosystem/verified-sources) を参照して認証情報の取得方法を確認してください。
 
-Once you have credentials for the source and destination, add them to the file above and save them.
+ソースと宛先の認証情報を取得したら、上記のファイルに追加して保存してください。
 
-Read more about [credential configuration.](../general-usage/credentials)
+[認証情報の設定](../general-usage/credentials) の詳細については、こちらをご覧ください。
 
-## Adding credentials to your deployment
+## デプロイメントへの認証情報の追加
 
-To add credentials to your deployment,
+デプロイメントに認証情報を追加するには、
 
-- either use one of the `dlt deploy` commands;
-- or follow the instructions to [pass credentials via code](../general-usage/credentials/advanced#configure-destination-credentials-in-code) or [environment](../general-usage/credentials/setup#environment-variables).
+- いずれかの `dlt deploy` コマンドを使用します。
+- または、[コード経由で認証情報を渡す](../general-usage/credentials/advanced#configure-destination-credentials-in-code) または [環境経由で認証情報を渡す](../general-usage/credentials/setup#environment-variables) 手順に従ってください。
 
-### Reading credentials from environment variables
+### 環境変数からの認証情報の読み取り
 
-`dlt` supports reading credentials from the environment. For example, our `.dlt/secrets.toml` might look like:
+`dlt` は、環境変数からの認証情報の読み取りをサポートしています。例えば、`.dlt/secrets.toml` は次のようになります。
 
 ```toml
 [sources.pipedrive]
@@ -61,11 +61,11 @@ private_key = "private_key" # please set me up!
 client_email = "client_email" # please set me up!
 ```
 
-If dlt tries to read this from environment variables, it will use a different naming convention.
+dlt が環境変数からこれを読み取ろうとする場合、異なる命名規則が使用されます。
 
-For environment variables, all names are capitalized and sections are separated with a double underscore "__".
+環境変数の場合、名前はすべて大文字で始まり、セクションは二重のアンダースコア "__" で区切られます。
 
-For example, for the secrets mentioned above, we would need to set them in the environment:
+例えば、上記のシークレットについては、環境変数で次のように設定する必要があります。
 
 ```sh
 SOURCES__PIPEDRIVE__PIPEDRIVE_API_KEY
@@ -75,14 +75,14 @@ DESTINATION__BIGQUERY__CREDENTIALS__CLIENT_EMAIL
 DESTINATION__BIGQUERY__LOCATION
 ```
 
-## Retrieving credentials from Google Cloud Secret Manager
+## Google Cloud Secret Manager からの認証情報の取得
 
-`dlt` supports reading credentials from Google Cloud Secret Manager. To enable this functionality you must provide
-credentials with following access permissions:
-* **roles/secretmanager.secretAccessor** to read particular secret
-* **roles/secretmanager.secretViewer** to list available secrets (optional but highly recommended)
+`dlt` は、Google Cloud Secret Manager からの認証情報の読み取りをサポートしています。
+この機能を有効にするには、以下のアクセス権限を持つ認証情報を提供する必要があります。
+* 特定のシークレットを読み取るための **roles/secretmanager.secretAccessor**
+* 利用可能なシークレットを一覧表示する **roles/secretmanager.secretViewer** (オプションですが、強く推奨)
 
-Example configuration:
+設定例:
 ```toml
 [providers]
 enable_google_secrets=true
@@ -98,14 +98,14 @@ list_secrets=true
 "client_email" = "....gserviceaccount.com"
 ```
 
-### Allow to list secrets and use toml fragments to reduce calls to backend
-We recommend enabling `list_secrets` to obtain a list of possible keys and avoid calls to the backends. We also recommend
-to store configuration fragments, not single values to reduce the number of calls. Vault provider is able to fetch such fragments
-and combine them into full configuration on the fly.
+### シークレットの一覧表示とToMLフラグメントの使用によるバックエンドへの呼び出し回数の削減
+`list_secrets` を有効にして、可能なキーの一覧を取得し、バックエンドへの呼び出し回数を削減することをお勧めします。
+また、呼び出し回数を削減するため、単一の値ではなく、構成フラグメントを保存することをお勧めします。
+Vaultプロバイダーは、このようなフラグメントを取得し、それらを即座に完全な構成に統合することができます。
 
-For example you can define:
+例えば、以下を定義できます。
 
-**destination** secret to keep credentials for destinations:
+**destination** シークレット：宛先の認証情報を保持します。
 ```toml
 [destination]
 postgres.credentials="postgresql://loader:***@host:5432/postgres"
@@ -116,7 +116,7 @@ postgres.credentials="postgresql://loader:***@host:5432/postgres"
 "client_email" = "....gserviceaccount.com"
 ```
 
-or **destination-filesystem** to just store filesystem credentials
+または、ファイルシステムの資格情報のみを保存するには **destination-filesystem** を使用します。
 ```toml
 [destination.filesystem]
 bucket_url="s3://bucket/path"
@@ -127,13 +127,13 @@ aws_access_key_id="..."
 aws_secret_access_key="..."
 ```
 
-same for sources ie. **sources-mongodb** will store mongo credentials:
+ソースについても同様です。つまり、**sources-mongodb** は mongo の資格情報を保存します。
 ```toml
 [sources.mongodb]
 connection_url="mongodb+srv://temp_writer:***/dlt_data?authSource=admin&replicaSet=db-mongodb&tls=true"
 ```
 
-Note that you still can store single values, in that case google vault works similarly to environment variables provider:
+単一の値を保存することもできます。その場合、Google Vault は環境変数プロバイダと同様に動作します。
 ```sh
 sources-pipedrive-pipedrive_api_key
 destination-bigquery-credentials-project_id
@@ -141,15 +141,14 @@ destination-bigquery-credentials-private_key
 destination-bigquery-credentials-client_email
 destination-bigquery-location
 ```
-This will obviously require several calls to Secrets backend.
+明らかに、これには Secrets バックエンドへの複数の呼び出しが必要になります。
 
 :::caution
-Vault provider will cache all retrieved keys internally and will not fetch those secrets again (until process is restarted). This
-reduces number of calls to backend (which cost money) but will also not pick up changes at runtime.
+Vaultプロバイダーは取得したすべてのキーを内部的にキャッシュし、（プロセスが再起動されるまで）それらのシークレットを再度取得しません。これにより、バックエンドへの呼び出し回数（コスト発生）が削減されますが、実行時に変更が反映されなくなります。
 :::
 
-### Access secrets without list secrets permissions
-Following settings will skip listing secrets and still minimize number of backend calls:
+### シークレットの一覧表示権限なしでシークレットにアクセスする
+以下の設定により、シークレットの一覧表示をスキップしながら、バックエンド呼び出しの回数を最小限に抑えることができます。
 ```toml
 [providers.google_secrets]
 only_secrets=true
@@ -157,15 +156,12 @@ only_toml_fragments=true
 list_secrets=false
 ```
 
-Vault will fetch only secret values (credentials, `dlt.secrets.value` marked arguments) and only the toml fragments as described
-in the above section, without fetching single values.
+Vault は、単一の値を取得せずに、シークレット値 (資格情報、`dlt.secrets.value` でマークされた引数) と、上記のセクションで説明した toml フラグメントのみを取得します。
 
 
 :::caution
-`dlt` probes several locations for a single value so if you disable `only_toml_fragments` you may receive large amount of calls
-to Secrets backend.
+`dlt` は単一の値について複数の場所を調査するため、`only_toml_fragments` を無効にすると、Secrets バックエンドへの呼び出しが大量に発生する可能性があります。
 :::
 
-## Retrieving credentials from other vault types
-Subclass `VaultDocProvider` and implement methods to fetch a secret and (optionally) to list secrets then
-[register subclass as custom provider](../examples/custom_config_provider).
+## 他のボールトタイプからの認証情報の取得
+`VaultDocProvider` のサブクラスを作成し、シークレットを取得するメソッドと（オプションで）シークレットを一覧表示するメソッドを実装します。次に、[サブクラスをカスタムプロバイダーとして登録します](../examples/custom_config_provider)。

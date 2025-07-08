@@ -12,7 +12,7 @@ keywords: [incremental loading, loading methods, append, merge]
 
 ## 書き込み処理の選択
 
-### ３つの書き込み処理:
+### ３つの書き込み処理: {#the-3-write-dispositions}
 
 - **Full load**: 宛先データセットを、この実行でソースが生成したものに置き換えます。これを実現するには、リソースで `write_disposition='replace'` を使用します。詳細については、[フルロードのドキュメント](./full-loading.md)を参照してください。
 
@@ -36,15 +36,14 @@ keywords: [incremental loading, loading methods, append, merge]
 
 そうでない場合は、データセット全体を置き換える必要があります。ただし、「昨日以降に追加または変更されたすべてのユーザー」のように、データを段階的に要求できる場合は、マージ書き込み処理を使用して既存のデータセットに変更を適用するだけで済みます。
 
-## Incremental loading strategies
+## 増分ロード戦略
 
-dlt provides several approaches to incremental loading:
+dlt は、増分ロードに複数のアプローチを提供します。
 
-1. [Merge strategies](./merge-loading.md#merge-strategies) - Choose between delete-insert, SCD2, and upsert approaches to incrementally update your data
-2. [Cursor-based incremental loading](./incremental/cursor.md) - Track changes using a cursor field (like timestamp or ID)
-3. [Lag / Attribution window](./incremental/lag.md) - Refresh data within a specific time window
-4. [Advanced state management](./incremental/advanced-state.md) - Custom state tracking
-
+1. [マージ戦略](./merge-loading.md#merge-strategies) - データの増分更新には、delete-insert、SCD2、upsert のいずれかのアプローチを選択します。
+2. [カーソルベースの増分ロード](./incremental/cursor.md) - カーソルフィールド（タイムスタンプや ID など）を使用して変更を追跡します。
+3. [遅延 / アトリビューションウィンドウ](./incremental/lag.md) - 特定の時間枠内でデータを更新します。
+4. [高度な状態管理](./incremental/advanced-state.md) - カスタムの状態追跡
 
 ## 完全なリフレッシュを行う
 
@@ -67,9 +66,9 @@ p.run(merge_source())
 
 書き込み処理を `replace` に渡すと、パイプラインの実行中に `repo_events` 内のすべてのリソースの書き込み処理が変更されます。
 
-## Next steps
+## 次のステップ
 
-- [Cursor-based incremental loading](./incremental/cursor.md) - Use timestamps or IDs to track changes
-- [Advanced state management](./incremental/advanced-state.md) - Advanced techniques for state tracking
-- [Walkthroughs: Add incremental configuration to SQL resources](../walkthroughs/add-incremental-configuration.md) - Step-by-step examples
-- [Troubleshooting incremental loading](./incremental/troubleshooting.md) - Common issues and how to fix them
+- [カーソルベースの増分読み込み](./incremental/cursor.md) - タイムスタンプまたはIDを使用して変更を追跡する
+- [高度な状態管理](./incremental/advanced-state.md) - 状態追跡のための高度なテクニック
+- [チュートリアル: SQLリソースへの増分構成の追加](../walkthroughs/add-incremental-configuration.md) - ステップバイステップの例
+- [増分読み込みのトラブルシューティング](./incremental/troubleshooting.md) - よくある問題とその解決方法

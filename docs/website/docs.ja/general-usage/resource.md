@@ -8,7 +8,7 @@ keywords: [resource, api endpoint, dlt.resource]
 
 ## リソースを宣言する
 
-[リソース](glossary.md#resource) は、データを生成する ([オプションで非同期の](../reference/performance.md#parallelism)) 関数です。リソースを作成するには、その関数に `@dlt.resource` デコレータを追加します。
+[リソース](glossary.md#resource) は、データを生成する ([オプションで非同期の](../reference/performance.md#parallelism-within-a-pipeline)) 関数です。リソースを作成するには、その関数に `@dlt.resource` デコレータを追加します。
 
 よく使われる引数:
 
@@ -236,7 +236,7 @@ for row in generate_var_rows(20):
 一部のリソース引数を [構成と資格情報](credentials)の値としてマークして、`dlt` がそれらを関数に自動的に渡すことができるようにすることができます。
 :::
 
-### `dlt.transformer` でリソースを処理する
+### `dlt.transformer` でリソースを処理する {#process-resources-with-dlttransformer}
 
 あるリソースから別のリソースにデータをフィードできます。最も一般的なケースは、1 つのエンドポイントでオブジェクト (つまり、ユーザー) のリストを返し、別のエンドポイントでユーザーの詳細を返す API がある場合です。これに対処するには、ユーザーのリストを取得するリソースと、リストから項目を受け取ってプロファイルをダウンロードする別のリソースを宣言します。
 
@@ -346,7 +346,7 @@ async def get_users():
 
 ## リソースをカスタマイズする
 
-### データのフィルタリング、変換、ピボット
+### データのフィルタリング、変換、ピボット {#filter-transform-and-pivot-data}
 
 リソースには、アイテムごとに評価される変換をいくつでも添付できます。使用可能な変換タイプは:
 
@@ -503,7 +503,7 @@ tables = sql_database()
 tables.users.table_name = "other_users"
 ```
 
-### データを生成するときにスキーマを調整する
+### データを生成するときにスキーマを調整する {#adjust-schema-when-you-yield-data}
 
 リソースが実行され、すでにデータが出力されているときに、テーブル名、列、およびその他のスキーマ要素を設定または更新できます。このような変更は、上記の `apply_hints` メソッドと同じように、既存のスキーマとマージされます。実行時にスキーマを調整する理由はたくさんあります。たとえば、Airflow を使用する場合、DAG の作成中に時間のかかる操作 (データベース テーブルの反映など) を避ける必要があるため、DAG の実行時に行う方がよいでしょう。また、列の部分的なヒント (小数点型の精度とスケールなど) を発行して、`dlt` 型の推論を支援することもできます。
 

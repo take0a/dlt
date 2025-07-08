@@ -83,7 +83,7 @@ load_info = pipeline.run(users)
 
 :::
 
-## ネストされたテーブル
+## ネストされたテーブル {#nested-tables}
 
 では、より複雑な例を見てみましょう:
 

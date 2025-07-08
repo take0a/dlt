@@ -167,7 +167,7 @@ progress="log"
 PROGRESS=log python pipeline_script.py
 ```
 
-## パイプライン内の並列処理
+## パイプライン内の並列処理 {#parallelism-within-a-pipeline}
 
 データの抽出、正規化、ロードを並列に実行するパイプラインを作成できます。
 

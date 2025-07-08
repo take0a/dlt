@@ -1,22 +1,22 @@
 ---
-title: Built-in credentials
-description: Configure access to AWS, Azure, Google Cloud and other systems
+title: 組み込みの資格情報
+description: AWS、Azure、Google Cloudなどのシステムへのアクセスを構成する
 keywords: [credentials, secrets.toml, secrets, config, configuration, environment
       variables, specs]
 ---
 
-## Overview
+## 概要
 
-`dlt` provides built-in credential (**specs**) for seamless integration with common external systems. These specs can be configured using the methods described in the [overview](setup.md) documentation. For major cloud providers like AWS, Azure, and Google Cloud, `dlt` also calls client-specific code to authenticate users and can automatically retrieve default credentials from the running environment. Additionally, `dlt` understands common string representations for credentials such as connection strings or service json, making it easier to work with different credential formats beyond the typical dictionary representation.
+`dlt` は、一般的な外部システムとのシームレスな統合を可能にする組み込みの認証情報 (**specs**) を提供します。これらの specs は、[概要](setup.md) ドキュメントに記載されている方法を使用して設定できます。AWS、Azure、Google Cloud などの主要なクラウドプロバイダーの場合、`dlt` はクライアント固有のコードを呼び出してユーザーを認証し、実行環境からデフォルトの認証情報を自動的に取得することもできます。さらに、`dlt` は接続文字列やサービス JSON などの認証情報の一般的な文字列表現を理解するため、一般的な辞書表現以外のさまざまな認証情報形式を簡単に扱うことができます。
 
 :::tip
-Learn about the authentication methods supported by the `dlt` RestAPI Client in detail in the [RESTClient section](../http/rest-client.md#authentication).
+[RESTClient セクション](../http/rest-client.md#authentication)で、`dlt` RestAPI クライアントでサポートされている認証方法について詳しく学習してください。
 :::
 
 
-## Example with ConnectionStringCredentials
+## ConnectionStringCredentials の例
 
-`ConnectionStringCredentials` handles database connection strings:
+`ConnectionStringCredentials` はデータベース接続文字列を処理します。
 
 ```py
 from dlt.sources.credentials import ConnectionStringCredentials
@@ -26,11 +26,11 @@ def query(sql: str, dsn: ConnectionStringCredentials = dlt.secrets.value):
   ...
 ```
 
-The source above executes the `sql` against the database defined in `dsn`. `ConnectionStringCredentials` ensures you get the correct values with the correct types and understands the relevant native form of the credentials.
+上記のソースは、`dsn` で定義されたデータベースに対して `sql` を実行します。`ConnectionStringCredentials` は、正しい型で正しい値を取得し、資格情報の適切なネイティブ形式を認識します。
 
-Below are examples of how you can set credentials in `secrets.toml` and `config.toml` files.
+以下は、`secrets.toml` ファイルと `config.toml` ファイルで資格情報を設定する方法の例です。
 
-### Dictionary form
+### 辞書形式
 
 ```toml
 [dsn]
@@ -40,21 +40,21 @@ username="loader"
 host="localhost"
 ```
 
-### Native form
+### ネイティブ形式
 
 ```toml
 dsn="postgres://loader:loader@localhost:5432/dlt_data"
 ```
 
-### Mixed form
+### 混合形式
 
-If all credentials, except the password, are provided explicitly in the code, `dlt` will look for the password in `secrets.toml`.
+パスワード以外のすべての資格情報がコード内で明示的に提供されている場合、`dlt` は `secrets.toml` でパスワードを検索します。
 
 ```toml
 dsn.password="loader"
 ```
 
-You can explicitly provide credentials in various forms:
+さまざまな形式で資格情報を明示的に提供できます:
 
 ```py
 query("SELECT * FROM customers", "postgres://loader@localhost:5432/dlt_data") # type: ignore[arg-type]
@@ -62,9 +62,9 @@ query("SELECT * FROM customers", "postgres://loader@localhost:5432/dlt_data") # 
 query("SELECT * FROM customers", {"database": "dlt_data", "username": "loader"}) # type: ignore[arg-type]
 ```
 
-## Built-in credentials
+## 組み込みの認証情報 {#built-in-credentials}
 
-`dlt` offers some ready-made credentials you can reuse:
+`dlt` は、再利用できる既製の認証情報を提供します。
 
 ```py
 from dlt.sources.credentials import ConnectionStringCredentials
@@ -76,9 +76,9 @@ from dlt.sources.credentials import AzureCredentials
 
 ### ConnectionStringCredentials
 
-The `ConnectionStringCredentials` class handles connection string credentials for SQL database connections. It includes attributes for the driver name, database name, username, password, host, port, and additional query parameters. This class provides methods for parsing and generating connection strings.
+`ConnectionStringCredentials` クラスは、SQL データベース接続用の接続文字列認証情報を処理します。ドライバー名、データベース名、ユーザー名、パスワード、ホスト、ポート、その他のクエリパラメータなどの属性が含まれます。このクラスは、接続文字列を解析および生成するためのメソッドを提供します。
 
-#### Usage
+#### 使用方法
 ```py
 credentials = ConnectionStringCredentials()
 
@@ -100,13 +100,13 @@ credentials.parse_native_representation(native_value)
 # Get a URL representation of the connection
 url_representation = credentials.to_url()
 ```
-Above, you can find an example of how to use this spec with sources and TOML files.
+上記は、ソースと TOML ファイルでこの仕様を使用する方法の例です。
 
 ### OAuth2Credentials
 
-The `OAuth2Credentials` class handles OAuth 2.0 credentials, including client ID, client secret, refresh token, and access token. It also allows for the addition of scopes and provides methods for client authentication.
+`OAuth2Credentials` クラスは、クライアント ID、クライアントシークレット、リフレッシュトークン、アクセストークンなどの OAuth 2.0 認証情報を処理します。また、スコープの追加やクライアント認証のためのメソッドも提供します。
 
-Usage:
+使用方法:
 ```py
 oauth_credentials = OAuth2Credentials(
     client_id="CLIENT_ID",
@@ -122,13 +122,13 @@ oauth_credentials.auth()
 oauth_credentials.add_scopes(["scope3", "scope4"])
 ```
 
-`OAuth2Credentials` is a base class to implement actual OAuth; for example, it is a base class for [GcpOAuthCredentials](#gcpoauthcredentials).
+`OAuth2Credentials` は実際の OAuth を実装するための基本クラスです。たとえば、[GcpOAuthCredentials](#gcpoauthcredentials) の基本クラスです。
 
-### GCP credentials
+### GCP 認証情報
 
-#### Examples
-* [Google Analytics verified source](https://github.com/dlt-hub/verified-sources/blob/master/sources/google_analytics/__init__.py): an example of how to use GCP Credentials.
-* [Google Analytics example](https://github.com/dlt-hub/verified-sources/blob/master/sources/google_analytics/setup_script_gcp_oauth.py): how you can get the refresh token using `dlt.secrets.value`.
+#### 例
+* [Google Analytics 検証済みソース](https://github.com/dlt-hub/verified-sources/blob/master/sources/google_analytics/__init__.py): GCP 認証情報の使用方法の例。
+* [Google Analytics の例](https://github.com/dlt-hub/verified-sources/blob/master/sources/google_analytics/setup_script_gcp_oauth.py): `dlt.secrets.value` を使用してリフレッシュトークンを取得する方法。
 
 #### Types
 
@@ -137,12 +137,12 @@ oauth_credentials.add_scopes(["scope3", "scope4"])
 
 #### GcpServiceAccountCredentials
 
-The `GcpServiceAccountCredentials` class manages GCP Service Account credentials. This class provides methods to retrieve native credentials for Google clients.
+`GcpServiceAccountCredentials` クラスは、GCP サービスアカウントの認証情報を管理します。このクラスは、Google クライアントのネイティブ認証情報を取得するためのメソッドを提供します。
 
-##### Usage
+##### 使用方法
 
-- You may just pass the `service.json` as a string or dictionary (in code and via config providers).
-- Or default credentials will be used.
+- `service.json` を文字列または辞書として渡すこともできます（コード内および構成プロバイダー経由）。
+- または、デフォルトの認証情報が使用されます。
 
 ```py
 gcp_credentials = GcpServiceAccountCredentials()
@@ -153,7 +153,7 @@ gcp_credentials = GcpServiceAccountCredentials()
 gcp_native_value = {"private_key": ".."} # or "path/to/services.json"
 gcp_credentials.parse_native_representation(gcp_native_value)
 ```
-or more preferred use:
+またはより好ましい使用法:
 ```py
 import dlt
 from dlt.sources.credentials import GcpServiceAccountCredentials
@@ -173,7 +173,7 @@ def google_analytics(
     credentials_str = str(credentials)
     ...
 ```
-while `secrets.toml` looks as follows:
+一方、`secrets.toml` は次のようになります。
 ```toml
 [sources.google_analytics.credentials]
 client_id = "client_id" # please set me up!
@@ -181,7 +181,7 @@ client_secret = "client_secret" # please set me up!
 refresh_token = "refresh_token" # please set me up!
 project_id = "project_id" # please set me up!
 ```
-and `config.toml`:
+そして `config.toml`:
 ```toml
 [sources.google_analytics]
 property_id = "213025502"
@@ -189,9 +189,9 @@ property_id = "213025502"
 
 #### GcpOAuthCredentials
 
-The `GcpOAuthCredentials` class is responsible for handling OAuth2 credentials for desktop applications in Google Cloud Platform (GCP). It can parse native values either as `GoogleOAuth2Credentials` or as serialized OAuth client secrets JSON. This class provides methods for authentication and obtaining access tokens.
+`GcpOAuthCredentials` クラスは、Google Cloud Platform (GCP) のデスクトップ アプリケーションの OAuth2 認証情報を処理します。ネイティブ値を `GoogleOAuth2Credentials` またはシリアル化された OAuth クライアント シークレット JSON として解析できます。このクラスは、認証とアクセス トークンの取得のためのメソッドを提供します。
 
-##### Usage
+##### 使用方法
 
 ```py
 oauth_credentials = GcpOAuthCredentials()
@@ -224,7 +224,7 @@ def google_analytics(
     credentials_str = str(credentials)
     ...
 ```
-While `secrets.toml` looks as follows:
+一方、`secrets.toml` は次のようになります。
 ```toml
 [sources.google_analytics.credentials]
 client_id = "client_id" # please set me up!
@@ -232,28 +232,28 @@ client_secret = "client_secret" # please set me up!
 refresh_token = "refresh_token" # please set me up!
 project_id = "project_id" # please set me up!
 ```
-And `config.toml`:
+そして `config.toml`:
 ```toml
 [sources.google_analytics]
 property_id = "213025502"
 ```
 
-In order for the `auth()` method to succeed:
+`auth()` メソッドを成功させるには、次の条件を満たす必要があります。
 
-- You must provide valid `client_id`, `client_secret`, `refresh_token`, and `project_id` to get a current **access token** and authenticate with OAuth. Keep in mind that the `refresh_token` must contain all the scopes that are required for your access.
-- If the `refresh_token` is not provided, and you run the pipeline from a console or a notebook, `dlt` will use InstalledAppFlow to run the desktop authentication flow.
+- 最新の **アクセストークン** を取得し、OAuth で認証するには、有効な `client_id`、`client_secret`、`refresh_token`、`project_id` を指定する必要があります。`refresh_token` には、アクセスに必要なすべてのスコープが含まれている必要があることに注意してください。
+- `refresh_token` が指定されておらず、コンソールまたはノートブックからパイプラインを実行する場合、`dlt` は InstalledAppFlow を使用してデスクトップ認証フローを実行します。
 
-#### Defaults
+#### デフォルト
 
-If configuration values are missing, `dlt` will use the default Google credentials (from `default()`) if available. Read more about [Google defaults.](https://googleapis.dev/python/google-auth/latest/user-guide.html#application-default-credentials)
+設定値が欠落している場合、`dlt` はデフォルトの Google 認証情報（`default()` から取得）を使用します（利用可能な場合）。[Google のデフォルト](https://googleapis.dev/python/google-auth/latest/user-guide.html#application-default-credentials) の詳細については、こちらをご覧ください。
 
-- `dlt` will try to fetch the `project_id` from default credentials. If the project id is missing, it will look for `project_id` in the secrets. So it is normal practice to pass partial credentials (just `project_id`) and take the rest from defaults.
+- `dlt` はデフォルトの認証情報から `project_id` を取得しようとします。プロジェクト ID が欠落している場合は、シークレットから `project_id` を検索します。そのため、通常は認証情報の一部（`project_id` のみ）を渡し、残りはデフォルトから取得します。
 
 ### AwsCredentials
 
-The `AwsCredentials` class is responsible for handling AWS credentials, including access keys, session tokens, profile names, region names, and endpoint URLs. It inherits the ability to manage default credentials and extends it with methods for handling partial credentials and converting credentials to a botocore session.
+`AwsCredentials`クラスは、アクセスキー、セッショントークン、プロファイル名、リージョン名、エンドポイントURLなどのAWS認証情報の処理を担当します。デフォルトの認証情報を管理する機能を継承し、部分的な認証情報の処理や認証情報をbotocoreセッションに変換するメソッドを追加して拡張しています。
 
-#### Usage
+#### 使用方法
 ```py
 aws_credentials = AwsCredentials()
 # Set the necessary attributes
@@ -288,31 +288,31 @@ def aws_readers(
     print(aws_credentials.access_key)
     ...
 ```
-while `secrets.toml` looks as follows:
+一方、`secrets.toml` は次のようになります。
 ```toml
 [sources.aws_readers.credentials]
 aws_access_key_id = "key_id"
 aws_secret_access_key = "access_key"
 region_name = "region"
 ```
-and `config.toml`:
+そして `config.toml`:
 ```toml
 [sources.aws_readers]
 bucket_url = "bucket_url"
 ```
 
-#### Defaults
+#### デフォルト
 
-If configuration is not provided, `dlt` uses the default AWS credentials (from `.aws/credentials`) as present on the machine:
+設定が指定されていない場合、`dlt` はマシン上に存在するデフォルトの AWS 認証情報（`.aws/credentials` から取得）を使用します。
 
-- It works by creating an instance of a botocore Session.
-- If `profile_name` is specified, the credentials for that profile are used. If not, the default profile is used.
+- botocore セッションのインスタンスを作成することで動作します。
+- `profile_name` が指定されている場合は、そのプロファイルの認証情報が使用されます。指定されていない場合は、デフォルトのプロファイルが使用されます。
 
 ### AzureCredentials
 
-The `AzureCredentials` class is responsible for handling Azure Blob Storage credentials, including account name, account key, Shared Access Signature (SAS) token, and SAS token permissions. It inherits the ability to manage default credentials and extends it with methods for handling partial credentials and converting credentials to a format suitable for interacting with Azure Blob Storage using the adlfs library.
+`AzureCredentials` クラスは、アカウント名、アカウントキー、Shared Access Signature (SAS) トークン、SAS トークンのアクセス許可など、Azure Blob Storage の資格情報の処理を担当します。このクラスは、デフォルトの資格情報を管理する機能を継承し、部分的な資格情報の処理や、adlfs ライブラリを使用して Azure Blob Storage とのやり取りに適した形式への資格情報変換を行うメソッドを追加して拡張しています。
 
-#### Usage
+#### 使用方法
 ```py
 az_credentials = AzureCredentials()
 # Set the necessary attributes
@@ -338,27 +338,27 @@ def azure_readers(
     # to_native_credentials() is not yet implemented
     ...
 ```
-while `secrets.toml` looks as follows:
+一方、`secrets.toml` は次のようになります。
 ```toml
 [sources.azure_readers.credentials]
 azure_storage_account_name = "account_name"
 azure_storage_account_key = "account_key"
 ```
-and `config.toml`:
+そして `config.toml`:
 ```toml
 [sources.azure_readers]
 bucket_url = "bucket_url"
 ```
 
-#### Defaults
+#### デフォルト
 
-If configuration is not provided, `dlt` uses the default credentials using `DefaultAzureCredential`.
+設定が指定されていない場合、`dlt` は `DefaultAzureCredential` を使用してデフォルトの資格情報を使用します。
 
-## Working with alternatives of credentials (Union types)
+## 認証情報の代替（ユニオン型）の使用
 
-If your source/resource allows for many authentication methods, you can support those seamlessly for your user. The user just passes the right credentials, and `dlt` will inject the right type into your decorated function.
+ソース/リソースが複数の認証方法をサポートしている場合、ユーザーはそれらをシームレスに利用できます。ユーザーは適切な認証情報を渡すだけで、`dlt` が適切な型をデコレートされた関数に挿入します。
 
-Example:
+例:
 
 ```py
 @dlt.source
@@ -378,9 +378,9 @@ assert list(zen_source(credentials={"email": "emx", "password": "pass"}))[0].ema
 ```
 
 :::info
-This applies not only to credentials but to [all specs](advanced.md#write-custom-specs).
+これは資格情報だけでなく、[すべての仕様](advanced.md#write-custom-specs)に適用されます。
 :::
 
 :::tip
-Check out the [complete example](https://github.com/dlt-hub/dlt/blob/devel/tests/common/configuration/test_spec_union.py), to learn how to create unions of credentials that derive from the common class, so you can handle it seamlessly in your code.
+共通クラスから派生した資格情報の結合を作成し、コード内でシームレスに処理する方法については、[完全な例](https://github.com/dlt-hub/dlt/blob/devel/tests/common/configuration/test_spec_union.py)を参照してください。
 :::

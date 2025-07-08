@@ -8,7 +8,7 @@ keywords: [state, metadata, dlt.current.resource_state, dlt.current.source_state
 
 パイプラインの状態は、データと一緒に存在する Python 辞書です。そこに値を保存し、次回のパイプライン実行時に値を戻すように要求できます。
 
-## リソース内のパイプラインの状態の読み取りと書き込み
+## リソース内のパイプラインの状態の読み取りと書き込み {#read-and-write-pipeline-state-in-a-resource}
 
 リソースの状態を読み書きします。以下では、状態を使用してチェスの試合のアーカイブのリストを作成し、それを使用して [重複したリクエストを防止](incremental/advanced-state.md#advanced-state-usage-storing-a-list-of-processed-entities) します。
 

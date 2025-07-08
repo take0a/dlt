@@ -1,6 +1,6 @@
 ---
-title: Load data from a cloud storage or a file system
-description: Learn how to load data files like JSON, JSONL, CSV, and Parquet from a cloud storage (AWS S3, Google Cloud Storage, Google Drive, Azure Blob Storage) or a local file system using dlt.
+title: クラウドストレージまたはファイルシステムからデータをロードする
+description: dlt を使用して、クラウド ストレージ (AWS S3、Google Cloud Storage、Google Drive、Azure Blob Storage) またはローカル ファイル システムから JSON、JSONL、CSV、Parquet などのデータ ファイルをロードする方法を学習します。
 keywords: [dlt, tutorial, filesystem, cloud storage, file system, python, data pipeline, incremental loading, json, jsonl, csv, parquet, duckdb]
 ---
 
@@ -171,12 +171,12 @@ files = filesystem(
 :::
 
 :::tip
-`filesystem` source uses the same configuration layout as filesystem destination so you can refer to:
+`filesystem` ソースはファイルシステムの宛先と同じ設定レイアウトを使用するため、以下を参照してください。
 
-1. [bucket access setup and examples](../dlt-ecosystem/destinations/filesystem.md#set-up-the-destination-and-credentials)
-2. [additional fsspec and client options](../dlt-ecosystem/destinations/filesystem.md#adding-additional-configuration) like ssl setup.
+1. [バケットアクセスの設定と例](../dlt-ecosystem/destinations/filesystem.md#set-up-the-destination-and-credentials)
+2. [追加の fsspec およびクライアントオプション](../dlt-ecosystem/destinations/filesystem.md#adding-additional-configuration) (SSL 設定など)
 
-Just remember that examples are prepared for destination configuration. Replace **destination** category section with **sources**.
+宛先設定の例が用意されていることにご注意ください。**destination** カテゴリセクションを **sources** に置き換えてください。
 
 :::
 

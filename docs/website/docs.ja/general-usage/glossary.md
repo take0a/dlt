@@ -6,7 +6,7 @@ keywords: [glossary, resource, source, pipeline]
 
 # Glossary
 
-## [ソース](source)
+## [Source](source)
 
 1 つ以上のリソースが編成された、特定の構造を持つデータを保持する場所。
 
@@ -16,7 +16,7 @@ keywords: [glossary, resource, source, pipeline]
 
 このドキュメントでは、**ソース** は、1 つ以上のリソース コンポーネントを使用してソースの場所からデータを **抽出** するソフトウェア コンポーネント (つまり、Python 関数) も指します。
 
-## [リソース](resource)
+## [Resource](resource)
 
 データソース内のデータを論理的にグループ化したもの。通常は、同様の構造と発生元のデータを持ちます。
 
@@ -26,28 +26,28 @@ keywords: [glossary, resource, source, pipeline]
 
 このドキュメントでは、**リソース** は、ソースの場所からデータを **抽出** するソフトウェア コンポーネント (つまり、Python 関数) も指します。
 
-## [宛先](../dlt-ecosystem/destinations)
+## [Destinations](../dlt-ecosystem/destinations)
 
 ソースからのデータがロードされるデータ ストア (例: Google BigQuery)。
 
-## [パイプライン](pipeline)
+## [Pipeline](pipeline)
 
 スキーマで指定された指示に従って、データをソースから宛先に移動します (データの抽出、正規化、ロードなど)。
 
-## [検証済みのソース](../walkthroughs/add-a-verified-source)
+## [Verified source](../walkthroughs/add-a-verified-source)
 
 `dlt init` とともに配布される Python モジュールで、特定の **ソース** からデータを抽出するパイプラインを作成できます。このようなモジュールは、他のユーザーがパイプラインを構築するために使用できるように公開されることを目的としています。
 
 ソースが、「検証済み」になるためには公開されている必要があります。つまり、テスト、テスト データ、デモ スクリプト、ドキュメントが含まれ、生成されたデータセットがデータ エンジニアによってレビューされている必要があります。
 
-## [スキーマ](schema)
+## [Schema](schema)
 
 正規化されたデータの構造 (展開されたテーブル、列の型など) を記述し、データの処理方法とロード方法に関する指示を提供します (つまり、データの内容とそれを宛先にロードする方法を `dlt` に伝えます)。
 
-## [設定](credentials/setup#secrets.toml-and-config.toml)
+## [Config](credentials/setup#secrets.toml-and-config.toml)
 
 実行時にパイプラインに渡される値のセット (例: ローカルと本番環境での動作を変更するため)。
 
-## [資格情報](credentials/complex_types)
+## [Credentials](credentials/complex_types)
 
 要素が秘密に保持され、プレーンテキストで共有されることのない構成のサブセット。
