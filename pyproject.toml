@@ -321,6 +321,9 @@ docs = [
 [tool.uv.sources]
 flake8-encodings = { git = "https://github.com/dlt-hub/flake8-encodings.git", branch = "disable_jedi_support" }
 
+[tool.uv.workspace]
+members = ["docs/website"]
+
 [tool.hatch.build.targets.sdist]
 packages = ["dlt"]
 include = [
