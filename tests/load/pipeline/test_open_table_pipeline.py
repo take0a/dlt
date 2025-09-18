@@ -12,7 +12,10 @@ import pytest
 
 from dlt.common import json
 from dlt.common import pendulum
-from dlt.common.storages.configuration import FilesystemConfiguration
+from dlt.common.storages.configuration import (
+    FilesystemConfiguration,
+    FilesystemConfigurationWithLocalFiles,
+)
 from dlt.common.storages.load_package import ParsedLoadJobFileName
 from dlt.common.utils import uniq_id
 from dlt.common.schema.typing import TWriteDisposition, TTableFormat
@@ -127,7 +130,8 @@ def test_table_format_core(
     # row should match expected values
     rows = load_tables_to_dicts(pipeline, "data_types", exclude_system_cols=True)["data_types"]
     assert len(rows) == 10
-    assert_all_data_types_row(rows[0], schema=column_schemas)
+    with pipeline._maybe_destination_capabilities() as caps:
+        assert_all_data_types_row(caps, rows[0], schema=column_schemas)
 
     # make sure remote_url is in metrics
     metrics = info.metrics[info.loads_ids[0]][0]
@@ -137,7 +141,7 @@ def test_table_format_core(
     assert remote_url.endswith(("data_types", "_dlt_pipeline_state", ""))
     bucket_url = destination_config.bucket_url
     if FilesystemConfiguration.is_local_path(bucket_url):
-        bucket_url = FilesystemConfiguration.make_file_url(bucket_url)
+        bucket_url = FilesystemConfigurationWithLocalFiles.make_file_url(bucket_url)
     assert remote_url.startswith(bucket_url)
 
     # another run should append rows to the table
@@ -375,16 +379,15 @@ def test_table_format_child_tables(
     assert len(rows_dict["nested_table__child"]) == 3
     assert len(rows_dict["nested_table__child__grandchild"]) == 5
 
-    if destination_config.supports_merge:
-        # now drop children and grandchildren, use merge write disposition to create and pass full table chain
-        # also for tables that do not have jobs
-        info = pipeline.run(
-            [{"foo": 3}] * 10000,
-            table_name="nested_table",
-            primary_key="foo",
-            write_disposition="merge",
-        )
-        assert_load_info(info)
+    # now drop children and grandchildren, use merge write disposition to create and pass full table chain
+    # also for tables that do not have jobs
+    info = pipeline.run(
+        [{"foo": i} for i in range(3, 10003)],
+        table_name="nested_table",
+        primary_key="foo",
+        write_disposition="merge",
+    )
+    assert_load_info(info)
 
 
 @pytest.mark.parametrize(

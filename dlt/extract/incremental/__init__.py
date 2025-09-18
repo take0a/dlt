@@ -6,7 +6,7 @@ import inspect
 from functools import wraps
 
 from dlt.common import logger
-from dlt.common.exceptions import MissingDependencyException
+from dlt.common.exceptions import MissingDependencyException, ValueErrorWithKnownValues
 from dlt.common.pendulum import pendulum
 from dlt.common.jsonpath import compile_path, extract_simple_field_name
 from dlt.common.typing import (
@@ -23,7 +23,6 @@ from dlt.common.typing import (
 )
 from dlt.common.configuration import configspec, ConfigurationValueError
 from dlt.common.configuration.specs import BaseConfiguration
-from dlt.common.pipeline import resource_state
 from dlt.common.data_types.type_helpers import (
     coerce_from_date_types,
     coerce_value,
@@ -45,6 +44,7 @@ from dlt.common.incremental.typing import (
 )
 from dlt.extract.items import SupportsPipe, TTableHintTemplate
 from dlt.extract.items_transform import ItemTransform
+from dlt.extract.state import resource_state
 from dlt.extract.incremental.transform import (
     JsonIncremental,
     ArrowIncremental,
@@ -154,7 +154,7 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
                 last_value_func = max
             else:
                 raise ValueError(
-                    f"Unknown last_value_func '{last_value_func}' passed as string. Provide a"
+                    f"Unknown `{last_value_func=:}` passed as string. Provide a"
                     " callable to use a custom function."
                 )
         self.last_value_func = last_value_func
@@ -168,9 +168,10 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
         self.row_order = row_order
         self.allow_external_schedulers = allow_external_schedulers
         if on_cursor_value_missing not in ["raise", "include", "exclude"]:
-            raise ValueError(
-                f"Unexpected argument for on_cursor_value_missing. Got {on_cursor_value_missing}"
+            raise ValueErrorWithKnownValues(
+                "on_cursor_value_missing", on_cursor_value_missing, ["raise", "include", "exclude"]
             )
+
         self.on_cursor_value_missing = on_cursor_value_missing
 
         self._cached_state: IncrementalColumnState = None
@@ -263,32 +264,39 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
         compile_path(self.cursor_path)
         if self.end_value is not None and self.initial_value is None:
             raise ConfigurationValueError(
-                "Incremental 'end_value' was specified without 'initial_value'. 'initial_value' is"
-                " required when using 'end_value'."
+                "Incremental `end_value` was specified without `initial_value`."
+                "`initial_value` is required when using `end_value`."
             )
-        self._cursor_datetime_check(self.initial_value, "initial_value")
-        self._cursor_datetime_check(self.initial_value, "end_value")
         # Ensure end value is "higher" than initial value
-        if (
-            self.end_value is not None
-            and self.last_value_func([self.end_value, self.initial_value]) != self.end_value
-        ):
-            if self.last_value_func in (min, max):
-                adject = "higher" if self.last_value_func is max else "lower"
-                msg = (
-                    f"Incremental 'initial_value' ({self.initial_value}) is {adject} than"
-                    f" 'end_value` ({self.end_value}). 'end_value' must be {adject} than"
-                    " 'initial_value'"
-                )
-            else:
-                msg = (
-                    f"Incremental 'initial_value' ({self.initial_value}) is greater than"
-                    f" 'end_value' ({self.end_value}) as determined by the custom"
-                    " 'last_value_func'. The result of"
-                    f" '{self.last_value_func.__name__}([end_value, initial_value])' must equal"
-                    " 'end_value'"
-                )
-            raise ConfigurationValueError(msg)
+        try:
+            if (
+                self.end_value is not None
+                and self.last_value_func([self.end_value, self.initial_value]) != self.end_value
+            ):
+                if self.last_value_func in (min, max):
+                    adject = "higher" if self.last_value_func is max else "lower"
+                    msg = (
+                        f"Incremental `initial_value={self.initial_value}` is {adject} than"
+                        f" `end_value={self.end_value}`. 'end_value' must be {adject} than"
+                        " `initial_value`."
+                    )
+                else:
+                    msg = (
+                        f"Incremental `initial_value={self.initial_value}` is greater than"
+                        f" `end_value={self.end_value}` as determined by the custom"
+                        " `last_value_func`. The result of"
+                        f" `{self.last_value_func.__name__}([end_value, initial_value])` must equal"
+                        " `end_value`"
+                    )
+                raise ConfigurationValueError(msg)
+        except ConfigurationValueError:
+            raise
+        except Exception as exc:
+            raise ConfigurationValueError(
+                f"Incremental `initial_value={self.initial_value}` and `end_value={self.end_value}`"
+                " are not comparable. Make sure they are of the same type and tz-awareness: "
+                + str(exc)
+            ) from exc
 
     def parse_native_representation(self, native_value: Any) -> None:
         if isinstance(native_value, Incremental):
@@ -296,8 +304,8 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
                 raise ValueError("Trying to resolve EMPTY Incremental")
             if native_value is self.EMPTY:
                 raise ValueError(
-                    "Do not use EMPTY Incremental as default or explicit values. Pass None to reset"
-                    " an incremental."
+                    "Do not use `EMPTY` Incremental as default or explicit values. "
+                    "Pass `None` to reset an incremental."
                 )
             merged = self.merge(native_value)
             self.cursor_path = merged.cursor_path
@@ -322,7 +330,11 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
             self.initial_value = native_value
 
     def get_state(self) -> IncrementalColumnState:
-        """Returns an Incremental state for a particular cursor column"""
+        """Returns or creates an Incremental state for a particular cursor column
+
+        If end_value is set, a mock state is created that will be discarded after extract step
+        Otherwise state is taken from current pipeline and will be persisted in it
+        """
         if self.end_value is not None:
             # End value uses mock state. We don't want to write it.
             return {
@@ -348,21 +360,12 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
 
     @staticmethod
     def _get_state(resource_name: str, cursor_path: str) -> IncrementalColumnState:
+        """Retrieve the sate from currently active pipeline"""
         state: IncrementalColumnState = (
             resource_state(resource_name).setdefault("incremental", {}).setdefault(cursor_path, {})
         )
         # if state params is empty
         return state
-
-    @staticmethod
-    def _cursor_datetime_check(value: Any, arg_name: str) -> None:
-        if value and isinstance(value, datetime) and value.tzinfo is None:
-            logger.warning(
-                f"The {arg_name} argument {value} is a datetime without timezone. This may result"
-                " in an error when such values  are compared by Incremental class. Note that `dlt`"
-                " stores datetimes in timezone-aware types so the UTC timezone will be added by"
-                " the destination"
-            )
 
     @property
     def last_value(self) -> Optional[TCursorValue]:
@@ -382,7 +385,7 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
                 )
             elif last_value is not None:
                 last_value = apply_lag(
-                    self.lag, s["initial_value"], last_value, self.last_value_func
+                    self.lag, self.initial_value, last_value, self.last_value_func
                 )
 
         return last_value
@@ -543,7 +546,8 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
         )
         return transformer
 
-    def _get_transformer(self, items: TDataItems) -> IncrementalTransform:
+    def _get_transform(self, items: TDataItems) -> IncrementalTransform:
+        """Gets transform implementation that handles particular data item type"""
         # Assume list is all of the same type
         for item in items if isinstance(items, list) else [items]:
             if is_arrow_item(item):
@@ -558,7 +562,7 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
         # example: MaterializedEmptyList
         if rows is None or (isinstance(rows, list) and len(rows) == 0):
             return rows
-        transformer = self._get_transformer(rows)
+        transformer = self._get_transform(rows)
         if isinstance(rows, list):
             rows = [
                 item
@@ -576,7 +580,7 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
         # writing back state
         self._cached_state["last_value"] = transformer.last_value
 
-        if not transformer.deduplication_disabled:
+        if transformer.boundary_deduplication:
             # compute hashes for new last rows
             # NOTE: object transform uses last_rows to pass rows to dedup, arrow computes
             #  hashes directly
@@ -695,8 +699,8 @@ class IncrementalResourceWrapper(ItemTransform[TDataItem]):
                 explicit_value = bound_args.arguments[p.name]
                 if explicit_value is Incremental.EMPTY or p.default is Incremental.EMPTY:
                     raise ValueError(
-                        "Do not use EMPTY Incremental as default or explicit values. Pass None to"
-                        " reset an incremental."
+                        "Do not use `EMPTY` Incremental as default or explicit values. "
+                        "Pass `None` to reset an incremental."
                     )
                 elif isinstance(explicit_value, Incremental):
                     # Explicit Incremental instance is merged with default
@@ -717,8 +721,8 @@ class IncrementalResourceWrapper(ItemTransform[TDataItem]):
                     bound_args.arguments[p.name] = None  # Remove partial spec
                     return func(*bound_args.args, **bound_args.kwargs)
                 raise ValueError(
-                    f"{p.name} Incremental argument has no default. Please wrap its typing in"
-                    " Optional[] to allow no incremental"
+                    f"`{p.name}` incremental argument has no default. Please wrap its typing in"
+                    " `Optional[]` to allow no incremental"
                 )
             # pass Generic information from annotation to new_incremental
             if (

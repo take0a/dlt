@@ -23,6 +23,7 @@ from dlt.common.schema import TColumnSchema, Schema, TTableSchemaColumns
 from dlt.common.schema.typing import TColumnType
 from dlt.common.schema.utils import get_inherited_table_hint, get_columns_names_with_prop
 from dlt.common.storages.load_package import destination_state
+from dlt.common.storages.load_storage import ParsedLoadJobFileName
 from dlt.common.typing import DictStrAny
 from dlt.destinations.exceptions import (
     DatabaseTransientException,
@@ -91,7 +92,7 @@ class BigQueryLoadJob(RunnableLoadJob, HasFollowupJobs):
             elif reason in BQ_TERMINAL_REASONS:
                 # google.api_core.exceptions.BadRequest - will not be processed ie bad job name
                 raise LoadJobTerminalException(
-                    self._file_path, f"The server reason was: {reason}"
+                    self._file_path, f"The server reason was: `{reason}`"
                 ) from gace
             else:
                 raise DatabaseTransientException(gace) from gace
@@ -110,19 +111,20 @@ class BigQueryLoadJob(RunnableLoadJob, HasFollowupJobs):
                 # the job permanently failed for the reason above
                 raise DatabaseTerminalException(
                     Exception(
-                        f"Bigquery Load Job failed, reason reported from bigquery: '{reason}'"
+                        f"Bigquery Load Job failed, reason reported from bigquery: `{reason}`"
                     )
                 )
             elif reason in ["internalError"]:
                 logger.warning(
-                    f"Got reason {reason} for job {self._file_name}, job considered still"
+                    f"Got reason `{reason}` for job `{self._file_name}`, job considered still"
                     f" running. ({self._bq_load_job.error_result})"
                 )
                 continue
             else:
                 raise DatabaseTransientException(
                     Exception(
-                        f"Bigquery Job needs to be retried, reason reported from bigquer '{reason}'"
+                        "Bigquery Job needs to be retried, reason reported from bigquery"
+                        f" `{reason}`"
                     )
                 )
 
@@ -154,7 +156,7 @@ class BigQueryMergeJob(SqlMergeFollowupJob):
         for table in table_chain:
             if should_autodetect_schema(table):
                 table_name, staging_table_name = sql_client.get_qualified_table_names(table["name"])
-                sql.append(f"CREATE TABLE IF NOT EXISTS {table_name} LIKE {staging_table_name};")
+                sql.append(f"CREATE TABLE IF NOT EXISTS {table_name} LIKE {staging_table_name}")
         return sql
 
     @classmethod
@@ -223,17 +225,18 @@ class BigQueryClient(SqlJobClientWithStagingDataset, SupportsStagingDestination)
             if insert_api == "streaming":
                 if table["write_disposition"] != "append":
                     raise DestinationTerminalException(
-                        "BigQuery streaming insert can only be used with `append`"
-                        " write_disposition, while the given resource has"
-                        f" `{table['write_disposition']}`."
+                        "BigQuery streaming insert can only be used with"
+                        " `write_disposition='append'`. Resource received"
+                        f" `write_disposition={table['write_disposition']}`"
                     )
-                if file_path.endswith(".jsonl"):
+                parsed_file = ParsedLoadJobFileName.parse(file_path)
+                if parsed_file.file_format in ["jsonl", "typed-jsonl"]:
                     job_cls = DestinationJsonlLoadJob
-                elif file_path.endswith(".parquet"):
+                elif parsed_file.file_format == "parquet":
                     job_cls = DestinationParquetLoadJob  # type: ignore
                 else:
                     raise ValueError(
-                        f"Unsupported file type for BigQuery streaming inserts: {file_path}"
+                        f"Unsupported file type for BigQuery streaming inserts: `{file_path}`"
                     )
 
                 job = job_cls(
@@ -448,7 +451,7 @@ SELECT {",".join(self._get_storage_table_query_columns())}
             # placeholder for each table
             table_placeholders = ",".join(["%s"] * len(folded_table_names))
             query += f"WHERE table_name IN ({table_placeholders}) "
-        query += "ORDER BY table_name, ordinal_position;"
+        query += "ORDER BY table_name, ordinal_position"
 
         return query, folded_table_names
 

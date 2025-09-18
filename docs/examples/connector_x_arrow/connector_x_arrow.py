@@ -37,7 +37,7 @@ def read_sql_x(
     yield cx.read_sql(
         conn_str.to_native_representation(),
         query,
-        return_type="arrow2",
+        return_type="arrow",
         protocol="binary",
     )
 

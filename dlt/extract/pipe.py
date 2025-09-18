@@ -16,7 +16,7 @@ from typing import (
 
 from dlt.common.reflection.inspect import isasyncgenfunction, isgeneratorfunction
 from dlt.common.typing import AnyFun, AnyType, TDataItems
-from dlt.common.utils import get_callable_name
+from dlt.common.utils import get_callable_name, uniq_id
 
 from dlt.extract.exceptions import (
     CreatePipeException,
@@ -76,6 +76,7 @@ class Pipe(SupportsPipe):
         self._gen_idx = 0
         self._steps: List[TPipeStep] = []
         self.parent = parent
+        self.instance_id = uniq_id()
         # add the steps, this will check and mod transformations
         if steps:
             for index, step in enumerate(steps):
@@ -148,7 +149,7 @@ class Pipe(SupportsPipe):
 
     def fork(self, child_pipe: "Pipe", child_step: int = -1, copy_on_fork: bool = False) -> "Pipe":
         if len(self._steps) == 0:
-            raise CreatePipeException(self.name, f"Cannot fork to empty pipe {child_pipe}")
+            raise CreatePipeException(self.name, f"Cannot fork to empty pipe `{child_pipe}`")
         fork_step = self.tail
         if not isinstance(fork_step, ForkPipe):
             fork_step = ForkPipe(child_pipe, child_step, copy_on_fork)
@@ -206,7 +207,7 @@ class Pipe(SupportsPipe):
         if index == self._gen_idx:
             raise CreatePipeException(
                 self.name,
-                f"Step at index {index} holds a data generator for this pipe and cannot be removed",
+                f"Step at `{index=:}` holds a data generator for this pipe and cannot be removed",
             )
         self._steps.pop(index)
         if index < self._gen_idx:
@@ -358,7 +359,7 @@ class Pipe(SupportsPipe):
         if not isinstance(step, (Iterable, Iterator, AsyncIterator)) and not callable(step):
             raise CreatePipeException(
                 self.name,
-                "A head of a resource pipe must be Iterable, Iterator, AsyncIterator or a Callable",
+                "A head of a resource pipe must be: [Iterable, Iterator, AsyncIterator, Callable]",
             )
 
     def _wrap_transform_step_meta(self, step_no: int, step: TPipeStep) -> TPipeStep:
@@ -443,20 +444,12 @@ class Pipe(SupportsPipe):
             else:
                 raise InvalidStepFunctionArguments(self.name, callable_name, sig, str(ty_ex))
 
-    def _clone(self, new_name: str = None, with_parent: bool = False) -> "Pipe":
+    def _clone(self, new_name: str = None) -> "Pipe":
         """Clones the pipe steps, optionally renaming the pipe. Used internally to clone a list of connected pipes."""
         new_parent = self.parent
-        if with_parent and self.parent and not self.parent.is_empty:
-            parent_new_name = new_name
-            if new_name:
-                # if we are renaming the pipe, then also rename the parent
-                if self.name in self.parent.name:
-                    parent_new_name = self.parent.name.replace(self.name, new_name)
-                else:
-                    parent_new_name = f"{self.parent.name}_{new_name}"
-            new_parent = self.parent._clone(parent_new_name, with_parent)
-
         p = Pipe(new_name or self.name, [], new_parent)
+        # keep instance id
+        p.instance_id = self.instance_id
         p._steps = self._steps.copy()
         return p
 

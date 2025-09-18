@@ -30,15 +30,7 @@ from tests.load.utils import (
     destinations_configs,
     DestinationTestConfiguration,
     get_normalized_dataset_name,
-    drop_active_pipeline_data,
 )
-
-
-@pytest.fixture(autouse=True)
-def duckdb_pipeline_location() -> None:
-    # this will store duckdb in working folder so it survives pipeline wipe
-    if "DESTINATION__DUCKDB__CREDENTIALS" in os.environ:
-        del os.environ["DESTINATION__DUCKDB__CREDENTIALS"]
 
 
 @pytest.mark.essential
@@ -98,9 +90,6 @@ def test_restore_state_utils(destination_config: DestinationTestConfiguration) -
     with p.destination_client(p.default_schema.name) as job_client:  # type: ignore[assignment]
         stored_schema = job_client.get_stored_schema(job_client.schema.name)
         assert stored_schema is not None
-        # dataset exists, still no table
-        with pytest.raises(DestinationUndefinedEntity):
-            load_pipeline_state_from_destination(p.pipeline_name, job_client)
         initial_state = p._get_state()
         # now add table to schema and sync
         initial_state["_local"]["_last_extracted_at"] = pendulum.now()
@@ -204,6 +193,7 @@ def test_restore_state_utils(destination_config: DestinationTestConfiguration) -
     assert new_stored_state["_state_version"] + 1 == new_stored_state_2["_state_version"]
 
 
+@pytest.mark.no_load
 @pytest.mark.parametrize(
     "destination_config",
     destinations_configs(default_sql_configs=True, default_vector_configs=True),
@@ -334,7 +324,6 @@ def test_get_schemas_from_destination(
     "destination_config",
     destinations_configs(
         default_sql_configs=True,
-        all_staging_configs=True,
         default_vector_configs=True,
         all_buckets_filesystem_configs=True,
         table_format_filesystem_configs=True,
@@ -453,7 +442,6 @@ def test_restore_state_pipeline(
     )
     p.run(**destination_config.run_kwargs)
     assert p.default_schema_name is None
-    drop_active_pipeline_data()
 
     # create pipeline without restore
     os.environ["RESTORE_FROM_DESTINATION"] = "False"

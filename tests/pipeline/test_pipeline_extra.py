@@ -5,6 +5,8 @@ import pytest
 
 from dlt.common.destination.client import SupportsOpenTables
 from dlt.common.schema.utils import new_table
+
+from dlt.destinations import filesystem
 from dlt.destinations.exceptions import DatabaseUndefinedRelation
 from dlt.pipeline.exceptions import PipelineStepFailed
 
@@ -655,7 +657,7 @@ def test_pick_matching_file_format(test_storage: FileStorage) -> None:
     assert files[0].endswith("parquet")
     files = test_storage.list_folder_files("user_data/object")
     assert len(files) == 1
-    assert files[0].endswith("jsonl")
+    assert files[0].endswith("jsonl.gz")
 
     # load as csv
     info = dlt.run(
@@ -670,10 +672,10 @@ def test_pick_matching_file_format(test_storage: FileStorage) -> None:
     assert_load_info(info)
     files = test_storage.list_folder_files("user_data_csv/arrow")
     assert len(files) == 1
-    assert files[0].endswith("csv")
+    assert files[0].endswith("csv.gz")
     files = test_storage.list_folder_files("user_data_csv/object")
     assert len(files) == 1
-    assert files[0].endswith("csv")
+    assert files[0].endswith("csv.gz")
 
 
 def test_filesystem_column_hint_timezone() -> None:
@@ -832,3 +834,24 @@ def test_open_table_location(data_dir: str, layout: str) -> None:
         )
         with pytest.raises(DatabaseUndefinedRelation):
             assert_table_counts(pipeline, {"missing": 0}, "missing")
+
+
+def test_null_in_non_null_arrow() -> None:
+    @dlt.resource(file_format="parquet", columns={"foo": {"nullable": False}})
+    def inconsistent_data(dtype: str):
+        if dtype == "bigint":
+            yield {"foo": 1}
+        elif dtype == "text":
+            yield {"foo": "foo"}
+
+    pipeline = dlt.pipeline(
+        pipeline_name="variant",
+        pipelines_dir="_storage",
+        destination=filesystem(TEST_STORAGE_ROOT),
+    )
+
+    with pytest.raises(PipelineStepFailed) as pip_ex:
+        pipeline.run(inconsistent_data("bigint"), refresh="drop_sources")
+        # generates variant column on non-nullable column. original "foo" will receive null
+        pipeline.run(inconsistent_data("text"))
+    assert pip_ex.value.step == "normalize"

@@ -48,7 +48,6 @@ from tests.load.utils import (
 )
 
 
-@pytest.mark.essential
 @pytest.mark.parametrize(
     "destination_config",
     destinations_configs(
@@ -172,8 +171,8 @@ def test_merge_record_updates(
 
     # initial load, also use primary key is that must be normalized "ID" -> "id"
     run_1 = [
-        {"ID": 1, "foo": 1, "child": [{"bar": 1, "grandchild": [{"baz": 1}]}]},
-        {"ID": 2, "foo": 1, "child": [{"bar": 1, "grandchild": [{"baz": 1}]}]},
+        {"ID": 1, "foo": 1, "empty_col": None, "child": [{"bar": 1, "grandchild": [{"baz": 1}]}]},
+        {"ID": 2, "foo": 1, "empty_col": None, "child": [{"bar": 1, "grandchild": [{"baz": 1}]}]},
     ]
     info = p.run(r(run_1), **destination_config.run_kwargs)
     assert_load_info(info)
@@ -193,8 +192,8 @@ def test_merge_record_updates(
 
     # update record — change at parent level
     run_2 = [
-        {"id": 1, "foo": 2, "child": [{"bar": 1, "grandchild": [{"baz": 1}]}]},
-        {"id": 2, "foo": 1, "child": [{"bar": 1, "grandchild": [{"baz": 1}]}]},
+        {"id": 1, "foo": 2, "child": [{"bar": 1, "empty_col": None, "grandchild": [{"baz": 1}]}]},
+        {"id": 2, "foo": 1, "child": [{"bar": 1, "empty_col": None, "grandchild": [{"baz": 1}]}]},
     ]
     info = p.run(r(run_2), **destination_config.run_kwargs)
     assert_load_info(info)
@@ -255,7 +254,6 @@ def test_merge_record_updates(
     )
 
 
-@pytest.mark.essential
 @pytest.mark.parametrize(
     "destination_config",
     destinations_configs(
@@ -373,7 +371,6 @@ def test_merge_primary_key_normalization(
         )
 
 
-@pytest.mark.essential
 @pytest.mark.parametrize(
     "destination_config",
     destinations_configs(
@@ -440,7 +437,10 @@ def test_merge_nested_records_inserted_deleted(
     table_data = load_tables_to_dicts(p, "parent", "parent__child", exclude_system_cols=True)
     if merge_strategy == "upsert":
         # merge keys will not apply and parent will not be deleted
-        if destination_config.table_format == "delta":
+        if (
+            destination_config.table_format in ["delta", "iceberg"]
+            and destination_config.destination_type != "athena"
+        ):
             # delta merges cannot delete from nested tables
             assert table_counts == {
                 "parent": 3,  # id == 3 not deleted (not present in the data)
@@ -509,7 +509,6 @@ def test_merge_nested_records_inserted_deleted(
     )
 
 
-@pytest.mark.essential
 @pytest.mark.parametrize(
     "destination_config",
     destinations_configs(
@@ -770,8 +769,6 @@ def test_merge_no_child_tables(destination_config: DestinationTestConfiguration)
     assert github_2_counts["issues"] == 100 if destination_config.supports_merge else 115
 
 
-# mark as essential for now
-@pytest.mark.essential
 @pytest.mark.parametrize(
     "destination_config",
     destinations_configs(default_sql_configs=True, local_filesystem_configs=True),
@@ -825,11 +822,22 @@ def test_pipeline_load_parquet(destination_config: DestinationTestConfiguration)
     github_data.max_table_nesting = 2
     github_data_copy = github()
     github_data_copy.max_table_nesting = 2
-    info = p.run(
-        [github_data, github_data_copy],
-        write_disposition="merge",
-        **destination_config.run_kwargs,
-    )
+    # iceberg filesystem requires input data without duplicates
+    if (
+        destination_config.table_format == "iceberg"
+        and destination_config.destination_type == "filesystem"
+    ):
+        info = p.run(
+            github_data,
+            write_disposition="merge",
+            **destination_config.run_kwargs,
+        )
+    else:
+        info = p.run(
+            [github_data, github_data_copy],
+            write_disposition="merge",
+            **destination_config.run_kwargs,
+        )
     assert_load_info(info)
     # make sure it was parquet or sql transforms
     expected_formats = ["parquet"]
@@ -841,10 +849,9 @@ def test_pipeline_load_parquet(destination_config: DestinationTestConfiguration)
 
     github_1_counts = load_table_counts(p)
     expected_rows = 100
-    # if table_format is set we use upsert which does not deduplicate input data
-    if not destination_config.supports_merge or (
-        destination_config.table_format and destination_config.destination_type != "athena"
-    ):
+    # if table_format is set to delta we use upsert which does not deduplicate input data
+    # otherwise the data is either deduplicated or it's iceberg filesystem for which we didn't pass duplicates at all
+    if destination_config.table_format == "delta":
         expected_rows *= 2
     assert github_1_counts["issues"] == expected_rows
 
@@ -870,6 +877,48 @@ def test_pipeline_load_parquet(destination_config: DestinationTestConfiguration)
 
     github_1_counts = load_table_counts(p)
     assert github_1_counts["issues"] == 100
+
+
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(
+        default_sql_configs=True,
+        subset=("postgres", "athena", "sqlalchemy"),
+        supports_merge=True,
+    ),
+    ids=lambda x: x.name,
+)
+@pytest.mark.parametrize("max_table_nesting", (0, 1))
+def test_pipeline_disable_deduplication(
+    destination_config: DestinationTestConfiguration, max_table_nesting: int
+) -> None:
+    pipeline = destination_config.setup_pipeline("github_3", dev_mode=True)
+    # do not save state to destination so jobs counting is easier
+    pipeline.config.restore_from_destination = False
+    github_data = github()
+    # generate some nested types
+    github_data.max_table_nesting = max_table_nesting
+    github_data_copy = github()
+    github_data_copy.max_table_nesting = max_table_nesting
+
+    # disable deduplication
+    pipeline.run(
+        [github_data, github_data_copy],
+        write_disposition={
+            "disposition": "merge",
+            "strategy": "delete-insert",
+            "deduplicated": True,
+        },
+        **destination_config.run_kwargs,
+    )
+    github_1_counts = load_table_counts(pipeline)
+    # dedup disabled
+    assert github_1_counts["issues"] == 200
+    # make sure we get expected number of tables
+    assert len(github_1_counts) == 1 if max_table_nesting == 0 else 3
+    if max_table_nesting == 1:
+        assert github_1_counts["issues__labels"] == 68
+        assert github_1_counts["issues__assignees"] == 62
 
 
 @dlt.transformer(

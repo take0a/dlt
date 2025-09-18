@@ -1,19 +1,22 @@
 import asyncio
 import pathlib
+import pickle
 from concurrent.futures import ThreadPoolExecutor
 import itertools
 import logging
-import os
+import os, sys
 import random
 import shutil
 import threading
 from time import sleep
 from typing import Any, List, Tuple, cast
 from tenacity import retry_if_exception, Retrying, stop_after_attempt
+from unittest.mock import patch
 
 import pytest
 from dlt.common.known_env import DLT_LOCAL_DIR
 from dlt.common.storages import FileStorage
+from dlt.common.storages.load_storage import ParsedLoadJobFileName
 
 import dlt
 from dlt.common import json, pendulum, Decimal
@@ -31,7 +34,7 @@ from dlt.common.destination.exceptions import (
     UnknownDestinationModule,
 )
 from dlt.common.exceptions import PipelineStateNotAvailable
-from dlt.common.pipeline import LoadInfo, PipelineContext
+from dlt.common.pipeline import LoadInfo, PipelineContext, SupportsPipeline
 from dlt.common.runtime.collector import LogCollector
 from dlt.common.schema.exceptions import TableIdentifiersFrozen
 from dlt.common.schema.typing import TColumnSchema
@@ -63,6 +66,9 @@ from dlt.pipeline.exceptions import (
 from dlt.pipeline.helpers import retry_load
 
 from dlt.pipeline.pipeline import Pipeline
+from dlt.pipeline.trace import PipelineTrace, PipelineStepTrace
+from dlt.pipeline.typing import TPipelineStep
+
 from tests.common.utils import TEST_SENTRY_DSN
 from tests.utils import TEST_STORAGE_ROOT
 from tests.pipeline.utils import assert_load_info, load_table_counts
@@ -94,8 +100,10 @@ def test_default_pipeline() -> None:
     assert p.dataset_name is None
     assert p.destination is None
     assert p.default_schema_name is None
-    # init_cwd is cwd
-    assert p.get_local_state_val("initial_cwd") == os.path.abspath(os.curdir)
+    # init_cwd is local_dir
+    assert p.get_local_state_val("initial_cwd") == os.path.abspath(
+        dlt.current.run_context().local_dir
+    )
 
     # this is the same pipeline
     p2 = dlt.pipeline()
@@ -367,7 +375,7 @@ def test_file_format_resolution() -> None:
     with pytest.raises(DestinationIncompatibleLoaderFileFormatException):
         pipeline = dlt.pipeline(pipeline_name="managed_state_pipeline", destination="postgres")
         pipeline.config.restore_from_destination = False
-        pipeline.run([1, 2, 3], table_name="numbers", loader_file_format="parquet")
+        pipeline.run([1, 2, 3], table_name="numbers", loader_file_format="jsonl")
 
     # check invalid input
     with pytest.raises(DestinationIncompatibleLoaderFileFormatException):
@@ -405,33 +413,50 @@ def test_pipeline_context_deferred_activation() -> None:
 
 def test_pipeline_context() -> None:
     ctx = Container()[PipelineContext]
-    assert ctx.is_active() is False
-    # create pipeline
-    p = dlt.pipeline()
-    assert ctx.is_active() is True
-    assert ctx.pipeline() is p
-    assert p.is_active is True
-    # has no destination context
-    assert DestinationCapabilitiesContext not in Container()
+    ctx.enable_activation_history = True
+    try:
+        assert ctx.is_active() is False
+        assert len(ctx.activation_history()) == 0
+        # create pipeline
+        p = dlt.pipeline()
+        assert ctx.is_active() is True
+        assert ctx.pipeline() is p
+        assert p.is_active is True
+        # has no destination context
+        assert DestinationCapabilitiesContext not in Container()
+        assert ctx.activation_history()[0] is p
+        ctx.clear_activation_history()
 
-    # create another pipeline
-    p2 = dlt.pipeline(pipeline_name="another pipeline", destination="duckdb")
-    assert ctx.pipeline() is p2
-    assert p.is_active is False
-    assert p2.is_active is True
+        # create another pipeline
+        p2 = dlt.pipeline(pipeline_name="another pipeline", destination="duckdb")
+        assert ctx.pipeline() is p2
+        assert p.is_active is False
+        assert p2.is_active is True
+        assert ctx.activation_history() == [p2]
 
-    p3 = dlt.pipeline(pipeline_name="more pipelines", destination="dummy")
-    assert ctx.pipeline() is p3
-    assert p3.is_active is True
-    assert p2.is_active is False
-    # no default naming convention
-    assert Container()[DestinationCapabilitiesContext].naming_convention is None
+        p3 = dlt.pipeline(pipeline_name="more pipelines", destination="dummy")
+        assert ctx.pipeline() is p3
+        assert p3.is_active is True
+        assert p2.is_active is False
+        # no default naming convention
+        assert Container()[DestinationCapabilitiesContext].naming_convention is None
+        assert ctx.activation_history() == [p2, p3]
 
-    # restore previous
-    p2 = dlt.attach("another pipeline")
-    assert ctx.pipeline() is p2
-    assert p3.is_active is False
-    assert p2.is_active is True
+        # restore previous
+        p2_a = dlt.attach("another pipeline")
+        assert ctx.pipeline() is p2_a
+        assert p3.is_active is False
+        assert p2.is_active is False
+        assert p2_a.is_active is True
+        assert ctx.activation_history() == [p2, p3, p2_a]
+
+        # activate p2
+        p2.activate()
+        # already was on the list
+        assert ctx.activation_history() == [p2, p3, p2_a]
+    finally:
+        ctx.clear_activation_history()
+        ctx.enable_activation_history = False
 
 
 def test_import_unknown_destination() -> None:
@@ -1260,6 +1285,13 @@ def test_set_get_local_value() -> None:
     assert p.state["_local"][new_val] == new_val  # type: ignore[literal-required]
 
 
+def test_update_last_run_context() -> None:
+    p = dlt.pipeline(destination="dummy", dev_mode=True)
+    p._update_last_run_context()
+    assert p.last_run_context["local_dir"] == os.path.join(os.getcwd(), "_storage")
+    assert p.last_run_context["settings_dir"] == os.path.join(os.getcwd(), ".dlt")
+
+
 def test_changed_write_disposition() -> None:
     pipeline_name = "pipe_" + uniq_id()
     p = dlt.pipeline(pipeline_name=pipeline_name, destination=DUMMY_COMPLETE)
@@ -1356,7 +1388,7 @@ def test_resource_name_in_schema() -> None:
         return [static_data(), dynamic_func_data(), dynamic_mark_data(), nested_data()]
 
     source = some_source()
-    p = dlt.pipeline(pipeline_name=uniq_id(), destination=DUMMY_COMPLETE)
+    p = dlt.pipeline(pipeline_name="p" + uniq_id(), destination=DUMMY_COMPLETE)
     p.run(source)
 
     schema = p.default_schema
@@ -1489,6 +1521,106 @@ def test_pipeline_log_progress() -> None:
     p = dlt.attach(progress=dlt.progress.log(0.5, logger=logging.getLogger()))
     assert cast(LogCollector, p.collector).logger is not None
     p.extract(many_delayed(2, 10))
+
+
+def test_progress_collector_callbacks() -> None:
+    collector = dlt.progress.log()
+
+    with (
+        patch.object(collector, "on_start_trace") as mock_on_start_trace,
+        patch.object(collector, "on_start_trace_step") as mock_on_start_trace_step,
+        patch.object(collector, "on_end_trace_step") as mock_on_end_trace_step,
+        patch.object(collector, "on_end_trace") as mock_on_end_trace,
+    ):
+        pipeline = dlt.pipeline(
+            pipeline_name="test_pipeline", destination="dummy", progress=collector
+        )
+        pipeline.extract(many_delayed(2, 5))
+
+        mock_on_start_trace.assert_called()
+        mock_on_start_trace_step.assert_called()
+        mock_on_end_trace_step.assert_called()
+        mock_on_end_trace.assert_called()
+
+        # Verify on_start_trace args
+        call_args = mock_on_start_trace.call_args[0]
+        assert isinstance(call_args[0], PipelineTrace)
+        assert isinstance(call_args[1], str)
+        assert call_args[2].pipeline_name == "test_pipeline"
+
+        # Verify on_start_trace_step args
+        call_args = mock_on_start_trace_step.call_args[0]
+        assert isinstance(call_args[0], PipelineTrace)
+        assert isinstance(call_args[1], str)
+        assert call_args[2].pipeline_name == "test_pipeline"
+
+        # Verify on_end_trace_step args
+        call_args = mock_on_end_trace_step.call_args[0]
+        assert isinstance(call_args[0], PipelineTrace)
+        assert isinstance(call_args[1], PipelineStepTrace)
+        assert call_args[2].pipeline_name == "test_pipeline"
+        assert isinstance(call_args[4], bool)  # send_state
+
+        # Verify on_end_trace args
+        call_args = mock_on_end_trace.call_args[0]
+        assert isinstance(call_args[0], PipelineTrace)
+        assert call_args[1].pipeline_name == "test_pipeline"
+        assert isinstance(call_args[2], bool)  # send_state
+
+
+def test_progress_subclass_receives_callbacks() -> None:
+    counters_accesible = False
+    callbacks_received = {
+        "on_start_trace": False,
+        "on_start_trace_step": False,
+        "on_end_trace_step": False,
+        "on_end_trace": False,
+    }
+
+    class MyCollector(LogCollector):
+        def on_start_trace(
+            self, trace: PipelineTrace, step: TPipelineStep, pipeline: SupportsPipeline
+        ) -> None:
+            nonlocal callbacks_received
+            callbacks_received["on_start_trace"] = True
+
+        def on_start_trace_step(
+            self, trace: PipelineTrace, step: TPipelineStep, pipeline: SupportsPipeline
+        ) -> None:
+            nonlocal callbacks_received
+            callbacks_received["on_start_trace_step"] = True
+
+        def on_end_trace_step(
+            self,
+            trace: PipelineTrace,
+            step: PipelineStepTrace,
+            pipeline: SupportsPipeline,
+            step_info: Any,
+            send_state: bool,
+        ) -> None:
+            nonlocal callbacks_received
+            callbacks_received["on_end_trace_step"] = True
+
+        def on_end_trace(
+            self, trace: PipelineTrace, pipeline: SupportsPipeline, send_state: bool
+        ) -> None:
+            nonlocal callbacks_received
+            callbacks_received["on_end_trace"] = True
+
+        def on_log(self) -> None:
+            nonlocal counters_accesible
+            if self.counters.keys():
+                counters_accesible = True
+
+    collector = MyCollector()
+    pipeline = dlt.pipeline(pipeline_name="test_pipeline", destination="dummy", progress=collector)
+    pipeline.extract([1, 2, 3], table_name="test_table")
+
+    assert counters_accesible
+    assert callbacks_received["on_start_trace"]
+    assert callbacks_received["on_start_trace_step"]
+    assert callbacks_received["on_end_trace_step"]
+    assert callbacks_received["on_end_trace"]
 
 
 def test_pipeline_source_state_activation() -> None:
@@ -1929,15 +2061,12 @@ def test_remove_autodetect() -> None:
     )
     pipeline.load()
 
-    pipeline = pipeline.drop()
-
     source = autodetect()
     assert "timestamp" in source.schema.settings["detections"]
     source.schema.remove_type_detection("timestamp")
     assert "timestamp" not in source.schema.settings["detections"]
 
-    pipeline = dlt.pipeline(destination="duckdb")
-    pipeline.run(source)
+    pipeline.run(source, refresh="drop_sources")
     assert "timestamp" not in pipeline.default_schema.settings["detections"]
 
     assert pipeline.default_schema.get_table("numbers")["columns"]["value"]["data_type"] == "bigint"
@@ -2679,13 +2808,13 @@ def test_yielding_empty_list_creates_table() -> None:
             assert rows[0] == (1, None)
 
 
-local_paths = [os.path.abspath("_storage"), "_storage"]
+local_paths = [os.path.abspath(TEST_STORAGE_ROOT), "."]
 if os.name == "nt":
     local_paths += [
         # UNC extended path
-        "\\\\?\\UNC\\localhost\\" + os.path.abspath("_storage").replace(":", "$"),
+        "\\\\?\\UNC\\localhost\\" + os.path.abspath(TEST_STORAGE_ROOT).replace(":", "$"),
         # UNC path
-        "\\\\localhost\\" + os.path.abspath("_storage").replace(":", "$"),
+        "\\\\localhost\\" + os.path.abspath(TEST_STORAGE_ROOT).replace(":", "$"),
     ]
 
 
@@ -2726,18 +2855,20 @@ def test_local_filesystem_destination(local_path: str) -> None:
     assert expected_dataset.joinpath(INIT_FILE_NAME).is_file()
     # one numbers table (replaced)
     assert len(list(expected_dataset.joinpath("numbers").glob("*"))) == 1
-    # two loads + init
-    assert len(list(expected_dataset.joinpath("_dlt_loads").glob("*"))) == 3
+    # two loads
+    assert len(list(expected_dataset.joinpath("_dlt_loads").glob("*"))) == 2
     # one schema (dedup on hash)
-    assert len(list(expected_dataset.joinpath("_dlt_version").glob("*"))) == 2
+    assert len(list(expected_dataset.joinpath("_dlt_version").glob("*"))) == 1
     # one state (not sent twice)
-    assert len(list(expected_dataset.joinpath("_dlt_pipeline_state").glob("*"))) == 2
+    assert len(list(expected_dataset.joinpath("_dlt_pipeline_state").glob("*"))) == 1
 
     fs_client = pipeline._fs_client()
     # all path formats we use must lead to "_storage" relative to tests
-    assert (
-        pathlib.Path(fs_client.dataset_path).resolve()
-        == pathlib.Path(local_path).joinpath(dataset_name).resolve()
+    expect_path_fragment = str(pathlib.Path(TEST_STORAGE_ROOT).joinpath(dataset_name).resolve())
+    expect_path_fragment = expect_path_fragment[expect_path_fragment.index(TEST_STORAGE_ROOT) :]
+    # TODO: restore on windows
+    assert str(pathlib.Path(TEST_STORAGE_ROOT).joinpath(dataset_name).resolve()).endswith(
+        expect_path_fragment
     )
     # same for client
     assert len(fs_client.list_table_files("numbers")) == 1
@@ -3081,7 +3212,7 @@ def test_resources_same_name_in_single_source() -> None:
 def test_static_staging_dataset() -> None:
     # share database and staging dataset
     duckdb_ = dlt.destinations.duckdb(
-        "_storage/test_static_staging_dataset.db", staging_dataset_name_layout="_dlt_staging"
+        "test_static_staging_dataset.db", staging_dataset_name_layout="_dlt_staging"
     )
 
     pipeline_1 = dlt.pipeline("test_static_staging_dataset_1", destination=duckdb_, dev_mode=True)
@@ -3199,7 +3330,7 @@ def test_exceed_job_file_name_length() -> None:
     assert isinstance(os_err.value.__cause__, OSError)
 
     # fit into 255 + 1
-    suffix_len = len(".b61d3af76c.0.insert-values")
+    suffix_len = len(".b61d3af76c.0.insert-values.gz")
     pipeline = dlt.pipeline(
         pipeline_name="test_exceed_job_file_name_length",
         destination=duckdb(
@@ -3231,10 +3362,18 @@ def assert_imported_file(
     assert len(rows[table_name]) == expected_rows
     # we should have twp files loaded
     jobs = pipeline.last_trace.last_load_info.load_packages[0].jobs["completed_jobs"]
-    job_extensions = [os.path.splitext(job.job_file_info.file_name())[1] for job in jobs]
+    job_extensions = []
+    for job in jobs:
+        parsed_file = ParsedLoadJobFileName.parse(job.job_file_info.file_name())
+        ext = (
+            f".{parsed_file.file_format}.gz"
+            if parsed_file.is_compressed
+            else f".{parsed_file.file_format}"
+        )
+        job_extensions.append(ext)
     assert ".jsonl" in job_extensions
     if expects_state:
-        assert ".insert_values" in job_extensions
+        assert ".insert_values.gz" in job_extensions
     # check extract trace if jsonl is really there
     extract_info = pipeline.last_trace.last_extract_info
     jobs = extract_info.load_packages[0].jobs["new_jobs"]
@@ -3410,7 +3549,7 @@ def test_many_pipelines_single_dataset() -> None:
     p = dlt.pipeline(
         pipeline_name="source_1_pipeline", destination="duckdb", dataset_name="shared_dataset"
     )
-    p.run(source_1(), credentials="duckdb:///_storage/test_quack.duckdb")
+    p.run(source_1(), credentials="duckdb:///test_quack.duckdb")
     counts = load_table_counts(p, *p.default_schema.tables.keys())
     assert counts.items() >= {"gen1": 1, "_dlt_pipeline_state": 1, "_dlt_loads": 1}.items()
     p._wipe_working_folder()
@@ -3419,7 +3558,7 @@ def test_many_pipelines_single_dataset() -> None:
     p = dlt.pipeline(
         pipeline_name="source_2_pipeline", destination="duckdb", dataset_name="shared_dataset"
     )
-    p.run(source_2(), credentials="duckdb:///_storage/test_quack.duckdb")
+    p.run(source_2(), credentials="duckdb:///test_quack.duckdb")
     # table_names = [t["name"] for t in p.default_schema.data_tables()]
     counts = load_table_counts(p, *p.default_schema.tables.keys())
     # gen1: one record comes from source_1, 1 record from source_2
@@ -3431,7 +3570,7 @@ def test_many_pipelines_single_dataset() -> None:
     # restore from destination, check state
     p = dlt.pipeline(
         pipeline_name="source_1_pipeline",
-        destination=dlt.destinations.duckdb(credentials="duckdb:///_storage/test_quack.duckdb"),
+        destination=dlt.destinations.duckdb(credentials="duckdb:///test_quack.duckdb"),
         dataset_name="shared_dataset",
     )
     p.sync_destination()
@@ -3447,7 +3586,7 @@ def test_many_pipelines_single_dataset() -> None:
 
     p = dlt.pipeline(
         pipeline_name="source_2_pipeline",
-        destination=dlt.destinations.duckdb(credentials="duckdb:///_storage/test_quack.duckdb"),
+        destination=dlt.destinations.duckdb(credentials="duckdb:///test_quack.duckdb"),
         dataset_name="shared_dataset",
     )
     p.sync_destination()
@@ -3477,7 +3616,7 @@ def test_nested_hints_file_format() -> None:
     norm_metrics = normalize_info.metrics[load_id][0]
     for file_name, _ in norm_metrics["job_metrics"].items():
         # always jsonl
-        assert file_name.endswith("jsonl")
+        assert file_name.endswith("jsonl.gz")
 
 
 def test_nested_hints_write_disposition_append_replace() -> None:
@@ -3549,9 +3688,7 @@ def test_nested_hints_write_disposition_nested_merge() -> None:
     # nested_data__list not copied to main dataset
     assert p.dataset().row_counts().fetchall() == [("nested_data", 1), ("nested_data__list", 0)]
     # will be loading to staging and always overwritten but not merged
-    staging_dataset = dlt.destinations.dataset.dataset(
-        p.destination, "local_staging", p.default_schema
-    )
+    staging_dataset = dlt.dataset(p.destination, "local_staging", p.default_schema)
     assert staging_dataset.row_counts(table_names=["nested_data__list"]).fetchall() == [
         ("nested_data__list", 3)
     ]
@@ -3755,3 +3892,22 @@ def test_pipeline_repr() -> None:
     assert getattr(p, "is_active", sentinel) is not sentinel
     assert getattr(p, "pipelines_dir", sentinel) is not sentinel
     assert getattr(p, "working_dir", sentinel) is not sentinel
+
+
+def test_repr_after_loading_trace(tmp_path):
+    pipeline_name = "foo"
+    trace_path = tmp_path / pipeline_name / "trace.pickle"
+    pipeline = dlt.pipeline(pipeline_name, destination="duckdb", pipelines_dir=tmp_path)
+    pipeline.run([{"foo": "bar"}], table_name="temp")
+    trace = pickle.load(trace_path.open("rb"))
+
+    # ensure calling `__repr__()` shouldn't cause any error
+    trace.__repr__()
+
+
+def test_pipeline_with_null_executors(monkeypatch) -> None:
+    # NOTE: emscripten forces null executor, this is tested in test_runners.py
+    monkeypatch.setattr(sys, "platform", "emscripten")
+    p = dlt.pipeline(pipeline_name="null_executor", destination="duckdb")
+    p.run([{"id": 1}], table_name="test_table")
+    assert p.dataset().row_counts().fetchall() == [("test_table", 1)]

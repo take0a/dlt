@@ -31,7 +31,7 @@ Creates, adds, inspects and deploys dlt pipelines. Further help is available at 
 ```sh
 dlt [-h] [--version] [--disable-telemetry] [--enable-telemetry]
     [--non-interactive] [--debug]
-    {telemetry,studio,schema,pipeline,init,render-docs,deploy,ai} ...
+    {telemetry,schema,pipeline,init,render-docs,deploy,dashboard,ai} ...
 ```
 
 <details>
@@ -48,12 +48,12 @@ dlt [-h] [--version] [--disable-telemetry] [--enable-telemetry]
 
 **Available subcommands**
 * [`telemetry`](#dlt-telemetry) - Shows telemetry status
-* [`studio`](#dlt-studio) - Starts the dlt studio marimo app
 * [`schema`](#dlt-schema) - Shows, converts and upgrades schemas
 * [`pipeline`](#dlt-pipeline) - Operations on pipelines that were ran locally
 * [`init`](#dlt-init) - Creates a pipeline project in the current folder by adding existing verified source or creating a new one from template.
 * [`render-docs`](#dlt-render-docs) - Renders markdown version of cli docs
 * [`deploy`](#dlt-deploy) - Creates a deployment package for a selected pipeline script
+* [`dashboard`](#dlt-dashboard) - Starts the dlt pipeline dashboard
 * [`ai`](#dlt-ai) - Use ai-powered development tools and utilities
 
 </details>
@@ -82,42 +82,13 @@ Inherits arguments from [`dlt`](#dlt).
 
 </details>
 
-## `dlt studio`
-
-Starts the dlt studio marimo app.
-
-**Usage**
-```sh
-dlt studio [-h]
-```
-
-**Description**
-
-The `dlt studio` command starts the dlt studio app. You can use the studio:
-
-* to list and inspect local pipelines
-* browse the full pipeline schema and all hints
-* browse the data in the destination
-* inspect the pipeline state.
-
-<details>
-
-<summary>Show Arguments and Options</summary>
-
-Inherits arguments from [`dlt`](#dlt).
-
-**Options**
-* `-h, --help` - Show this help message and exit
-
-</details>
-
 ## `dlt schema`
 
 Shows, converts and upgrades schemas.
 
 **Usage**
 ```sh
-dlt schema [-h] [--format {json,yaml}] [--remove-defaults] file
+dlt schema [-h] [--format {json,yaml,dbml,dot}] [--remove-defaults] file
 ```
 
 **Description**
@@ -135,7 +106,7 @@ Inherits arguments from [`dlt`](#dlt).
 
 **Options**
 * `-h, --help` - Show this help message and exit
-* `--format {json,yaml}` - Display schema in this format
+* `--format {json,yaml,dbml,dot}` - Display schema in this format
 * `--remove-defaults` - Does not show default hint values
 
 </details>
@@ -146,8 +117,8 @@ Operations on pipelines that were ran locally.
 
 **Usage**
 ```sh
-dlt pipeline [-h] [--list-pipelines] [--hot-reload] [--pipelines-dir
-    PIPELINES_DIR] [--verbose] [pipeline_name]
+dlt pipeline [-h] [--list-pipelines] [--pipelines-dir PIPELINES_DIR] [--verbose]
+    [pipeline_name]
     {info,show,failed-jobs,drop-pending-packages,sync,trace,schema,drop,load-package}
     ...
 ```
@@ -168,7 +139,6 @@ Inherits arguments from [`dlt`](#dlt).
 **Options**
 * `-h, --help` - Show this help message and exit
 * `--list-pipelines, -l` - List local pipelines
-* `--hot-reload` - Reload streamlit app (for core development)
 * `--pipelines-dir PIPELINES_DIR` - Pipelines working directory
 * `--verbose, -v` - Provides more information for certain commands.
 
@@ -217,16 +187,18 @@ Generates and launches Streamlit app with the loading status and dataset explore
 
 **Usage**
 ```sh
-dlt pipeline [pipeline_name] show [-h]
+dlt pipeline [pipeline_name] show [-h] [--streamlit] [--edit]
 ```
 
 **Description**
 
-Generates and launches Streamlit (https://streamlit.io/) app with the loading status and dataset explorer.
+Launches the pipeline dashboard app with a comprehensive interface to inspect the pipeline state, schemas, and data in the destination.
 
-This is a simple app that you can use to inspect the schemas and data in the destination as well as your pipeline state and loading status/stats. It should be executed from the same folder from which you ran the pipeline script to access destination credentials.
+This app should be executed from the same folder from which you ran the pipeline script to be able access destination credentials.
 
-Requires `streamlit` to be installed in the current environment: `pip install streamlit`.
+If the --edit flag is used, will launch the editable version of the app if it exists in the current directory, or create this version and launch it in edit mode.
+
+Requires `marimo` to be installed in the current environment: `pip install marimo`. Use the --streamlit flag to launch the legacy streamlit app.
 
 <details>
 
@@ -236,6 +208,8 @@ Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
 
 **Options**
 * `-h, --help` - Show this help message and exit
+* `--streamlit` - Launch the legacy streamlit dashboard instead of the new pipeline dashboard.
+* `--edit` - Creates editable version of pipeline dashboard in current directory if it does not exist there yet and launches it in edit mode. will have no effect when using the streamlit flag.
 
 </details>
 
@@ -358,7 +332,7 @@ Displays default schema.
 
 **Usage**
 ```sh
-dlt pipeline [pipeline_name] schema [-h] [--format {json,yaml}]
+dlt pipeline [pipeline_name] schema [-h] [--format {json,yaml,dbml,dot}]
     [--remove-defaults]
 ```
 
@@ -374,7 +348,7 @@ Inherits arguments from [`dlt pipeline`](#dlt-pipeline).
 
 **Options**
 * `-h, --help` - Show this help message and exit
-* `--format {json,yaml}` - Display schema in this format
+* `--format {json,yaml,dbml,dot}` - Display schema in this format
 * `--remove-defaults` - Does not show default hint values
 
 </details>
@@ -696,6 +670,37 @@ Inherits arguments from [`dlt deploy`](#dlt-deploy).
 
 </details>
 
+## `dlt dashboard`
+
+Starts the dlt pipeline dashboard.
+
+**Usage**
+```sh
+dlt dashboard [-h] [--pipelines-dir PIPELINES_DIR] [--edit]
+```
+
+**Description**
+
+The `dlt dashboard` command starts the dlt pipeline dashboard. You can use the dashboard:
+
+* to list and inspect local pipelines
+* browse the full pipeline schema and all hints
+* browse the data in the destination
+* inspect the pipeline state.
+
+<details>
+
+<summary>Show Arguments and Options</summary>
+
+Inherits arguments from [`dlt`](#dlt).
+
+**Options**
+* `-h, --help` - Show this help message and exit
+* `--pipelines-dir PIPELINES_DIR` - Pipelines working directory
+* `--edit` - Eject dashboard and start editable version
+
+</details>
+
 ## `dlt ai`
 
 Use AI-powered development tools and utilities.
@@ -730,7 +735,7 @@ Generate IDE-specific configuration and rules files.
 **Usage**
 ```sh
 dlt ai setup [-h] [--location LOCATION] [--branch BRANCH]
-    {cursor,continue,cline,claude_desktop}
+    {amp,codex,claude,cody,cline,cursor,continue,windsurf,copilot}
 ```
 
 **Description**

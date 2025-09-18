@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING, Any, Literal
 import os
 from pathlib import Path
 import sys
@@ -12,6 +13,11 @@ import traceback
 import zlib
 from importlib.metadata import version as pkg_version
 from packaging.version import Version
+
+if TYPE_CHECKING:
+    from dlt.common.libs.sqlglot import TSqlGlotDialect
+else:
+    TSqlGlotDialect = Any
 
 from typing import (
     Any,
@@ -31,6 +37,7 @@ from typing import (
     Union,
     Iterable,
     IO,
+    cast,
 )
 
 from dlt.common.exceptions import (
@@ -38,6 +45,7 @@ from dlt.common.exceptions import (
     ExceptionTrace,
     TerminalException,
     DependencyVersionException,
+    ValueErrorWithKnownValues,
 )
 from dlt.common.typing import AnyFun, StrAny, DictStrAny, StrStr, TAny, TFun, Generic
 
@@ -117,7 +125,9 @@ def str2bool(v: str) -> bool:
     elif v.lower() in ("no", "false", "f", "n", "0"):
         return False
     else:
-        raise ValueError("Boolean value expected.")
+        raise ValueErrorWithKnownValues(
+            "v", v, [True, "yes", "true", "t", "y", 1, False, "no", "false", "f", "n", "0"]
+        )
 
 
 # def flatten_list_of_dicts(dicts: Sequence[StrAny]) -> StrAny:
@@ -142,12 +152,12 @@ def flatten_list_of_str_or_dicts(seq: Sequence[Union[StrAny, str]]) -> DictStrAn
         if isinstance(e, dict):
             for k, v in e.items():
                 if k in o:
-                    raise KeyError(f"Cannot flatten with duplicate key {k}")
+                    raise KeyError(f"Failed to flatten because of duplicate key `{k}`")
                 o[k] = v
         else:
             key = str(e)
             if key in o:
-                raise KeyError(f"Cannot flatten with duplicate key {key}")
+                raise KeyError(f"Failed to flatten because of duplicate key `{key}`")
             o[key] = None
     return o
 
@@ -284,8 +294,13 @@ def clone_dict_nested(src: TDict) -> TDict:
     return update_dict_nested({}, src, copy_src_dicts=True)  # type: ignore[return-value]
 
 
-def map_nested_in_place(func: AnyFun, _nested: TAny, *args: Any, **kwargs: Any) -> TAny:
-    """Applies `func` to all elements in `_dict` recursively, replacing elements in nested dictionaries and lists in place.
+def map_nested_values_in_place(
+    func: AnyFun,
+    _nested: TAny,
+    *args: Any,
+    **kwargs: Any,
+) -> TAny:
+    """Applies `func` to all values in `_dict` recursively, replacing elements in nested dictionaries and lists in place.
     Additional `*args` and `**kwargs` are passed to `func`.
     """
     if isinstance(_nested, tuple):
@@ -297,15 +312,53 @@ def map_nested_in_place(func: AnyFun, _nested: TAny, *args: Any, **kwargs: Any) 
     if isinstance(_nested, dict):
         for k, v in _nested.items():
             if isinstance(v, (dict, list, tuple)):
-                _nested[k] = map_nested_in_place(func, v, *args, **kwargs)
+                _nested[k] = map_nested_values_in_place(func, v, *args, **kwargs)
             else:
                 _nested[k] = func(v, *args, **kwargs)
     elif isinstance(_nested, list):
         for idx, _l in enumerate(_nested):
             if isinstance(_l, (dict, list, tuple)):
-                _nested[idx] = map_nested_in_place(func, _l, *args, **kwargs)
+                _nested[idx] = map_nested_values_in_place(func, _l, *args, **kwargs)
             else:
                 _nested[idx] = func(_l, *args, **kwargs)
+    else:
+        raise ValueError(_nested, "Not a nested type")
+    return _nested
+
+
+# keep old name for backwards compatibility
+# dlt+ needs to be updated
+map_nested_in_place = map_nested_values_in_place
+
+
+def map_nested_keys_in_place(
+    func: AnyFun,
+    _nested: TAny,
+    *args: Any,
+    **kwargs: Any,
+) -> TAny:
+    """Applies `func` to all keys in `_dict` recursively, replacing elements in nested dictionaries and lists in place.
+    Additional `*args` and `**kwargs` are passed to `func`. List indexes will remain untouched.
+    """
+    if isinstance(_nested, tuple):
+        if hasattr(_nested, "_asdict"):
+            _nested = _nested._asdict()
+        else:
+            _nested = list(_nested)  # type: ignore
+
+    if isinstance(_nested, dict):
+        # NOTE: to modify the dictionary in place, exhaust the iterator into a list before iterating over it
+        for k, v in list(_nested.items()):
+            _nested.pop(k)
+            k = func(k, *args, **kwargs)
+            if isinstance(v, (dict, list, tuple)):
+                _nested[k] = map_nested_keys_in_place(func, v, *args, **kwargs)
+            else:
+                _nested[k] = v
+    elif isinstance(_nested, list):
+        for idx, _l in enumerate(_nested):
+            if isinstance(_l, (dict, list, tuple)):
+                _nested[idx] = map_nested_keys_in_place(func, _l, *args, **kwargs)
     else:
         raise ValueError(_nested, "Not a nested type")
     return _nested
@@ -700,8 +753,8 @@ removeprefix = getattr(
 
 def read_dialect_and_sql(
     file_obj: IO[str],
-    fallback_dialect: Optional[str] = None,
-) -> Tuple[str, str]:
+    fallback_dialect: Optional[TSqlGlotDialect] = None,
+) -> Tuple[TSqlGlotDialect, str]:
     """
     Read the first line of a file for the dialect (after the first colon),
     falls back to `fallback_dialect` if not found or empty,
@@ -720,7 +773,7 @@ def read_dialect_and_sql(
     first_line = file_obj.readline()
     # e.g. something like: "dialect: clickhouse\n"
     parts = first_line.split(":", 1)
-    parsed_dialect = parts[1].strip() if len(parts) > 1 else ""
+    parsed_dialect = cast(TSqlGlotDialect, parts[1].strip() if len(parts) > 1 else "")
 
     dialect = parsed_dialect if parsed_dialect else fallback_dialect
 
